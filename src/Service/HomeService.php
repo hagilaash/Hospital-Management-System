@@ -1,18 +1,18 @@
 <?php
 
-namespace app\Service;
+namespace App\Service;
 
-use app\repository\HomeRepository;
+use App\Repository\HomeRepository;
 
 class HomeService
 {
-    public function__construct(
-        private HomeRepository $home_repository
-    ){
-
+    public function __construct(
+        private HomeRepository $homeRepository
+    ) {
     }
+
     public function getHomeModules(): array
     {
-        return $this->homerepository-->getModules();
+        return $this->homeRepository->getHomeModules();
     }
 }

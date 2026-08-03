@@ -6,7 +6,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use app\Service\HomeService;
+use App\Service\HomeService;
 
 class HomeController extends AbstractController
 {
@@ -17,13 +17,13 @@ class HomeController extends AbstractController
     }
 
     #[Route('/home',name:'home',methods:['GET'])]
-    public function index(HomeServices $homeservices):JsonResponse
+    public function index_home(HomeService $homeservices): JsonResponse
     {
-        $modules =$homeservices->getHomeModules();
+        $modules = $homeservices->getHomeModules();
         return $this->json([
             'status'=>true,
             'message'=>'Modules Loaded Successfully',
             'modules'=>$modules
-        ])
+        ]);
     }
 }

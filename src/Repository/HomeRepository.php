@@ -1,15 +1,15 @@
 <?php
 
-namespace app\Repository
+namespace App\Repository;
 
 use Doctrine\DBAL\Connection;
 
 class HomeRepository
 {
-    public function__construct(
-        private Connection $connection
-    ){
-
+    public function __construct(
+    private Connection $connection
+    )
+    {
     }
     public function getHomeModules(): array
     {
