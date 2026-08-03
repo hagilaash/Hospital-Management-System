@@ -1,0 +1,29 @@
+<?php
+
+namespace App\Controller;
+
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Routing\Attribute\Route;
+use app\Service\HomeService;
+
+class HomeController extends AbstractController
+{
+    #[Route('/', name: 'home')]
+    public function index(): Response
+    {
+        return new Response('<h1>Hospital Management System</h1>');
+    }
+
+    #[Route('/home',name:'home',methods:['GET'])]
+    public function index(HomeServices $homeservices):JsonResponse
+    {
+        $modules =$homeservices->getHomeModules();
+        return $this->json([
+            'status'=>true,
+            'message'=>'Modules Loaded Successfully',
+            'modules'=>$modules
+        ])
+    }
+}
