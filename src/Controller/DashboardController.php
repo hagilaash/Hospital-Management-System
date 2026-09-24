@@ -2,15 +2,22 @@
 
 namespace App\Controller;
 
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-class DashboardController extends AbstractController
+class DashboardController
 {
+    public function __construct(
+        private LoggerInterface $logger
+    ) {
+    }
+
     #[Route('/dashboard', name: 'dashboard')]
-    public function index(): Response
+    public function dashboard(): Response
     {
-        return new Response('Dashboard');
+        $this->logger->info('Dashboard page opened');
+
+        return new Response('Dashboard is working');
     }
 }
