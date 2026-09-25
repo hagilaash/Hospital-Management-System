@@ -21,4 +21,17 @@ class DatabaseFunction
             ]
         );
     }
+
+    public function getHomeModules(): array
+    {
+        $sql = 'SELECT * FROM function_get_home_modules()';
+
+        return $this->connection->fetchAllAssociative($sql);
+    }
+
+    public function getDoctorsList(): array
+    { 
+        $sql = 'SELECT * FROM ecs_get_doctors_list()';
+        return $this->connection->fetchAllAssociative($sql);
+    }
 }

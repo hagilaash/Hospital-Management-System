@@ -14,6 +14,7 @@ class LoginController extends AbstractController
         private LoginService $loginService
     ) {
     }
+
     #[Route('/login', name: 'login', methods: ['GET', 'POST'])]
     public function login(Request $request): Response
     {
@@ -23,7 +24,14 @@ class LoginController extends AbstractController
             $password = $request->request->get('password');
 
             $result = $this->loginService->login($username, $password);
-            dd($result);
+
+            if ($result['success'] === true) {
+                return $this->redirectToRoute('home');
+            }
+
+            return $this->render('login/login.html.twig', [
+                'error' => $result['message']
+            ]);
         }
 
         return $this->render('login/login.html.twig');

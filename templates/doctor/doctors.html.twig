@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctors</title>
+</head>
+
+<body>
+
+    <h1>Doctor List</h1>
+
+    {% for doctor in doctors %}
+
+        <p>
+            {{ doctor.doctor_name }}
+        </p>
+
+    {% endfor %}
+
+</body>
+</html>

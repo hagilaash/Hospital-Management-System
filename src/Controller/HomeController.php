@@ -2,28 +2,25 @@
 
 namespace App\Controller;
 
+use App\Service\HomeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use App\Service\HomeService;
 
 class HomeController extends AbstractController
 {
-    #[Route('/', name: 'home')]
-    public function index(): Response
-    {
-        return new Response('<h1>Hospital Management System</h1>');
+    public function __construct(
+        private HomeService $homeService
+    ) {
     }
 
-    #[Route('/home',name:'home',methods:['GET'])]
-    public function index_home(HomeService $homeservices): JsonResponse
+    #[Route('/home', name: 'home', methods: ['GET'])]
+    public function home(): Response
     {
-        $modules = $homeservices->getHomeModules();
-        return $this->json([
-            'status'=>true,
-            'message'=>'Modules Loaded Successfully',
-            'modules'=>$modules
+        $modules = $this->homeService->getHomeModules();
+
+        return $this->render('home/dashboard.html.twig', [
+            'modules' => $modules
         ]);
     }
 }
