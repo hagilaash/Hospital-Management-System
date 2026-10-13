@@ -1,5 +1,9 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        # Lets templates show the signed-in username ({{ auth.username }})
+        # without knowing how the session stores it.
+        auth: '@App\Service\AuthSessionService'
 
 when@test:
     twig:

@@ -21,6 +21,8 @@
 
         .login-container {
             width: 350px;
+            max-width: calc(100% - 32px);
+            box-sizing: border-box;
             background: white;
             padding: 30px;
             border-radius: 8px;
@@ -65,6 +67,25 @@
             background: #163a5c;
         }
 
+        .alert {
+            margin-bottom: 18px;
+            padding: 10px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .alert-error {
+            background: #fdecea;
+            border: 1px solid #f5c2c0;
+            color: #8a1f17;
+        }
+
+        .alert-success {
+            background: #e8f5e9;
+            border: 1px solid #b7dfb9;
+            color: #1b5e20;
+        }
+
         body {
         margin: 0;
         min-height: 100vh;
@@ -82,7 +103,21 @@
 
     <h1>HMS Login</h1>
 
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success" role="status">{{ message }}</div>
+    {% endfor %}
+
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-error" role="alert">{{ message }}</div>
+    {% endfor %}
+
+    {% if error is defined and error %}
+        <div class="alert alert-error" role="alert">{{ error }}</div>
+    {% endif %}
+
     <form method="POST" action="{{ path('login') }}">
+
+        <input type="hidden" name="_token" value="{{ csrf_token('login') }}">
 
         <div class="form-group">
             <label for="username">Username</label>
@@ -91,6 +126,8 @@
                 type="text"
                 id="username"
                 name="username"
+                value="{{ username|default('') }}"
+                autocomplete="username"
                 required
             >
         </div>
@@ -102,6 +139,7 @@
                 type="password"
                 id="password"
                 name="password"
+                autocomplete="current-password"
                 required
             >
         </div>

@@ -2,8 +2,16 @@
 framework:
     secret: '%env(APP_SECRET)%'
 
+    # Required by the Patient module: CSRF tokens for login and patient forms.
+    # Needs symfony/security-csrf (composer require symfony/security-csrf:7.4.*).
+    csrf_protection: true
+
     # Note that the session will be started ONLY if you read or write from it.
-    session: true
+    # The session now carries the authenticated user, so the cookie is hardened.
+    session:
+        cookie_secure: auto
+        cookie_httponly: true
+        cookie_samesite: lax
 
     #esi: true
     #fragments: true

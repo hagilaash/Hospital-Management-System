@@ -14,7 +14,6 @@ class DoctorDAO
     public function getDoctorsList(): array
     {
         $result = $this->databaseFunction->getDoctorsList();
-        dd($result);
         return $result;
     }
 }
