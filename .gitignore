@@ -12,3 +12,7 @@
 # Windows/WSL download markers
 *:Zone.Identifier
 ###< HMS project ###
+###> phpunit/phpunit ###
+/phpunit.xml
+/.phpunit.cache/
+###< phpunit/phpunit ###
