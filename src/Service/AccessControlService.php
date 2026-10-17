@@ -14,9 +14,9 @@ namespace App\Service;
  */
 class AccessControlService
 {
-    public const PATIENT_VIEW   = 'patient.view';
+    public const PATIENT_VIEW = 'patient.view';
     public const PATIENT_CREATE = 'patient.create';
-    public const PATIENT_EDIT   = 'patient.edit';
+    public const PATIENT_EDIT = 'patient.edit';
     public const PATIENT_STATUS = 'patient.status';
 
     private const DEFINED_PERMISSIONS = [
@@ -27,7 +27,7 @@ class AccessControlService
     ];
 
     public function __construct(
-        private AuthSessionService $authSession
+        private AuthSessionService $authSession,
     ) {
     }
 

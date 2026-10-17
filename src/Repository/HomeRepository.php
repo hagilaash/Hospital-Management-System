@@ -7,7 +7,7 @@ use App\DAO\HomeDAO;
 class HomeRepository
 {
     public function __construct(
-        private HomeDAO $homeDAO
+        private HomeDAO $homeDAO,
     ) {
     }
 

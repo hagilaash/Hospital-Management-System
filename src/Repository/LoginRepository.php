@@ -7,7 +7,7 @@ use App\DAO\LoginDAO;
 class LoginRepository
 {
     public function __construct(
-        private LoginDAO $loginDAO
+        private LoginDAO $loginDAO,
     ) {
     }
 

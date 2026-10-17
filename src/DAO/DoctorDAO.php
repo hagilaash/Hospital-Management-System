@@ -7,13 +7,44 @@ use App\DB\DatabaseFunction;
 class DoctorDAO
 {
     public function __construct(
-        private DatabaseFunction $databaseFunction
+        private DatabaseFunction $databaseFunction,
     ) {
     }
 
-    public function getDoctorsList(): array
+    public function getDoctorsList(
+        int $limit,
+        int $offset,
+        ?string $search = null,
+        ?string $specialization = null,
+        ?string $department = null,
+        string $status = 'Active',
+    ): array {
+        return $this->databaseFunction->getDoctorsList(
+            $limit,
+            $offset,
+            $search,
+            $specialization,
+            $department,
+            $status
+        );
+    }
+
+    public function countDoctors(
+        ?string $search = null,
+        ?string $specialization = null,
+        ?string $department = null,
+        string $status = 'Active',
+    ): int {
+        return $this->databaseFunction->countDoctors(
+            $search,
+            $specialization,
+            $department,
+            $status
+        );
+    }
+
+    public function registerDoctor(array $data): array
     {
-        $result = $this->databaseFunction->getDoctorsList();
-        return $result;
+        return $this->databaseFunction->registerDoctor($data);
     }
 }

@@ -69,7 +69,7 @@ class PatientServiceTest extends TestCase
     public function testRegisterPassesNormalisedCopyToRepository(): void
     {
         $input = $this->validPatient();
-        $input->firstName = "  Anita  ";
+        $input->firstName = '  Anita  ';
         $input->lastName = " Raman\t";
         $input->phone = ' (984) 101-2345 ';
         $input->email = '  Anita.Raman@Example.COM ';
@@ -160,7 +160,7 @@ class PatientServiceTest extends TestCase
 
             $result = $this->service->registerPatient($input, 'admin');
 
-            $this->assertTrue($result['success'], 'Rejected valid input: ' . json_encode($case, JSON_UNESCAPED_UNICODE));
+            $this->assertTrue($result['success'], 'Rejected valid input: '.json_encode($case, JSON_UNESCAPED_UNICODE));
         }
     }
 
@@ -196,35 +196,35 @@ class PatientServiceTest extends TestCase
         $tomorrow = (new \DateTimeImmutable('tomorrow'))->format('Y-m-d');
 
         return [
-            'first name blank'            => [['firstName' => '   '], 'firstName'],
-            'first name has digits'       => [['firstName' => 'Anita2'], 'firstName'],
-            'first name too long'         => [['firstName' => str_repeat('a', 101)], 'firstName'],
-            'last name blank'             => [['lastName' => ''], 'lastName'],
-            'last name has symbols'       => [['lastName' => 'Raman<script>'], 'lastName'],
-            'gender not selected'         => [['gender' => ''], 'gender'],
-            'gender not allowed'          => [['gender' => 'Robot'], 'gender'],
-            'gender wrong case'           => [['gender' => 'female'], 'gender'],
-            'dob blank'                   => [['dateOfBirth' => ''], 'dateOfBirth'],
-            'dob not a date'              => [['dateOfBirth' => 'not-a-date'], 'dateOfBirth'],
-            'dob wrong format'            => [['dateOfBirth' => '12/04/1990'], 'dateOfBirth'],
-            'dob impossible date'         => [['dateOfBirth' => '2026-02-31'], 'dateOfBirth'],
-            'dob not a leap day'          => [['dateOfBirth' => '2023-02-29'], 'dateOfBirth'],
-            'dob before 1900'             => [['dateOfBirth' => '1899-12-31'], 'dateOfBirth'],
-            'dob tomorrow'                => [['dateOfBirth' => $tomorrow], 'dateOfBirth'],
-            'dob far future'              => [['dateOfBirth' => '2999-01-01'], 'dateOfBirth'],
-            'phone blank'                 => [['phone' => ''], 'phone'],
-            'phone too short'             => [['phone' => '12345'], 'phone'],
-            'phone too long'              => [['phone' => '1234567890123456'], 'phone'],
-            'phone has letters'           => [['phone' => 'abc1234567'], 'phone'],
-            'phone only a plus sign'      => [['phone' => '+'], 'phone'],
-            'phone plus in the middle'    => [['phone' => '98410+12345'], 'phone'],
-            'email not an address'        => [['email' => 'not-an-email'], 'email'],
-            'email without a domain dot'  => [['email' => 'a@b'], 'email'],
-            'email too long'              => [['email' => str_repeat('b', 150) . '@example.com'], 'email'],
-            'blood group not valid'       => [['bloodGroup' => 'Z+'], 'bloodGroup'],
-            'address too long'            => [['address' => str_repeat('x', 256)], 'address'],
-            'emergency name has digits'   => [['emergencyContactName' => 'R2D2'], 'emergencyContactName'],
-            'emergency phone too short'   => [['emergencyContactPhone' => '123'], 'emergencyContactPhone'],
+            'first name blank' => [['firstName' => '   '], 'firstName'],
+            'first name has digits' => [['firstName' => 'Anita2'], 'firstName'],
+            'first name too long' => [['firstName' => str_repeat('a', 101)], 'firstName'],
+            'last name blank' => [['lastName' => ''], 'lastName'],
+            'last name has symbols' => [['lastName' => 'Raman<script>'], 'lastName'],
+            'gender not selected' => [['gender' => ''], 'gender'],
+            'gender not allowed' => [['gender' => 'Robot'], 'gender'],
+            'gender wrong case' => [['gender' => 'female'], 'gender'],
+            'dob blank' => [['dateOfBirth' => ''], 'dateOfBirth'],
+            'dob not a date' => [['dateOfBirth' => 'not-a-date'], 'dateOfBirth'],
+            'dob wrong format' => [['dateOfBirth' => '12/04/1990'], 'dateOfBirth'],
+            'dob impossible date' => [['dateOfBirth' => '2026-02-31'], 'dateOfBirth'],
+            'dob not a leap day' => [['dateOfBirth' => '2023-02-29'], 'dateOfBirth'],
+            'dob before 1900' => [['dateOfBirth' => '1899-12-31'], 'dateOfBirth'],
+            'dob tomorrow' => [['dateOfBirth' => $tomorrow], 'dateOfBirth'],
+            'dob far future' => [['dateOfBirth' => '2999-01-01'], 'dateOfBirth'],
+            'phone blank' => [['phone' => ''], 'phone'],
+            'phone too short' => [['phone' => '12345'], 'phone'],
+            'phone too long' => [['phone' => '1234567890123456'], 'phone'],
+            'phone has letters' => [['phone' => 'abc1234567'], 'phone'],
+            'phone only a plus sign' => [['phone' => '+'], 'phone'],
+            'phone plus in the middle' => [['phone' => '98410+12345'], 'phone'],
+            'email not an address' => [['email' => 'not-an-email'], 'email'],
+            'email without a domain dot' => [['email' => 'a@b'], 'email'],
+            'email too long' => [['email' => str_repeat('b', 150).'@example.com'], 'email'],
+            'blood group not valid' => [['bloodGroup' => 'Z+'], 'bloodGroup'],
+            'address too long' => [['address' => str_repeat('x', 256)], 'address'],
+            'emergency name has digits' => [['emergencyContactName' => 'R2D2'], 'emergencyContactName'],
+            'emergency phone too short' => [['emergencyContactPhone' => '123'], 'emergencyContactPhone'],
             'invalid UTF-8 in first name' => [['firstName' => "\xB1\x31"], 'firstName'],
         ];
     }
@@ -547,14 +547,14 @@ class PatientServiceTest extends TestCase
     public static function statusProvider(): array
     {
         return [
-            'all'                 => ['all', 'all'],
-            'all upper case'      => [' ALL ', 'all'],
+            'all' => ['all', 'all'],
+            'all upper case' => [' ALL ', 'all'],
             'inactive mixed case' => ['Inactive', 'inactive'],
-            'active'              => ['active', 'active'],
-            'null'                => [null, 'active'],
-            'empty'               => ['', 'active'],
-            'unknown value'       => ['deleted', 'active'],
-            'injection attempt'   => ["active' OR 1=1 --", 'active'],
+            'active' => ['active', 'active'],
+            'null' => [null, 'active'],
+            'empty' => ['', 'active'],
+            'unknown value' => ['deleted', 'active'],
+            'injection attempt' => ["active' OR 1=1 --", 'active'],
         ];
     }
 
@@ -630,12 +630,12 @@ class PatientServiceTest extends TestCase
     public static function searchProvider(): array
     {
         return [
-            'null'                  => [null, null],
-            'blank'                 => ['   ', null],
+            'null' => [null, null],
+            'blank' => ['   ', null],
             'trimmed and collapsed' => ['  anita   raman  ', 'anita raman'],
-            'patient id kept'       => ['PAT-2026-000001', 'PAT-2026-000001'],
+            'patient id kept' => ['PAT-2026-000001', 'PAT-2026-000001'],
             'wildcards kept as text' => ['50%_off', '50%_off'],
-            'truncated to 100'      => [str_repeat('a', 150), str_repeat('a', 100)],
+            'truncated to 100' => [str_repeat('a', 150), str_repeat('a', 100)],
             'invalid UTF-8 dropped' => ["\xB1\x31", null],
         ];
     }

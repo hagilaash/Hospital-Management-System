@@ -19,7 +19,7 @@ class PatientListDTO
         public readonly int $perPage,
         public readonly int $totalPages,
         public readonly ?string $search,
-        public readonly string $status
+        public readonly string $status,
     ) {
     }
 
@@ -36,13 +36,13 @@ class PatientListDTO
     /** Number of the first patient on this page ("Showing 11-20 of 45"), 0 when empty. */
     public function getFirstItemNumber(): int
     {
-        return $this->total === 0 ? 0 : ($this->page - 1) * $this->perPage + 1;
+        return 0 === $this->total ? 0 : ($this->page - 1) * $this->perPage + 1;
     }
 
     /** Number of the last patient on this page, 0 when empty. */
     public function getLastItemNumber(): int
     {
-        if ($this->total === 0) {
+        if (0 === $this->total) {
             return 0;
         }
 

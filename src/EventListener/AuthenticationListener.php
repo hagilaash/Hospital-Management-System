@@ -28,7 +28,7 @@ class AuthenticationListener
     public function __construct(
         private AuthSessionService $authSession,
         private AccessControlService $accessControl,
-        private UrlGeneratorInterface $urlGenerator
+        private UrlGeneratorInterface $urlGenerator,
     ) {
     }
 
@@ -45,7 +45,7 @@ class AuthenticationListener
 
         // No matched route (404 is raised earlier) or a Symfony internal
         // route such as _error / _wdt / _profiler.
-        if (!is_string($route) || $route === '' || str_starts_with($route, '_')) {
+        if (!is_string($route) || '' === $route || str_starts_with($route, '_')) {
             return;
         }
 

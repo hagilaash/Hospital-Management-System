@@ -98,7 +98,7 @@ class PatientDTO
     /** Full name for display, e.g. in lists and page titles. */
     public function getFullName(): string
     {
-        return trim($this->firstName . ' ' . $this->lastName);
+        return trim($this->firstName.' '.$this->lastName);
     }
 
     private static function nullableString(mixed $value): ?string

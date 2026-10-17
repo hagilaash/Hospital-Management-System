@@ -1,0 +1,160 @@
+{% extends 'patient/_layout.html.twig' %}
+
+{% block title %}Patients | HMS{% endblock %}
+
+{% block content %}
+
+{% set status_labels = {active: 'Active', inactive: 'Inactive', all: 'All'} %}
+{% set filter_params = {search: list.search, status: list.status} %}
+
+<div class="page-header">
+    <h1>Patients</h1>
+    <a class="btn btn-primary" href="{{ path('patient_new') }}">+ Register new patient</a>
+</div>
+
+<form method="get" action="{{ path('patient_list') }}" class="card toolbar" role="search">
+    <div class="toolbar-field toolbar-grow">
+        <label for="search">Search by patient ID, name or phone</label>
+        <input type="search" id="search" name="search" value="{{ list.search|default('') }}"
+               maxlength="100" placeholder="e.g. PAT-2026-000001, Anita, 98410">
+    </div>
+
+    <div class="toolbar-field">
+        <label for="status">Status</label>
+        <select id="status" name="status">
+            {% for value, label in status_labels %}
+                <option value="{{ value }}" {{ list.status == value ? 'selected' }}>{{ label }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="toolbar-actions">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a class="btn btn-secondary" href="{{ path('patient_list') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}
+            Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }}
+            {{ list.total == 1 ? 'patient' : 'patients' }}
+            {% if list.status != 'all' %}({{ status_labels[list.status]|lower }}){% endif %}
+            {% if list.search %}matching &ldquo;{{ list.search }}&rdquo;{% endif %}
+        {% else %}
+            No patients found.
+        {% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+
+        <div class="empty-state">
+            {% if list.search or list.status != 'active' %}
+                <p>No patients match these filters.</p>
+                <a class="btn btn-secondary" href="{{ path('patient_list') }}">Show active patients</a>
+            {% else %}
+                <p>No patients have been registered yet.</p>
+                <a class="btn btn-primary" href="{{ path('patient_new') }}">Register the first patient</a>
+            {% endif %}
+        </div>
+
+    {% else %}
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Patient ID</th>
+                        <th scope="col">Name</th>
+                        <th scope="col">Gender</th>
+                        <th scope="col">Date of birth</th>
+                        <th scope="col">Phone</th>
+                        <th scope="col">Blood</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for p in list.patients %}
+                    <tr class="{{ p.isActive ? '' : 'row-inactive' }}">
+                        <td data-label="Patient ID">
+                            <a href="{{ path('patient_show', {id: p.patientId}) }}"><strong>{{ p.patientCode }}</strong></a>
+                        </td>
+                        <td data-label="Name">{{ p.fullName }}</td>
+                        <td data-label="Gender">{{ p.gender }}</td>
+                        <td data-label="Date of birth">
+                            {{ p.dateOfBirth|date('d M Y') }}
+                            <span class="muted">({{ date().diff(date(p.dateOfBirth)).y }} yrs)</span>
+                        </td>
+                        <td data-label="Phone">{{ p.phone }}</td>
+                        <td data-label="Blood">{{ p.bloodGroup|default('—') }}</td>
+                        <td data-label="Status">
+                            <span class="badge {{ p.isActive ? 'badge-active' : 'badge-inactive' }}">
+                                {{ p.isActive ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td data-label="Actions" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('patient_show', {id: p.patientId}) }}">View</a>
+
+                            {% if p.isActive %}
+                                <a class="btn btn-secondary btn-sm" href="{{ path('patient_edit', {id: p.patientId}) }}">Edit</a>
+                            {% endif %}
+
+                            <form method="post" action="{{ path('patient_status', {id: p.patientId}) }}" class="inline-form"
+                                  {% if p.isActive %}onsubmit="return confirm('Deactivate this patient? The record is kept and can be reactivated later.');"{% endif %}>
+                                <input type="hidden" name="_token" value="{{ csrf_token('patient_status_' ~ p.patientId) }}">
+                                <input type="hidden" name="action" value="{{ p.isActive ? 'deactivate' : 'activate' }}">
+                                <input type="hidden" name="return" value="list">
+                                <input type="hidden" name="search" value="{{ list.search|default('') }}">
+                                <input type="hidden" name="status" value="{{ list.status }}">
+                                <input type="hidden" name="page" value="{{ list.page }}">
+                                <button type="submit" class="btn btn-sm {{ p.isActive ? 'btn-danger' : 'btn-success' }}">
+                                    {{ p.isActive ? 'Deactivate' : 'Activate' }}
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if list.totalPages > 1 %}
+            {% set first_shown = max(1, list.page - 2) %}
+            {% set last_shown = min(list.totalPages, list.page + 2) %}
+
+            <nav class="pager" aria-label="Patient list pages">
+                {% if list.hasPreviousPage %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path('patient_list', filter_params|merge({page: list.page - 1})) }}">&laquo; Previous</a>
+                {% endif %}
+
+                {% if first_shown > 1 %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path('patient_list', filter_params|merge({page: 1})) }}">1</a>
+                    {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                {% endif %}
+
+                {% for n in range(first_shown, last_shown) %}
+                    {% if n == list.page %}
+                        <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                    {% else %}
+                        <a class="btn btn-secondary btn-sm" href="{{ path('patient_list', filter_params|merge({page: n})) }}">{{ n }}</a>
+                    {% endif %}
+                {% endfor %}
+
+                {% if last_shown < list.totalPages %}
+                    {% if last_shown < list.totalPages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path('patient_list', filter_params|merge({page: list.totalPages})) }}">{{ list.totalPages }}</a>
+                {% endif %}
+
+                {% if list.hasNextPage %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path('patient_list', filter_params|merge({page: list.page + 1})) }}">Next &raquo;</a>
+                {% endif %}
+            </nav>
+        {% endif %}
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

@@ -16,7 +16,7 @@ class LoginController extends AbstractController
     public function __construct(
         private LoginService $loginService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -40,7 +40,7 @@ class LoginController extends AbstractController
         $username = $request->request->getString('username');
         $password = $request->request->getString('password');
 
-        if ($username === '' || $password === '') {
+        if ('' === $username || '' === $password) {
             return $this->render('login/login.html.twig', [
                 'error' => 'Username and password are required.',
                 'username' => $username,

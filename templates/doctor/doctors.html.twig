@@ -1,20 +1,140 @@
 <!DOCTYPE html>
-<html>
-<head>
-    <title>Doctors</title>
-</head>
 
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Management | HMS</title>
+
+<link rel="stylesheet" href="/css/doctor.css">
+
+</head>
 <body>
 
-    <h1>Doctor List</h1>
 
-    {% for doctor in doctors %}
 
-        <p>
-            {{ doctor.doctor_name }}
-        </p>
+<div class="doctor-page">
+    <div class="doctor-container">
 
-    {% endfor %}
+
+    <header class="doctor-header">
+        <div>
+            <p class="page-subtitle">HOSPITAL MANAGEMENT SYSTEM</p>
+            <h1>Doctor Management</h1>
+            <p class="page-description">
+                View and manage registered doctors in your hospital.
+            </p>
+        </div>
+
+
+        
+
+        <a href="{{ path('home') }}" class="back-button">← Back to Home</a>
+        
+    </header>
+    <a href="{{ path('doctor_new') }}"
+        style="display: inline-block; padding: 10px 18px; background: #198754; color: white; text-decoration: none; border-radius: 5px; margin-bottom: 15px;">
+            + Add New Doctor
+        </a>
+
+    <section class="doctor-card">
+        <div class="table-heading">
+            <div>
+                <h2>Doctor List</h2>
+                <p>Registered doctor details and current status</p>
+            </div>
+
+            <span class="doctor-count">
+                {{ doctors|length }} doctor(s)
+            </span>
+        </div>
+
+        <div class="table-wrapper">
+            <table class="doctor-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Specialization</th>
+                        <th>Department</th>
+                        <th>Phone</th>
+                        <th>Email</th>
+                        <th>Qualification</th>
+                        <th>Gender</th>
+                        <th>Date of Birth</th>
+                        <th>Created At</th>
+                        <th>Updated At</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for doctor in doctors %}
+                        <tr>
+                            <td>{{ doctor.doctorId }}</td>
+                            <td class="doctor-name">{{ doctor.doctorName }}</td>
+                            <td>{{ doctor.specialization ?? 'N/A' }}</td>
+                            <td>{{ doctor.department ?? 'N/A' }}</td>
+                            <td>{{ doctor.phoneNo ?? 'N/A' }}</td>
+                            <td>{{ doctor.email ?? 'N/A' }}</td>
+                            <td>{{ doctor.qualification ?? 'N/A' }}</td>
+                            <td>{{ doctor.gender ?? 'N/A' }}</td>
+                            <td>{{ doctor.dateOfBirth ?? 'N/A' }}</td>
+                            <td>{{ doctor.createdAt ?? 'N/A' }}</td>
+                            <td>{{ doctor.updatedAt ?? 'N/A' }}</td>
+                            <td>
+                                {% if doctor.isActive == '1' %}
+                                    <span class="status-badge status-active">Active</span>
+                                {% else %}
+                                    <span class="status-badge status-inactive">Inactive</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="12" class="empty-message">
+                                <div class="empty-icon">🩺</div>
+                                <strong>No doctors found</strong>
+                                <p>No doctor records are currently available.</p>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <footer class="table-footer">
+            <span>Hospital Management System</span>
+            <span>Doctor Directory</span>
+        </footer>
+    </section>
+
+</div>
+{% if totalPages > 1 %}
+<div class="pagination" style="margin-top: 20px; display: flex; align-items: center; justify-content: center; gap: 15px;">
+
+    {% if currentPage > 1 %}
+        <a href="{{ path('doctors', {page: currentPage - 1}) }}"
+           style="padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+            Previous
+        </a>
+    {% endif %}
+
+    <span>
+        Page {{ currentPage }} of {{ totalPages }}
+        (Total doctors: {{ totalDoctors }})
+    </span>
+
+    {% if currentPage < totalPages %}
+        <a href="{{ path('doctors', {page: currentPage + 1}) }}"
+           style="padding: 8px 16px; background: #007bff; color: white; text-decoration: none; border-radius: 5px;">
+            Next
+        </a>
+    {% endif %}
+
+</div>
+{% endif %}
+</div>
 
 </body>
 </html>

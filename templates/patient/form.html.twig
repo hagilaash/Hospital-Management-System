@@ -1,0 +1,151 @@
+{% extends 'patient/_layout.html.twig' %}
+
+{#
+  One form for both registration (mode = 'new') and editing (mode = 'edit').
+
+  Variables from PatientController::renderForm():
+    mode, patient (PatientDTO as the user typed it), errors (propertyName => message),
+    duplicates (rows), duplicate_warning, form_error, genders, blood_groups
+#}
+
+{% macro text_field(name, error_key, label, value, errors, required, type, maxlength, hint) %}
+    {% set error = errors[error_key] ?? null %}
+    <div class="field {{ error ? 'field-invalid' }}">
+        <label for="{{ name }}">{{ label }}{% if required %} <span class="req" aria-hidden="true">*</span>{% endif %}</label>
+        <input type="{{ type }}" id="{{ name }}" name="{{ name }}" value="{{ value }}" maxlength="{{ maxlength }}"
+               {% if required %}required{% endif %}
+               {% if error %}aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}>
+        {% if hint %}<small class="hint">{{ hint }}</small>{% endif %}
+        {% if error %}<p class="field-error" id="{{ name }}-error">{{ error }}</p>{% endif %}
+    </div>
+{% endmacro %}
+
+{% block title %}{{ mode == 'new' ? 'Register patient' : 'Edit patient' }} | HMS{% endblock %}
+
+{% block content %}
+{% import _self as f %}
+
+{% set is_new = mode == 'new' %}
+{% set form_action = is_new ? path('patient_new') : path('patient_edit', {id: patient.patientId}) %}
+{% set token_id = is_new ? 'patient_new' : 'patient_edit_' ~ patient.patientId %}
+
+<div class="page-header">
+    <h1>
+        {% if is_new %}Register new patient{% else %}Edit patient <span class="muted">{{ patient.patientCode }}</span>{% endif %}
+    </h1>
+    <a class="btn btn-secondary" href="{{ is_new ? path('patient_list') : path('patient_show', {id: patient.patientId}) }}">Cancel</a>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+{% if duplicate_warning %}
+    <section class="alert alert-warning" role="alert" aria-labelledby="duplicate-heading">
+        <h2 id="duplicate-heading">Possible duplicate patient</h2>
+        <p>
+            {{ is_new ? 'A patient' : 'Another patient' }} with the same name and the same date of birth or phone number
+            is already on record. Please check before continuing:
+        </p>
+        <ul class="duplicate-list">
+            {% for d in duplicates %}
+                <li>
+                    <a href="{{ path('patient_show', {id: d.patient_id}) }}" target="_blank" rel="noopener">
+                        <strong>{{ d.patient_code }}</strong>
+                    </a>
+                    &ndash; {{ d.first_name }} {{ d.last_name }}, born {{ d.date_of_birth|date('d M Y') }}, phone {{ d.phone }}
+                    <span class="muted">({{ d.match_reason }})</span>
+                    {% if d.is_active is same as(false) or d.is_active is same as('f') %}<span class="badge badge-inactive">Inactive</span>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+        <p>
+            If this is a different person, use <strong>{{ is_new ? 'Register anyway' : 'Save anyway' }}</strong> below.
+            Otherwise, open the existing record (it opens in a new tab so your entries are kept).
+        </p>
+    </section>
+{% endif %}
+
+<form method="post" action="{{ form_action }}" class="card patient-form">
+    <input type="hidden" name="_token" value="{{ csrf_token(token_id) }}">
+
+    <fieldset>
+        <legend>Personal details</legend>
+        <div class="form-grid">
+            {{ f.text_field('first_name', 'firstName', 'First name', patient.firstName, errors, true, 'text', 100, null) }}
+            {{ f.text_field('last_name', 'lastName', 'Last name', patient.lastName, errors, true, 'text', 100, null) }}
+
+            <div class="field {{ errors.gender is defined ? 'field-invalid' }}">
+                <label for="gender">Gender <span class="req" aria-hidden="true">*</span></label>
+                <select id="gender" name="gender" required
+                        {% if errors.gender is defined %}aria-invalid="true" aria-describedby="gender-error"{% endif %}>
+                    <option value="">Select&hellip;</option>
+                    {% for g in genders %}
+                        <option value="{{ g }}" {{ patient.gender == g ? 'selected' }}>{{ g }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.gender is defined %}<p class="field-error" id="gender-error">{{ errors.gender }}</p>{% endif %}
+            </div>
+
+            <div class="field {{ errors.dateOfBirth is defined ? 'field-invalid' }}">
+                <label for="date_of_birth">Date of birth <span class="req" aria-hidden="true">*</span></label>
+                <input type="date" id="date_of_birth" name="date_of_birth" value="{{ patient.dateOfBirth }}"
+                       min="1900-01-01" max="{{ 'today'|date('Y-m-d') }}" required
+                       {% if errors.dateOfBirth is defined %}aria-invalid="true" aria-describedby="date_of_birth-error"{% endif %}>
+                {% if errors.dateOfBirth is defined %}<p class="field-error" id="date_of_birth-error">{{ errors.dateOfBirth }}</p>{% endif %}
+            </div>
+
+            <div class="field {{ errors.bloodGroup is defined ? 'field-invalid' }}">
+                <label for="blood_group">Blood group</label>
+                <select id="blood_group" name="blood_group"
+                        {% if errors.bloodGroup is defined %}aria-invalid="true" aria-describedby="blood_group-error"{% endif %}>
+                    <option value="">Not known</option>
+                    {% for b in blood_groups %}
+                        <option value="{{ b }}" {{ patient.bloodGroup == b ? 'selected' }}>{{ b }}</option>
+                    {% endfor %}
+                </select>
+                {% if errors.bloodGroup is defined %}<p class="field-error" id="blood_group-error">{{ errors.bloodGroup }}</p>{% endif %}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Contact details</legend>
+        <div class="form-grid">
+            {{ f.text_field('phone', 'phone', 'Phone number', patient.phone, errors, true, 'tel', 20, '7 to 15 digits, optional leading +. Spaces and dashes are ignored.') }}
+            {{ f.text_field('email', 'email', 'Email address', patient.email, errors, false, 'email', 150, null) }}
+
+            <div class="field field-wide {{ errors.address is defined ? 'field-invalid' }}">
+                <label for="address">Address</label>
+                <input type="text" id="address" name="address" value="{{ patient.address }}" maxlength="255"
+                       {% if errors.address is defined %}aria-invalid="true" aria-describedby="address-error"{% endif %}>
+                {% if errors.address is defined %}<p class="field-error" id="address-error">{{ errors.address }}</p>{% endif %}
+            </div>
+        </div>
+    </fieldset>
+
+    <fieldset>
+        <legend>Emergency contact</legend>
+        <div class="form-grid">
+            {{ f.text_field('emergency_contact_name', 'emergencyContactName', 'Contact name', patient.emergencyContactName, errors, false, 'text', 100, null) }}
+            {{ f.text_field('emergency_contact_phone', 'emergencyContactPhone', 'Contact phone', patient.emergencyContactPhone, errors, false, 'tel', 20, null) }}
+        </div>
+    </fieldset>
+
+    <div class="form-actions">
+        {# This button comes first so pressing Enter never confirms a duplicate by accident. #}
+        <button type="submit" class="btn btn-primary">{{ is_new ? 'Register patient' : 'Save changes' }}</button>
+
+        {% if duplicate_warning %}
+            <button type="submit" name="confirm_duplicate" value="1" class="btn btn-warning">
+                {{ is_new ? 'Register anyway' : 'Save anyway' }}
+            </button>
+        {% endif %}
+
+        <a class="btn btn-secondary" href="{{ is_new ? path('patient_list') : path('patient_show', {id: patient.patientId}) }}">Cancel</a>
+    </div>
+
+    <p class="hint"><span class="req" aria-hidden="true">*</span> Required field</p>
+</form>
+
+{% endblock %}

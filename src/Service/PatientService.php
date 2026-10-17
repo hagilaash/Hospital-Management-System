@@ -67,7 +67,7 @@ class PatientService
     private const MESSAGE_NOT_SIGNED_IN = 'You must be signed in to perform this action';
 
     public function __construct(
-        private PatientRepository $patientRepository
+        private PatientRepository $patientRepository,
     ) {
     }
 
@@ -79,13 +79,13 @@ class PatientService
     public function registerPatient(PatientDTO $input, string $performedBy, bool $confirmDuplicate = false): array
     {
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $patient = $this->normalize($input);
         $errors = $this->validate($patient);
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -102,20 +102,20 @@ class PatientService
         int $patientId,
         PatientDTO $input,
         string $performedBy,
-        bool $confirmDuplicate = false
+        bool $confirmDuplicate = false,
     ): array {
         if ($patientId < 1) {
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
 
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $patient = $this->normalize($input);
         $errors = $this->validate($patient);
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -134,7 +134,7 @@ class PatientService
         }
 
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -221,18 +221,18 @@ class PatientService
      */
     private function clean(?string $value): string
     {
-        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
+        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value);
-        if ($value === null) {
+        if (null === $value) {
             return '';
         }
 
         $value = preg_replace('/\s+/u', ' ', $value);
 
-        return $value === null ? '' : trim($value);
+        return null === $value ? '' : trim($value);
     }
 
     /** Same characters the database strips: space, (, ) and hyphen. */
@@ -243,18 +243,18 @@ class PatientService
 
     private function nullIfEmpty(string $value): ?string
     {
-        return $value === '' ? null : $value;
+        return '' === $value ? null : $value;
     }
 
     private function normalizeSearch(?string $search): ?string
     {
-        if ($search === null) {
+        if (null === $search) {
             return null;
         }
 
         $clean = trim(mb_substr($this->clean($search), 0, self::MAX_SEARCH_LENGTH));
 
-        return $clean === '' ? null : $clean;
+        return '' === $clean ? null : $clean;
     }
 
     private function normalizeStatus(?string $status): string
@@ -280,12 +280,12 @@ class PatientService
         foreach (['firstName' => 'First name', 'lastName' => 'Last name'] as $field => $label) {
             $value = $patient->$field;
 
-            if ($value === '') {
-                $errors[$field] = $label . ' is required';
+            if ('' === $value) {
+                $errors[$field] = $label.' is required';
             } elseif (mb_strlen($value) > self::MAX_NAME_LENGTH) {
-                $errors[$field] = $label . ' must be ' . self::MAX_NAME_LENGTH . ' characters or fewer';
+                $errors[$field] = $label.' must be '.self::MAX_NAME_LENGTH.' characters or fewer';
             } elseif (!preg_match(self::NAME_PATTERN, $value)) {
-                $errors[$field] = $label . ' may contain only letters, spaces, apostrophes, hyphens and full stops';
+                $errors[$field] = $label.' may contain only letters, spaces, apostrophes, hyphens and full stops';
             }
         }
 
@@ -294,43 +294,43 @@ class PatientService
         }
 
         $dobError = $this->validateDateOfBirth($patient->dateOfBirth);
-        if ($dobError !== null) {
+        if (null !== $dobError) {
             $errors['dateOfBirth'] = $dobError;
         }
 
-        if ($patient->phone === '') {
+        if ('' === $patient->phone) {
             $errors['phone'] = 'Phone number is required';
         } elseif (!preg_match(self::PHONE_PATTERN, $patient->phone)) {
             $errors['phone'] = 'Phone number must contain 7 to 15 digits (optional leading +)';
         }
 
-        if ($patient->email !== null) {
+        if (null !== $patient->email) {
             if (mb_strlen($patient->email) > self::MAX_EMAIL_LENGTH) {
-                $errors['email'] = 'Email address must be ' . self::MAX_EMAIL_LENGTH . ' characters or fewer';
+                $errors['email'] = 'Email address must be '.self::MAX_EMAIL_LENGTH.' characters or fewer';
             } elseif (!preg_match(self::EMAIL_PATTERN, $patient->email)) {
                 $errors['email'] = 'Email address is not valid';
             }
         }
 
-        if ($patient->address !== null && mb_strlen($patient->address) > self::MAX_ADDRESS_LENGTH) {
-            $errors['address'] = 'Address must be ' . self::MAX_ADDRESS_LENGTH . ' characters or fewer';
+        if (null !== $patient->address && mb_strlen($patient->address) > self::MAX_ADDRESS_LENGTH) {
+            $errors['address'] = 'Address must be '.self::MAX_ADDRESS_LENGTH.' characters or fewer';
         }
 
-        if ($patient->bloodGroup !== null && !in_array($patient->bloodGroup, self::BLOOD_GROUPS, true)) {
+        if (null !== $patient->bloodGroup && !in_array($patient->bloodGroup, self::BLOOD_GROUPS, true)) {
             $errors['bloodGroup'] = 'Blood group is not valid';
         }
 
-        if ($patient->emergencyContactName !== null) {
+        if (null !== $patient->emergencyContactName) {
             if (mb_strlen($patient->emergencyContactName) > self::MAX_NAME_LENGTH) {
                 $errors['emergencyContactName'] = 'Emergency contact name must be '
-                    . self::MAX_NAME_LENGTH . ' characters or fewer';
+                    .self::MAX_NAME_LENGTH.' characters or fewer';
             } elseif (!preg_match(self::NAME_PATTERN, $patient->emergencyContactName)) {
                 $errors['emergencyContactName'] = 'Emergency contact name may contain only letters, spaces, '
-                    . 'apostrophes, hyphens and full stops';
+                    .'apostrophes, hyphens and full stops';
             }
         }
 
-        if ($patient->emergencyContactPhone !== null
+        if (null !== $patient->emergencyContactPhone
             && !preg_match(self::PHONE_PATTERN, $patient->emergencyContactPhone)
         ) {
             $errors['emergencyContactPhone'] = 'Emergency contact phone must contain 7 to 15 digits (optional leading +)';
@@ -341,7 +341,7 @@ class PatientService
 
     private function validateDateOfBirth(string $value): ?string
     {
-        if ($value === '') {
+        if ('' === $value) {
             return 'Date of birth is required';
         }
 
@@ -349,8 +349,8 @@ class PatientService
         $problems = \DateTimeImmutable::getLastErrors();
 
         // The round-trip comparison also catches rolled-over dates such as 2026-02-31.
-        if ($date === false
-            || ($problems !== false && ($problems['warning_count'] > 0 || $problems['error_count'] > 0))
+        if (false === $date
+            || (false !== $problems && ($problems['warning_count'] > 0 || $problems['error_count'] > 0))
             || $date->format('Y-m-d') !== $value
         ) {
             return 'Enter a valid date of birth (YYYY-MM-DD)';
@@ -413,6 +413,6 @@ class PatientService
 
     private function isTrue(mixed $value): bool
     {
-        return $value === true || $value === 't' || $value === 'true' || $value === 1 || $value === '1';
+        return true === $value || 't' === $value || 'true' === $value || 1 === $value || '1' === $value;
     }
 }

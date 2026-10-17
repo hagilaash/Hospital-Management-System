@@ -7,7 +7,7 @@ use App\DB\DatabaseFunction;
 class LoginDAO
 {
     public function __construct(
-        private DatabaseFunction $databaseFunction
+        private DatabaseFunction $databaseFunction,
     ) {
     }
 

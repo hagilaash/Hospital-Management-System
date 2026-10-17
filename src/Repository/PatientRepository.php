@@ -13,7 +13,7 @@ use App\DTO\PatientDTO;
 class PatientRepository
 {
     public function __construct(
-        private PatientDAO $patientDAO
+        private PatientDAO $patientDAO,
     ) {
     }
 
@@ -32,7 +32,7 @@ class PatientRepository
         int $patientId,
         PatientDTO $patient,
         string $updatedBy,
-        bool $confirmDuplicate
+        bool $confirmDuplicate,
     ): array {
         return $this->patientDAO->updatePatient($patientId, $patient, $updatedBy, $confirmDuplicate);
     }
@@ -58,7 +58,7 @@ class PatientRepository
     {
         $row = $this->patientDAO->getPatientById($patientId);
 
-        return $row === null ? null : PatientDTO::fromRow($row);
+        return null === $row ? null : PatientDTO::fromRow($row);
     }
 
     /**

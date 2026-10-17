@@ -13,7 +13,7 @@ use App\DTO\PatientDTO;
 class PatientDAO
 {
     public function __construct(
-        private DatabaseFunction $databaseFunction
+        private DatabaseFunction $databaseFunction,
     ) {
     }
 
@@ -39,7 +39,7 @@ class PatientDAO
         int $patientId,
         PatientDTO $patient,
         string $updatedBy,
-        bool $confirmDuplicate
+        bool $confirmDuplicate,
     ): array {
         return $this->databaseFunction->updatePatient(
             $patientId,

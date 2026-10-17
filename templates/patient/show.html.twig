@@ -1,0 +1,101 @@
+{% extends 'patient/_layout.html.twig' %}
+
+{% block title %}{{ patient.fullName }} | HMS{% endblock %}
+
+{% block content %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ patient.fullName }}</h1>
+        <p class="subtitle">
+            <strong>{{ patient.patientCode }}</strong>
+            <span class="badge {{ patient.isActive ? 'badge-active' : 'badge-inactive' }}">
+                {{ patient.isActive ? 'Active' : 'Inactive' }}
+            </span>
+        </p>
+    </div>
+
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('patient_list') }}">&laquo; Back to list</a>
+
+        {% if patient.isActive %}
+            <a class="btn btn-primary" href="{{ path('patient_edit', {id: patient.patientId}) }}">Edit</a>
+        {% endif %}
+
+        <form method="post" action="{{ path('patient_status', {id: patient.patientId}) }}" class="inline-form"
+              {% if patient.isActive %}onsubmit="return confirm('Deactivate this patient? The record is kept and can be reactivated later.');"{% endif %}>
+            <input type="hidden" name="_token" value="{{ csrf_token('patient_status_' ~ patient.patientId) }}">
+            <input type="hidden" name="action" value="{{ patient.isActive ? 'deactivate' : 'activate' }}">
+            <input type="hidden" name="return" value="show">
+            <button type="submit" class="btn {{ patient.isActive ? 'btn-danger' : 'btn-success' }}">
+                {{ patient.isActive ? 'Deactivate' : 'Activate' }}
+            </button>
+        </form>
+    </div>
+</div>
+
+{% if not patient.isActive %}
+    <div class="alert alert-warning" role="status">
+        This patient is inactive. The record is kept, but it can only be edited after it is reactivated.
+    </div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Personal details</h2>
+        <dl class="detail-list">
+            <div><dt>First name</dt><dd>{{ patient.firstName }}</dd></div>
+            <div><dt>Last name</dt><dd>{{ patient.lastName }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ patient.gender }}</dd></div>
+            <div>
+                <dt>Date of birth</dt>
+                <dd>
+                    {{ patient.dateOfBirth|date('d M Y') }}
+                    <span class="muted">({{ date().diff(date(patient.dateOfBirth)).y }} years)</span>
+                </dd>
+            </div>
+            <div><dt>Blood group</dt><dd>{{ patient.bloodGroup|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Contact details</h2>
+        <dl class="detail-list">
+            <div><dt>Phone</dt><dd>{{ patient.phone }}</dd></div>
+            <div><dt>Email</dt><dd>{{ patient.email|default('Not recorded') }}</dd></div>
+            <div><dt>Address</dt><dd>{{ patient.address|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Emergency contact</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ patient.emergencyContactName|default('Not recorded') }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ patient.emergencyContactPhone|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Record</h2>
+        <dl class="detail-list">
+            <div>
+                <dt>Registered</dt>
+                <dd>
+                    {% if patient.createdAt %}{{ patient.createdAt|date('d M Y, H:i') }}{% else %}&mdash;{% endif %}
+                    {% if patient.createdBy %}<span class="muted">by {{ patient.createdBy }}</span>{% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt>Last updated</dt>
+                <dd>
+                    {% if patient.updatedAt %}{{ patient.updatedAt|date('d M Y, H:i') }}{% else %}&mdash;{% endif %}
+                    {% if patient.updatedBy %}<span class="muted">by {{ patient.updatedBy }}</span>{% endif %}
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+</div>
+
+{% endblock %}

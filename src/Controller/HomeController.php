@@ -10,7 +10,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class HomeController extends AbstractController
 {
     public function __construct(
-        private HomeService $homeService
+        private HomeService $homeService,
     ) {
     }
 
@@ -20,7 +20,7 @@ class HomeController extends AbstractController
         $modules = $this->homeService->getHomeModules();
 
         return $this->render('home/dashboard.html.twig', [
-            'modules' => $modules
+            'modules' => $modules,
         ]);
     }
 }

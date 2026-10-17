@@ -7,7 +7,7 @@ use App\Repository\HomeRepository;
 class HomeService
 {
     public function __construct(
-        private HomeRepository $homeRepository
+        private HomeRepository $homeRepository,
     ) {
     }
 

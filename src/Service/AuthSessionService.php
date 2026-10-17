@@ -17,7 +17,7 @@ class AuthSessionService
     private const KEY_LOGIN_AT = 'auth.login_at';
 
     public function __construct(
-        private RequestStack $requestStack
+        private RequestStack $requestStack,
     ) {
     }
 
@@ -44,25 +44,25 @@ class AuthSessionService
 
     public function isAuthenticated(): bool
     {
-        return $this->getUsername() !== null;
+        return null !== $this->getUsername();
     }
 
     public function getUsername(): ?string
     {
         $session = $this->currentSession();
-        if ($session === null) {
+        if (null === $session) {
             return null;
         }
 
         $username = $session->get(self::KEY_USERNAME);
 
-        return is_string($username) && $username !== '' ? $username : null;
+        return is_string($username) && '' !== $username ? $username : null;
     }
 
     private function currentSession(): ?SessionInterface
     {
         $request = $this->requestStack->getCurrentRequest();
 
-        return $request !== null && $request->hasSession() ? $request->getSession() : null;
+        return null !== $request && $request->hasSession() ? $request->getSession() : null;
     }
 }

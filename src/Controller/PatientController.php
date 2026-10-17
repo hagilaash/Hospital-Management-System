@@ -15,19 +15,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-/**
- * HTTP layer for the Patient Management module.
- *
- * Authentication is enforced for every route by AuthenticationListener.
- * Each route also declares the permission it needs (defaults: _permission);
- * the listener checks it through AccessControlService before the action runs.
- *
- * CSRF token ids used here (and in the templates):
- *   patient_new, patient_edit_{id}, patient_status_{id}
- *
- * Database failures are caught here, logged, and shown as a generic message,
- * the same way LoginController handles them. No SQL error text reaches the user.
- */
 class PatientController extends AbstractController
 {
     private const MESSAGE_GENERIC_ERROR = 'Something went wrong while accessing patient records. Please try again.';
@@ -37,7 +24,7 @@ class PatientController extends AbstractController
     public function __construct(
         private PatientService $patientService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -178,7 +165,7 @@ class PatientController extends AbstractController
         $patient->patientCode = $existing->patientCode;
         $patient->isActive = true;
 
-        if (!$this->isCsrfTokenValid('patient_edit_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('patient_edit_'.$id, $request->request->getString('_token'))) {
             return $this->renderForm('edit', $patient, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -225,7 +212,7 @@ class PatientController extends AbstractController
     {
         $redirect = $this->redirectAfterStatusChange($id, $request);
 
-        if (!$this->isCsrfTokenValid('patient_status_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('patient_status_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $redirect;
@@ -239,7 +226,7 @@ class PatientController extends AbstractController
         }
 
         try {
-            $result = $this->patientService->changePatientStatus($id, $action === 'activate', $this->currentUsername());
+            $result = $this->patientService->changePatientStatus($id, 'activate' === $action, $this->currentUsername());
         } catch (DbalException $exception) {
             $this->logger->error('Patient status change failed.', ['exception' => $exception, 'patient_id' => $id]);
             $this->addFlash('error', self::MESSAGE_GENERIC_ERROR);
@@ -276,7 +263,7 @@ class PatientController extends AbstractController
             return $this->redirectToRoute('patient_list');
         }
 
-        if ($patient === null) {
+        if (null === $patient) {
             $this->addFlash('error', self::MESSAGE_NOT_FOUND);
 
             return $this->redirectToRoute('patient_list');
@@ -292,7 +279,7 @@ class PatientController extends AbstractController
      */
     private function redirectAfterStatusChange(int $id, Request $request): RedirectResponse
     {
-        if ($request->request->getString('return') === 'show') {
+        if ('show' === $request->request->getString('return')) {
             return $this->redirectToRoute('patient_show', ['id' => $id]);
         }
 
@@ -300,7 +287,7 @@ class PatientController extends AbstractController
             'search' => $request->request->getString('search'),
             'status' => $request->request->getString('status'),
             'page' => max(1, $request->request->getInt('page', 1)),
-        ], static fn ($value): bool => $value !== '' && $value !== 1);
+        ], static fn ($value): bool => '' !== $value && 1 !== $value);
 
         return $this->redirectToRoute('patient_list', $params);
     }
@@ -319,7 +306,7 @@ class PatientController extends AbstractController
             return $this->renderForm($mode, $patient, $result);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderForm($mode, $patient, $result, $status, $result['message']);
     }
@@ -332,7 +319,7 @@ class PatientController extends AbstractController
         PatientDTO $patient,
         array $result = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('patient/form.html.twig', [
             'mode' => $mode,

@@ -9,7 +9,7 @@ use Symfony\Component\Routing\Attribute\Route;
 class DashboardController
 {
     public function __construct(
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 

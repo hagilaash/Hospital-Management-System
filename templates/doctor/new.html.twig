@@ -1,0 +1,134 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Register New Doctor{% endblock %}
+
+{% block body %}
+<div class="container" style="max-width: 900px; margin: 30px auto; padding: 20px;">
+
+    <h1>Register New Doctor</h1>
+
+    {% for message in app.flashes('error') %}
+        <div style="padding: 12px; margin: 15px 0; background: #f8d7da; color: #842029; border-radius: 5px;">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    <form method="post" action="{{ path('doctor_new') }}">
+
+        <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px;">
+
+            <div>
+                <label for="doctor_name">Doctor Name *</label>
+                <input
+                    type="text"
+                    id="doctor_name"
+                    name="doctor_name"
+                    value="{{ data.doctor_name|default('') }}"
+                    required
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="specialization">Specialization *</label>
+                <input
+                    type="text"
+                    id="specialization"
+                    name="specialization"
+                    value="{{ data.specialization|default('') }}"
+                    required
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="department">Department</label>
+                <input
+                    type="text"
+                    id="department"
+                    name="department"
+                    value="{{ data.department|default('') }}"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="phone_no">Phone Number</label>
+                <input
+                    type="tel"
+                    id="phone_no"
+                    name="phone_no"
+                    value="{{ data.phone_no|default('') }}"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="email">Email</label>
+                <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    value="{{ data.email|default('') }}"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="qualification">Qualification</label>
+                <input
+                    type="text"
+                    id="qualification"
+                    name="qualification"
+                    value="{{ data.qualification|default('') }}"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+            <div>
+                <label for="gender">Gender</label>
+                <select
+                    id="gender"
+                    name="gender"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+                    <option value="">Select Gender</option>
+                    <option value="Male" {% if data.gender|default('') == 'Male' %}selected{% endif %}>Male</option>
+                    <option value="Female" {% if data.gender|default('') == 'Female' %}selected{% endif %}>Female</option>
+                    <option value="Other" {% if data.gender|default('') == 'Other' %}selected{% endif %}>Other</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="date_of_birth">Date of Birth</label>
+                <input
+                    type="date"
+                    id="date_of_birth"
+                    name="date_of_birth"
+                    value="{{ data.date_of_birth|default('') }}"
+                    style="width: 100%; padding: 10px; margin-top: 5px; box-sizing: border-box;"
+                >
+            </div>
+
+        </div>
+
+        <p style="margin-top: 25px;">
+            <button
+                type="submit"
+                style="padding: 10px 20px; background: #198754; color: white; border: none; border-radius: 5px; cursor: pointer;"
+            >
+                Register Doctor
+            </button>
+
+            <a
+                href="{{ path('doctors') }}"
+                style="margin-left: 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;"
+            >
+                Cancel
+            </a>
+        </p>
+
+    </form>
+
+</div>
+{% endblock %}
