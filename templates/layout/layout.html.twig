@@ -1,0 +1,24 @@
+{# Frame for every Front Desk page: the shared shell plus the FDM sub-navigation. #}
+{% extends 'layout/_layout.html.twig' %}
+
+{% block content %}
+    {% set current = app.request.attributes.get('_route') ?? '' %}
+
+    <nav class="fdm-subnav" aria-label="Front desk">
+        {% for item in [
+            {prefix: 'fdm_dashboard', route: 'fdm_dashboard', label: 'Overview'},
+            {prefix: 'fdm_appointment', route: 'fdm_appointment_list', label: 'Appointments'},
+            {prefix: 'fdm_check_in', route: 'fdm_check_in', label: 'Check-in'},
+            {prefix: 'fdm_queue', route: 'fdm_queue', label: 'Queue'},
+            {prefix: 'fdm_reports', route: 'fdm_reports', label: 'Reports'}
+        ] %}
+            {% if current starts with item.prefix %}
+                <a href="{{ path(item.route) }}" class="is-active" aria-current="page">{{ item.label }}</a>
+            {% else %}
+                <a href="{{ path(item.route) }}">{{ item.label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    {% block fdm_content %}{% endblock %}
+{% endblock %}

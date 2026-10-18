@@ -1,0 +1,74 @@
+{# Small helpers shared by the Front Desk pages. Import inside a block:  {% import 'fdm/_macros.html.twig' as ui %} #}
+
+{# A coloured status label for appointment and queue statuses. #}
+{% macro status_badge(status) %}
+    {% set classes = {
+        'Scheduled': 'badge-scheduled',
+        'Checked-In': 'badge-checkedin',
+        'Completed': 'badge-completed',
+        'Cancelled': 'badge-cancelled',
+        'No-Show': 'badge-noshow',
+        'Waiting': 'badge-waiting',
+        'In Consultation': 'badge-consulting'
+    } %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status }}</span>
+{% endmacro %}
+
+{# Previous / numbered / next links. params are the filters to keep; page_param is the query key for the page number. #}
+{% macro pager(route, params, page, total_pages, page_param) %}
+    {% if total_pages > 1 %}
+        {% set first_shown = max(1, page - 2) %}
+        {% set last_shown = min(total_pages, page + 2) %}
+
+        <nav class="pager" aria-label="Pages">
+            {% if page > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page - 1})) }}">&laquo; Previous</a>
+            {% endif %}
+
+            {% if first_shown > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): 1})) }}">1</a>
+                {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+            {% endif %}
+
+            {% for n in range(first_shown, last_shown) %}
+                {% if n == page %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                {% else %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): n})) }}">{{ n }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if last_shown < total_pages %}
+                {% if last_shown < total_pages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): total_pages})) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page + 1})) }}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endmacro %}
+
+{# Hidden fields that carry the appointment-list filters through a POST, so the user returns to the same view. #}
+{% macro appointment_filters(list) %}
+    <input type="hidden" name="date_from" value="{{ list.dateFrom ?? '' }}">
+    <input type="hidden" name="date_to" value="{{ list.dateTo ?? '' }}">
+    <input type="hidden" name="doctor_id" value="{{ list.doctorId ?? '' }}">
+    <input type="hidden" name="patient_id" value="{{ list.patientId ?? '' }}">
+    <input type="hidden" name="status" value="{{ list.status }}">
+    <input type="hidden" name="search" value="{{ list.search ?? '' }}">
+    <input type="hidden" name="page" value="{{ list.page }}">
+{% endmacro %}
+
+{# Same idea for the queue filters. #}
+{% macro queue_filters(queue) %}
+    <input type="hidden" name="date" value="{{ queue.visitDate ?? '' }}">
+    <input type="hidden" name="doctor_id" value="{{ queue.doctorId ?? '' }}">
+    <input type="hidden" name="status" value="{{ queue.status }}">
+    <input type="hidden" name="search" value="{{ queue.search ?? '' }}">
+    <input type="hidden" name="page" value="{{ queue.page }}">
+{% endmacro %}
+
+{# "1 h 5 min" / "12 min" #}
+{% macro minutes(value) %}{% if value >= 60 %}{{ value // 60 }} h {{ value % 60 }} min{% else %}{{ value }} min{% endif %}{% endmacro %}

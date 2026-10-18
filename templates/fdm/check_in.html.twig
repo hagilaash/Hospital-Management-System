@@ -1,0 +1,179 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{#
+  Variables from FDMController::checkIn():
+    appointments (AppointmentListDTO of TODAY's Scheduled appointments), walkin_patient (selected active patient or null),
+    patient_results (PatientListDTO or null), patient_search, doctors
+#}
+
+{% block title %}Check-in | HMS{% endblock %}
+
+{% block fdm_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Patient check-in</h1>
+        <p class="subtitle">Check in patients who have arrived. A queue token is generated automatically.</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('fdm_queue') }}">Open the queue</a>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{#  A. Scheduled appointments today                                      #}
+{# ------------------------------------------------------------------ #}
+<section class="card" aria-labelledby="scheduled-heading">
+    <h2 id="scheduled-heading">Today's scheduled appointments</h2>
+
+    <form method="get" action="{{ path('fdm_check_in') }}" class="toolbar" role="search">
+        <div class="toolbar-field toolbar-grow">
+            <label for="search">Find by appointment number, patient ID, name or phone</label>
+            <input type="search" id="search" name="search" value="{{ appointments.search ?? '' }}" maxlength="100">
+        </div>
+        <div class="toolbar-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-secondary" href="{{ path('fdm_check_in') }}">Clear</a>
+        </div>
+    </form>
+
+    <p class="result-summary" aria-live="polite">
+        {% if appointments.total > 0 %}
+            {{ appointments.total }} {{ appointments.total == 1 ? 'appointment' : 'appointments' }} waiting to be checked in
+        {% else %}
+            No scheduled appointments left to check in today.
+        {% endif %}
+    </p>
+
+    {% if appointments.total > 0 %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Appointment</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col"><span class="sr-only">Check in</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in appointments.appointments %}
+                    <tr>
+                        <td data-label="Time"><strong>{{ a.startTime }}</strong> <span class="muted">&ndash; {{ a.endTime }}</span></td>
+                        <td data-label="Appointment">
+                            <a href="{{ path('fdm_appointment_show', {id: a.appointmentId}) }}">{{ a.appointmentCode }}</a>
+                        </td>
+                        <td data-label="Patient">{{ a.patientName }}<br><span class="muted">{{ a.patientCode }}</span></td>
+                        <td data-label="Doctor">{{ a.doctorName }}<br><span class="muted">{{ a.specialization }}</span></td>
+                        <td data-label="Check in" class="actions">
+                            <form method="post" action="{{ path('fdm_check_in_appointment', {id: a.appointmentId}) }}" class="inline-form">
+                                <input type="hidden" name="_token" value="{{ csrf_token('fdm_check_in_' ~ a.appointmentId) }}">
+                                <input type="hidden" name="return" value="checkin">
+                                <button type="submit" class="btn btn-success btn-sm">Check in</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('fdm_check_in', {search: appointments.search}, appointments.page, appointments.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{# ------------------------------------------------------------------ #}
+{#  B. Walk-in                                                           #}
+{# ------------------------------------------------------------------ #}
+<section class="card" aria-labelledby="walkin-heading">
+    <h2 id="walkin-heading">Walk-in patient (no appointment)</h2>
+
+    {% if walkin_patient is not null %}
+
+        <div class="selected-patient">
+            <div>
+                <span class="muted">Patient</span>
+                <strong>{{ walkin_patient.fullName }}</strong>
+                <span class="muted">{{ walkin_patient.patientCode }} &middot; {{ walkin_patient.phone }}</span>
+            </div>
+            <a class="btn btn-secondary btn-sm" href="{{ path('fdm_check_in') }}">Change patient</a>
+        </div>
+
+        {% if doctors is empty %}
+            <div class="alert alert-warning" role="alert">There are no active doctors to choose from.</div>
+        {% endif %}
+
+        <form method="post" action="{{ path('fdm_walk_in') }}" class="walkin-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('fdm_walk_in') }}">
+            <input type="hidden" name="patient_id" value="{{ walkin_patient.patientId }}">
+
+            <div class="field">
+                <label for="walkin_doctor">Doctor <span class="req" aria-hidden="true">*</span></label>
+                <select id="walkin_doctor" name="doctor_id" required>
+                    <option value="">Select a doctor&hellip;</option>
+                    {% for d in doctors %}
+                        <option value="{{ d.id }}">{{ d.name }} &ndash; {{ d.specialization }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Check in as walk-in</button>
+        </form>
+        <p class="hint">If the patient already has a scheduled appointment with that doctor today, check in against the appointment instead.</p>
+
+    {% else %}
+
+        <p class="hint">Search for the patient by patient ID, name or phone number.
+            Not registered yet? <a href="{{ path('patient_new') }}">Register the patient first</a>.</p>
+
+        <form method="get" action="{{ path('fdm_check_in') }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Patient ID, name or phone</label>
+                <input type="search" id="q" name="q" value="{{ patient_search }}" maxlength="100">
+            </div>
+            <div class="toolbar-actions">
+                <button type="submit" class="btn btn-primary">Find patient</button>
+            </div>
+        </form>
+
+        {% if patient_results is not null %}
+            {% if patient_results.total == 0 %}
+                <div class="empty-state">
+                    <p>No active patients match this search.</p>
+                    <a class="btn btn-secondary" href="{{ path('patient_new') }}">Register a new patient</a>
+                </div>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Patient ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Date of birth</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col"><span class="sr-only">Select</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in patient_results.patients %}
+                            <tr>
+                                <td data-label="Patient ID"><strong>{{ p.patientCode }}</strong></td>
+                                <td data-label="Name">{{ p.fullName }}</td>
+                                <td data-label="Date of birth">{{ p.dateOfBirth|date('d M Y') }}</td>
+                                <td data-label="Phone">{{ p.phone }}</td>
+                                <td data-label="Select" class="actions">
+                                    <a class="btn btn-primary btn-sm" href="{{ path('fdm_check_in', {walkin_patient_id: p.patientId}) }}">Select</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {{ ui.pager('fdm_check_in', {q: patient_results.search}, patient_results.page, patient_results.totalPages, 'qpage') }}
+            {% endif %}
+        {% endif %}
+
+    {% endif %}
+</section>
+
+{% endblock %}

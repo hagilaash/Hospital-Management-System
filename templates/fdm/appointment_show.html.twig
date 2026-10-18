@@ -1,0 +1,136 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{% block title %}{{ appointment.appointmentCode }} | HMS{% endblock %}
+
+{% block fdm_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ appointment.appointmentCode }}</h1>
+        <p class="subtitle">
+            {{ ui.status_badge(appointment.status) }}
+            <span class="muted">{{ appointment.appointmentDate|date('l, d F Y') }}, {{ appointment.startTime }} &ndash; {{ appointment.endTime }}</span>
+        </p>
+    </div>
+
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('fdm_appointment_list') }}">&laquo; Back to list</a>
+
+        {% if appointment.canEdit %}
+            <a class="btn btn-primary" href="{{ path('fdm_appointment_edit', {id: appointment.appointmentId}) }}">Edit</a>
+
+            {% if appointment.appointmentDate == today %}
+                <form method="post" action="{{ path('fdm_check_in_appointment', {id: appointment.appointmentId}) }}" class="inline-form">
+                    <input type="hidden" name="_token" value="{{ csrf_token('fdm_check_in_' ~ appointment.appointmentId) }}">
+                    <input type="hidden" name="return" value="show">
+                    <button type="submit" class="btn btn-success">Check in</button>
+                </form>
+            {% endif %}
+
+            {% if appointment.appointmentDate <= today %}
+                <form method="post" action="{{ path('fdm_appointment_no_show', {id: appointment.appointmentId}) }}" class="inline-form"
+                      data-confirm="Mark this appointment as a no-show?">
+                    <input type="hidden" name="_token" value="{{ csrf_token('fdm_appointment_no_show_' ~ appointment.appointmentId) }}">
+                    <input type="hidden" name="return" value="show">
+                    <button type="submit" class="btn btn-secondary">Mark no-show</button>
+                </form>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+{% if appointment.status == 'Cancelled' %}
+    <div class="alert alert-warning" role="status">
+        This appointment was cancelled{% if appointment.cancelledAt %} on {{ appointment.cancelledAt|date('d M Y, H:i') }}{% endif %}{% if appointment.cancelledBy %} by {{ appointment.cancelledBy }}{% endif %}.
+        <strong>Reason:</strong> {{ appointment.cancelReason|default('Not recorded') }}
+    </div>
+{% elseif appointment.status == 'Checked-In' %}
+    <div class="alert alert-success" role="status">
+        The patient is checked in{% if appointment.tokenNumber %} &ndash; queue token <strong>#{{ appointment.tokenNumber }}</strong>{% endif %}.
+        <a href="{{ path('fdm_queue') }}">Open the queue</a>
+    </div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ appointment.patientName }}</dd></div>
+            <div><dt>Patient ID</dt><dd>{{ appointment.patientCode }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ appointment.patientPhone|default('Not recorded') }}</dd></div>
+        </dl>
+        <p class="card-links">
+            <a href="{{ path('patient_show', {id: appointment.patientId}) }}">Patient record</a>
+            &middot;
+            <a href="{{ path('fdm_appointment_list', {patient_id: appointment.patientId, date_from: '', date_to: ''}) }}">All appointments of this patient</a>
+        </p>
+    </section>
+
+    <section class="card">
+        <h2>Doctor</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ appointment.doctorName }}</dd></div>
+            <div><dt>Specialization</dt><dd>{{ appointment.specialization|default('Not recorded') }}</dd></div>
+            <div><dt>Department</dt><dd>{{ appointment.department|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Appointment</h2>
+        <dl class="detail-list">
+            <div><dt>Date</dt><dd>{{ appointment.appointmentDate|date('d M Y') }}</dd></div>
+            <div><dt>Time</dt><dd>{{ appointment.startTime }} &ndash; {{ appointment.endTime }}</dd></div>
+            <div><dt>Duration</dt><dd>{{ appointment.durationMinutes }} minutes</dd></div>
+            <div><dt>Reason</dt><dd>{{ appointment.reason|default('Not recorded') }}</dd></div>
+            <div><dt>Status</dt><dd>{{ ui.status_badge(appointment.status) }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Record</h2>
+        <dl class="detail-list">
+            <div>
+                <dt>Booked</dt>
+                <dd>
+                    {% if appointment.createdAt %}{{ appointment.createdAt|date('d M Y, H:i') }}{% else %}&mdash;{% endif %}
+                    {% if appointment.createdBy %}<span class="muted">by {{ appointment.createdBy }}</span>{% endif %}
+                </dd>
+            </div>
+            <div>
+                <dt>Last updated</dt>
+                <dd>
+                    {% if appointment.updatedAt %}{{ appointment.updatedAt|date('d M Y, H:i') }}{% else %}&mdash;{% endif %}
+                    {% if appointment.updatedBy %}<span class="muted">by {{ appointment.updatedBy }}</span>{% endif %}
+                </dd>
+            </div>
+            {% if appointment.queueId %}
+                <div>
+                    <dt>Queue</dt>
+                    <dd>
+                        Token #{{ appointment.tokenNumber }} {{ ui.status_badge(appointment.queueStatus) }}
+                        {% if appointment.arrivalAt %}<span class="muted">arrived {{ appointment.arrivalAt|date('H:i') }}</span>{% endif %}
+                    </dd>
+                </div>
+            {% endif %}
+        </dl>
+    </section>
+
+</div>
+
+{% if appointment.canEdit %}
+    <section class="card danger-zone">
+        <h2>Cancel this appointment</h2>
+        <form method="post" action="{{ path('fdm_appointment_cancel', {id: appointment.appointmentId}) }}" class="cancel-form"
+              data-confirm="Cancel this appointment?">
+            <input type="hidden" name="_token" value="{{ csrf_token('fdm_appointment_cancel_' ~ appointment.appointmentId) }}">
+            <input type="hidden" name="return" value="show">
+            <label for="cancel-reason">Reason for cancelling <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="cancel-reason" name="reason" maxlength="255" required>
+            <button type="submit" class="btn btn-danger">Cancel appointment</button>
+        </form>
+    </section>
+{% endif %}
+
+{% endblock %}

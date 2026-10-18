@@ -1,0 +1,99 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{% block title %}Front Desk | HMS{% endblock %}
+
+{% block fdm_content %}
+
+<div class="page-header">
+    <div>
+        <h1>Front Desk</h1>
+        <p class="subtitle">
+            {% if dashboard.reportDate %}Today &ndash; {{ dashboard.reportDate|date('l, d F Y') }}{% else %}Today{% endif %}
+        </p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-primary" href="{{ path('fdm_appointment_new') }}">+ New appointment</a>
+        <a class="btn btn-secondary" href="{{ path('fdm_check_in') }}">Check in a patient</a>
+    </div>
+</div>
+
+<section aria-label="Today at a glance">
+    <div class="stat-grid">
+        <a class="stat-card" href="{{ path('patient_list') }}">
+            <span class="stat-value">{{ dashboard.registrations }}</span>
+            <span class="stat-label">Patients registered today</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_appointment_list') }}">
+            <span class="stat-value">{{ dashboard.appointmentsTotal }}</span>
+            <span class="stat-label">Today's appointments</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_appointment_list', {status: 'Scheduled'}) }}">
+            <span class="stat-value">{{ dashboard.appointmentsScheduled }}</span>
+            <span class="stat-label">Scheduled</span>
+        </a>
+        <a class="stat-card stat-card-accent" href="{{ path('fdm_appointment_list', {status: 'Checked-In'}) }}">
+            <span class="stat-value">{{ dashboard.appointmentsCheckedIn }}</span>
+            <span class="stat-label">Checked in</span>
+        </a>
+        <a class="stat-card stat-card-warn" href="{{ path('fdm_queue', {status: 'Waiting'}) }}">
+            <span class="stat-value">{{ dashboard.queueWaiting }}</span>
+            <span class="stat-label">Waiting for consultation</span>
+        </a>
+        <a class="stat-card stat-card-accent" href="{{ path('fdm_queue', {status: 'In Consultation'}) }}">
+            <span class="stat-value">{{ dashboard.queueInConsultation }}</span>
+            <span class="stat-label">In consultation</span>
+        </a>
+        <a class="stat-card stat-card-ok" href="{{ path('fdm_queue', {status: 'Completed'}) }}">
+            <span class="stat-value">{{ dashboard.queueCompleted }}</span>
+            <span class="stat-label">Consultations completed</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_appointment_list', {status: 'Completed'}) }}">
+            <span class="stat-value">{{ dashboard.appointmentsCompleted }}</span>
+            <span class="stat-label">Appointments completed</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_appointment_list', {status: 'Cancelled'}) }}">
+            <span class="stat-value">{{ dashboard.appointmentsCancelled }}</span>
+            <span class="stat-label">Appointments cancelled</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_appointment_list', {status: 'No-Show'}) }}">
+            <span class="stat-value">{{ dashboard.appointmentsNoShow }}</span>
+            <span class="stat-label">No-shows</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_queue', {status: 'all'}) }}">
+            <span class="stat-value">{{ dashboard.walkIns }}</span>
+            <span class="stat-label">Walk-ins today</span>
+        </a>
+        <a class="stat-card" href="{{ path('fdm_queue', {status: 'Cancelled'}) }}">
+            <span class="stat-value">{{ dashboard.queueCancelled }}</span>
+            <span class="stat-label">Queue entries cancelled</span>
+        </a>
+    </div>
+</section>
+
+<section class="card" aria-labelledby="quick-actions-heading">
+    <h2 id="quick-actions-heading">Front desk tasks</h2>
+    <div class="quick-actions">
+        <a class="quick-action" href="{{ path('patient_new') }}">
+            <strong>Register a new patient</strong>
+            <span>Create the patient record first, then book or check in.</span>
+        </a>
+        <a class="quick-action" href="{{ path('fdm_appointment_new') }}">
+            <strong>Book an appointment</strong>
+            <span>Find the patient, choose a doctor, date and time.</span>
+        </a>
+        <a class="quick-action" href="{{ path('fdm_check_in') }}">
+            <strong>Check in a patient</strong>
+            <span>Scheduled appointments, or a walk-in without one.</span>
+        </a>
+        <a class="quick-action" href="{{ path('fdm_queue') }}">
+            <strong>Manage the queue</strong>
+            <span>Start and complete consultations, see waiting times.</span>
+        </a>
+        <a class="quick-action" href="{{ path('fdm_reports') }}">
+            <strong>Reports</strong>
+            <span>Registrations, appointments, cancellations and queue summary.</span>
+        </a>
+    </div>
+</section>
+
+{% endblock %}

@@ -1,0 +1,50 @@
+{# Shared application shell for the Patient and Front Desk pages. #}
+{# Extends the project's base.html.twig. Child templates fill the "content" block. #}
+{% extends 'base.html.twig' %}
+
+{# base.html.twig has no viewport tag, so it is added here (inside <head>) for phones. #}
+{% block stylesheets %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/css/hms.css">
+{% endblock %}
+
+{% block javascripts %}
+    <script src="/js/fdm.js" defer></script>
+{% endblock %}
+
+{% block body %}
+<div class="hms-page">
+
+    <header class="hms-topbar">
+        <a class="hms-brand" href="{{ path('home') }}">HMS</a>
+
+        <nav class="hms-nav" aria-label="Main">
+            <a href="{{ path('home') }}">Dashboard</a>
+            <a href="{{ path('fdm_dashboard') }}">Front Desk</a>
+            <a href="{{ path('patient_list') }}">Patients</a>
+            <a href="{{ path('doctors') }}">Doctors</a>
+        </nav>
+
+        <form method="post" action="{{ path('logout') }}" class="hms-user">
+            <input type="hidden" name="_token" value="{{ csrf_token('logout') }}">
+            <span>Signed in as <strong>{{ auth.username }}</strong></span>
+            <button type="submit" class="btn btn-secondary btn-sm">Log out</button>
+        </form>
+    </header>
+
+    <main class="hms-main">
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success" role="status">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-error" role="alert">{{ message }}</div>
+        {% endfor %}
+
+        {% block content %}{% endblock %}
+
+    </main>
+
+</div>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{#
+  One page for booking (mode = 'new') and editing (mode = 'edit').
+
+  Variables from FDMController::renderAppointmentForm():
+    mode, appointment (AppointmentDTO as the user typed it), patient (selected active patient or null),
+    patients (search results or null), patient_search, doctors, errors (propertyName => message),
+    form_error, today
+#}
+
+{% block title %}{{ mode == 'new' ? 'New appointment' : 'Edit appointment' }} | HMS{% endblock %}
+
+{% block fdm_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+{% set is_new = mode == 'new' %}
+{% set form_action = is_new ? path('fdm_appointment_new') : path('fdm_appointment_edit', {id: appointment.appointmentId}) %}
+{% set token_id = is_new ? 'fdm_appointment_new' : 'fdm_appointment_edit_' ~ appointment.appointmentId %}
+{% set back_url = is_new ? path('fdm_appointment_list') : path('fdm_appointment_show', {id: appointment.appointmentId}) %}
+
+<div class="page-header">
+    <h1>
+        {% if is_new %}New appointment{% else %}Edit appointment <span class="muted">{{ appointment.appointmentCode }}</span>{% endif %}
+    </h1>
+    <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+{% if is_new and patient is null %}
+
+    {# ---------------- Step 1: choose the patient ---------------- #}
+    <section class="card" aria-labelledby="find-patient-heading">
+        <h2 id="find-patient-heading">1. Find the patient</h2>
+        <p class="hint">Search the registered patients by patient ID, name or phone number.
+            Not registered yet? <a href="{{ path('patient_new') }}">Register the patient first</a>.</p>
+
+        {% if errors.patientId is defined %}
+            <p class="field-error" role="alert">{{ errors.patientId }}</p>
+        {% endif %}
+
+        <form method="get" action="{{ path('fdm_appointment_new') }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Patient ID, name or phone</label>
+                <input type="search" id="q" name="q" value="{{ patient_search }}" maxlength="100" autofocus>
+            </div>
+            <div class="toolbar-actions">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        {% if patients is not null %}
+            {% if patients.total == 0 %}
+                <div class="empty-state">
+                    <p>No active patients match this search.</p>
+                    <a class="btn btn-secondary" href="{{ path('patient_new') }}">Register a new patient</a>
+                </div>
+            {% else %}
+                <p class="result-summary">
+                    {{ patients.total }} {{ patients.total == 1 ? 'patient' : 'patients' }} found
+                    {% if patients.search %}for &ldquo;{{ patients.search }}&rdquo;{% endif %}
+                </p>
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Patient ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Date of birth</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col"><span class="sr-only">Select</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in patients.patients %}
+                            <tr>
+                                <td data-label="Patient ID"><strong>{{ p.patientCode }}</strong></td>
+                                <td data-label="Name">{{ p.fullName }}</td>
+                                <td data-label="Date of birth">{{ p.dateOfBirth|date('d M Y') }}</td>
+                                <td data-label="Phone">{{ p.phone }}</td>
+                                <td data-label="Select" class="actions">
+                                    <a class="btn btn-primary btn-sm" href="{{ path('fdm_appointment_new', {patient_id: p.patientId}) }}">Select</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {{ ui.pager('fdm_appointment_new', {q: patients.search}, patients.page, patients.totalPages, 'page') }}
+            {% endif %}
+        {% endif %}
+    </section>
+
+{% else %}
+
+    {# ---------------- Step 2: the appointment details ---------------- #}
+    <section class="card selected-patient" aria-label="Patient">
+        <div>
+            <span class="muted">Patient</span>
+            {% if patient is not null %}
+                <strong>{{ patient.fullName }}</strong>
+                <span class="muted">{{ patient.patientCode }} &middot; {{ patient.phone }}</span>
+            {% else %}
+                <strong>{{ appointment.patientName }}</strong>
+                <span class="muted">{{ appointment.patientCode }}</span>
+            {% endif %}
+        </div>
+        {% if is_new %}
+            <a class="btn btn-secondary btn-sm" href="{{ path('fdm_appointment_new') }}">Change patient</a>
+        {% endif %}
+    </section>
+
+    {% if doctors is empty %}
+        <div class="alert alert-warning" role="alert">There are no active doctors to choose from.</div>
+    {% endif %}
+
+    <form method="post" action="{{ form_action }}" class="card patient-form" novalidate>
+        <input type="hidden" name="_token" value="{{ csrf_token(token_id) }}">
+        {% if is_new %}<input type="hidden" name="patient_id" value="{{ appointment.patientId }}">{% endif %}
+
+        <fieldset>
+            <legend>{{ is_new ? '2. Appointment details' : 'Appointment details' }}</legend>
+
+            <div class="form-grid">
+
+                <div class="field field-wide {{ errors.doctorId is defined ? 'field-invalid' }}">
+                    <label for="doctor_id">Doctor <span class="req" aria-hidden="true">*</span></label>
+                    <select id="doctor_id" name="doctor_id" required
+                            {% if errors.doctorId is defined %}aria-invalid="true" aria-describedby="doctor_id-error"{% endif %}>
+                        <option value="">Select a doctor&hellip;</option>
+                        {% for d in doctors %}
+                            <option value="{{ d.id }}" {{ appointment.doctorId == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.doctorId is defined %}<p class="field-error" id="doctor_id-error">{{ errors.doctorId }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.appointmentDate is defined ? 'field-invalid' }}">
+                    <label for="appointment_date">Date <span class="req" aria-hidden="true">*</span></label>
+                    <input type="date" id="appointment_date" name="appointment_date" value="{{ appointment.appointmentDate }}"
+                           {% if today %}min="{{ today }}"{% endif %} required
+                           {% if errors.appointmentDate is defined %}aria-invalid="true" aria-describedby="appointment_date-error"{% endif %}>
+                    {% if errors.appointmentDate is defined %}<p class="field-error" id="appointment_date-error">{{ errors.appointmentDate }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.startTime is defined ? 'field-invalid' }}">
+                    <label for="start_time">Start time <span class="req" aria-hidden="true">*</span></label>
+                    <input type="time" id="start_time" name="start_time" value="{{ appointment.startTime }}" step="300" required
+                           {% if errors.startTime is defined %}aria-invalid="true" aria-describedby="start_time-error"{% endif %}>
+                    <small class="hint">On a 5-minute mark, for example 10:00 or 10:05.</small>
+                    {% if errors.startTime is defined %}<p class="field-error" id="start_time-error">{{ errors.startTime }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.durationMinutes is defined ? 'field-invalid' }}">
+                    <label for="duration_minutes">Duration (minutes) <span class="req" aria-hidden="true">*</span></label>
+                    <input type="number" id="duration_minutes" name="duration_minutes" value="{{ appointment.durationInput }}"
+                           min="5" max="120" step="5" required
+                           {% if errors.durationMinutes is defined %}aria-invalid="true" aria-describedby="duration_minutes-error"{% endif %}>
+                    <small class="hint">5 to 120, in steps of 5.</small>
+                    {% if errors.durationMinutes is defined %}<p class="field-error" id="duration_minutes-error">{{ errors.durationMinutes }}</p>{% endif %}
+                </div>
+
+                <div class="field field-wide {{ errors.reason is defined ? 'field-invalid' }}">
+                    <label for="reason">Reason for visit</label>
+                    <input type="text" id="reason" name="reason" value="{{ appointment.reason }}" maxlength="255"
+                           {% if errors.reason is defined %}aria-invalid="true" aria-describedby="reason-error"{% endif %}>
+                    {% if errors.reason is defined %}<p class="field-error" id="reason-error">{{ errors.reason }}</p>{% endif %}
+                </div>
+
+            </div>
+        </fieldset>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{{ is_new ? 'Book appointment' : 'Save changes' }}</button>
+            <a class="btn btn-secondary" href="{{ back_url }}">Cancel</a>
+        </div>
+
+        <p class="hint"><span class="req" aria-hidden="true">*</span> Required field. The appointment number is generated automatically.</p>
+    </form>
+
+{% endif %}
+
+{% endblock %}

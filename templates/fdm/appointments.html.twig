@@ -1,0 +1,189 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{% block title %}Appointments | HMS{% endblock %}
+
+{% block fdm_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+{% set filter_params = {
+    date_from: list.dateFrom ?? '',
+    date_to: list.dateTo ?? '',
+    doctor_id: list.doctorId,
+    patient_id: list.patientId,
+    status: list.status,
+    search: list.search
+} %}
+
+<div class="page-header">
+    <div>
+        <h1>Appointments</h1>
+        <p class="subtitle">
+            {% if list.dateFrom and list.dateFrom == list.dateTo %}
+                {{ list.dateFrom|date('l, d M Y') }}{% if list.dateFrom == list.today %} (today){% endif %}
+            {% elseif list.dateFrom or list.dateTo %}
+                {{ list.dateFrom ? list.dateFrom|date('d M Y') : 'earliest' }} &ndash; {{ list.dateTo ? list.dateTo|date('d M Y') : 'latest' }}
+            {% else %}
+                All dates
+            {% endif %}
+        </p>
+    </div>
+    <a class="btn btn-primary" href="{{ path('fdm_appointment_new') }}">+ New appointment</a>
+</div>
+
+<form method="get" action="{{ path('fdm_appointment_list') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.search ?? '' }}" maxlength="100"
+                   placeholder="Appointment no., patient ID, name or phone">
+        </div>
+
+        <div class="field">
+            <label for="date_from">From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ list.dateFrom ?? '' }}">
+        </div>
+
+        <div class="field">
+            <label for="date_to">To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ list.dateTo ?? '' }}">
+        </div>
+
+        <div class="field">
+            <label for="doctor_id">Doctor</label>
+            <select id="doctor_id" name="doctor_id">
+                <option value="">All doctors</option>
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {{ list.doctorId == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                {% for s in statuses %}
+                    <option value="{{ s }}" {{ list.status == s ? 'selected' }}>{{ s == 'all' ? 'All statuses' : s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    {% if list.patientId %}
+        <input type="hidden" name="patient_id" value="{{ list.patientId }}">
+        <p class="hint">Showing appointments of one patient. <a href="{{ path('fdm_appointment_list', {date_from: list.dateFrom ?? '', date_to: list.dateTo ?? ''}) }}">Show all patients</a></p>
+    {% endif %}
+
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('fdm_appointment_list') }}">Today</a>
+        <a class="btn btn-secondary" href="{{ path('fdm_appointment_list', {date_from: '', date_to: ''}) }}">All dates</a>
+    </div>
+</form>
+
+<section class="card">
+
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}
+            Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }}
+            {{ list.total == 1 ? 'appointment' : 'appointments' }}
+        {% else %}
+            No appointments found.
+        {% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+
+        <div class="empty-state">
+            <p>No appointments match these filters.</p>
+            <a class="btn btn-primary" href="{{ path('fdm_appointment_new') }}">Book an appointment</a>
+        </div>
+
+    {% else %}
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Appointment</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Time</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for a in list.appointments %}
+                    <tr>
+                        <td data-label="Appointment">
+                            <a href="{{ path('fdm_appointment_show', {id: a.appointmentId}) }}"><strong>{{ a.appointmentCode }}</strong></a>
+                        </td>
+                        <td data-label="Patient">
+                            {{ a.patientName }}<br>
+                            <span class="muted">{{ a.patientCode }}</span>
+                        </td>
+                        <td data-label="Doctor">
+                            {{ a.doctorName }}<br>
+                            <span class="muted">{{ a.specialization }}</span>
+                        </td>
+                        <td data-label="Date">{{ a.appointmentDate|date('d M Y') }}</td>
+                        <td data-label="Time">{{ a.startTime }} &ndash; {{ a.endTime }}</td>
+                        <td data-label="Reason">{{ a.reason|default('—') }}</td>
+                        <td data-label="Status">
+                            {{ ui.status_badge(a.status) }}
+                            {% if a.tokenNumber %}<span class="token-chip" title="Queue token">#{{ a.tokenNumber }}</span>{% endif %}
+                        </td>
+                        <td data-label="Actions" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('fdm_appointment_show', {id: a.appointmentId}) }}">View</a>
+
+                            {% if a.canEdit %}
+                                <a class="btn btn-secondary btn-sm" href="{{ path('fdm_appointment_edit', {id: a.appointmentId}) }}">Edit</a>
+
+                                {% if a.appointmentDate == list.today %}
+                                    <form method="post" action="{{ path('fdm_check_in_appointment', {id: a.appointmentId}) }}" class="inline-form">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('fdm_check_in_' ~ a.appointmentId) }}">
+                                        <input type="hidden" name="return" value="list">
+                                        {{ ui.appointment_filters(list) }}
+                                        <button type="submit" class="btn btn-success btn-sm">Check in</button>
+                                    </form>
+                                {% endif %}
+
+                                {% if a.appointmentDate <= list.today %}
+                                    <form method="post" action="{{ path('fdm_appointment_no_show', {id: a.appointmentId}) }}" class="inline-form"
+                                          data-confirm="Mark this appointment as a no-show?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('fdm_appointment_no_show_' ~ a.appointmentId) }}">
+                                        <input type="hidden" name="return" value="list">
+                                        {{ ui.appointment_filters(list) }}
+                                        <button type="submit" class="btn btn-secondary btn-sm">No-show</button>
+                                    </form>
+                                {% endif %}
+
+                                <details class="cancel-details">
+                                    <summary class="btn btn-danger btn-sm">Cancel</summary>
+                                    <form method="post" action="{{ path('fdm_appointment_cancel', {id: a.appointmentId}) }}" class="cancel-form"
+                                          data-confirm="Cancel this appointment?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('fdm_appointment_cancel_' ~ a.appointmentId) }}">
+                                        <input type="hidden" name="return" value="list">
+                                        {{ ui.appointment_filters(list) }}
+                                        <label for="cancel-reason-{{ a.appointmentId }}">Reason for cancelling</label>
+                                        <input type="text" id="cancel-reason-{{ a.appointmentId }}" name="reason" maxlength="255" required>
+                                        <button type="submit" class="btn btn-danger btn-sm">Confirm cancellation</button>
+                                    </form>
+                                </details>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('fdm_appointment_list', filter_params, list.page, list.totalPages, 'page') }}
+
+    {% endif %}
+
+</section>
+
+{% endblock %}
