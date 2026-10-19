@@ -1,8 +1,12 @@
 twig:
     file_name_pattern: '*.twig'
+
+    # The hospital works in India Standard Time.
+    date:
+        timezone: 'Asia/Kolkata'
+
+    # Makes the signed-in username available in Twig templates.
     globals:
-        # Lets templates show the signed-in username ({{ auth.username }})
-        # without knowing how the session stores it.
         auth: '@App\Service\AuthSessionService'
 
 when@test:

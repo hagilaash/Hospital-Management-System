@@ -1,0 +1,197 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{#
+  Variables from FDMController::queue():
+    queue (QueueListDTO), doctors, statuses
+#}
+
+{% block title %}Queue | HMS{% endblock %}
+
+{% block fdm_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+{% set filter_params = {
+    date: queue.visitDate ?? '',
+    doctor_id: queue.doctorId,
+    status: queue.status,
+    search: queue.search
+} %}
+{% set status_labels = {
+    'open': 'Waiting + in consultation',
+    'all': 'All statuses',
+    'Waiting': 'Waiting',
+    'In Consultation': 'In consultation',
+    'Completed': 'Completed',
+    'Cancelled': 'Cancelled'
+} %}
+
+<div class="page-header">
+    <div>
+        <h1>Consultation queue</h1>
+        <p class="subtitle">
+            {% if queue.visitDate %}
+                {{ queue.visitDate|date('l, d M Y') }}{% if queue.visitDate == queue.today %} (today){% endif %}
+            {% else %}
+                All days
+            {% endif %}
+        </p>
+    </div>
+    <a class="btn btn-primary" href="{{ path('fdm_check_in') }}">Check in a patient</a>
+</div>
+
+<form method="get" action="{{ path('fdm_queue') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ queue.search ?? '' }}" maxlength="100"
+                   placeholder="Patient ID, name, phone or appointment no.">
+        </div>
+
+        <div class="field">
+            <label for="date">Date</label>
+            <input type="date" id="date" name="date" value="{{ queue.visitDate ?? '' }}">
+        </div>
+
+        <div class="field">
+            <label for="doctor_id">Doctor</label>
+            <select id="doctor_id" name="doctor_id">
+                <option value="">All doctors</option>
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {{ queue.doctorId == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                {% for s in statuses %}
+                    <option value="{{ s }}" {{ queue.status == s ? 'selected' }}>{{ status_labels[s] ?? s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('fdm_queue') }}">Today</a>
+        <a class="btn btn-secondary" href="{{ path('fdm_queue', {date: '', status: 'all'}) }}">All days</a>
+    </div>
+</form>
+
+<section class="card" {% if queue.visitDate == queue.today %}data-auto-refresh="30"{% endif %}>
+
+    <p class="result-summary" aria-live="polite">
+        {% if queue.total > 0 %}
+            Showing {{ queue.firstItemNumber }}&ndash;{{ queue.lastItemNumber }} of {{ queue.total }}
+            {{ queue.total == 1 ? 'entry' : 'entries' }}
+            {% if queue.visitDate == queue.today %}<span class="muted">&middot; refreshes every 30 seconds</span>{% endif %}
+        {% else %}
+            The queue is empty.
+        {% endif %}
+    </p>
+
+    {% if queue.total == 0 %}
+
+        <div class="empty-state">
+            <p>No queue entries match these filters.</p>
+            <a class="btn btn-primary" href="{{ path('fdm_check_in') }}">Check in a patient</a>
+        </div>
+
+    {% else %}
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Token</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Visit</th>
+                        <th scope="col">Arrived</th>
+                        <th scope="col">Waiting</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for e in queue.entries %}
+                    <tr class="{{ e.isOpen ? '' : 'row-inactive' }}">
+                        <td data-label="Token"><span class="token-badge">#{{ e.tokenNumber }}</span></td>
+                        <td data-label="Patient">
+                            {{ e.patientName }}<br>
+                            <span class="muted">{{ e.patientCode }} &middot; {{ e.patientPhone }}</span>
+                        </td>
+                        <td data-label="Doctor">{{ e.doctorName }}<br><span class="muted">{{ e.specialization }}</span></td>
+                        <td data-label="Visit">
+                            {% if e.isWalkIn %}
+                                <span class="badge badge-walkin">Walk-in</span>
+                            {% else %}
+                                <a href="{{ path('fdm_appointment_show', {id: e.appointmentId}) }}">{{ e.appointmentCode }}</a><br>
+                                <span class="muted">booked for {{ e.appointmentTime }}</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Arrived">
+                            {% if e.arrivalAt %}{{ e.visitDate == queue.today ? e.arrivalAt|date('H:i') : e.arrivalAt|date('d M, H:i') }}{% else %}&mdash;{% endif %}
+                        </td>
+                        <td data-label="Waiting">
+                            {% if e.status == 'Waiting' and e.waitingMinutes is not null %}
+                                {{ ui.minutes(e.waitingMinutes) }}
+                            {% elseif e.status == 'In Consultation' and e.consultationStartedAt %}
+                                <span class="muted">since {{ e.consultationStartedAt|date('H:i') }}</span>
+                            {% elseif e.status == 'Completed' and e.completedAt %}
+                                <span class="muted">done {{ e.completedAt|date('H:i') }}</span>
+                            {% else %}
+                                &mdash;
+                            {% endif %}
+                        </td>
+                        <td data-label="Status">{{ ui.status_badge(e.status) }}</td>
+                        <td data-label="Actions" class="actions">
+
+                            {% if e.canStart %}
+                                <form method="post" action="{{ path('fdm_queue_status', {id: e.queueId}) }}" class="inline-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('fdm_queue_' ~ e.queueId) }}">
+                                    <input type="hidden" name="status" value="In Consultation">
+                                    {{ ui.queue_filters(queue) }}
+                                    <button type="submit" class="btn btn-primary btn-sm">Start consultation</button>
+                                </form>
+                            {% endif %}
+
+                            {% if e.canComplete %}
+                                <form method="post" action="{{ path('fdm_queue_status', {id: e.queueId}) }}" class="inline-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('fdm_queue_' ~ e.queueId) }}">
+                                    <input type="hidden" name="status" value="Completed">
+                                    {{ ui.queue_filters(queue) }}
+                                    <button type="submit" class="btn btn-success btn-sm">Complete</button>
+                                </form>
+                            {% endif %}
+
+                            {% if e.canCancel %}
+                                <details class="cancel-details">
+                                    <summary class="btn btn-danger btn-sm">Cancel</summary>
+                                    <form method="post" action="{{ path('fdm_queue_status', {id: e.queueId}) }}" class="cancel-form"
+                                          data-confirm="Cancel this queue entry?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('fdm_queue_' ~ e.queueId) }}">
+                                        <input type="hidden" name="status" value="Cancelled">
+                                        {{ ui.queue_filters(queue) }}
+                                        <label for="queue-reason-{{ e.queueId }}">Reason for cancelling</label>
+                                        <input type="text" id="queue-reason-{{ e.queueId }}" name="reason" maxlength="255" required>
+                                        <button type="submit" class="btn btn-danger btn-sm">Confirm cancellation</button>
+                                    </form>
+                                </details>
+                            {% endif %}
+
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('fdm_queue', filter_params, queue.page, queue.totalPages, 'page') }}
+
+    {% endif %}
+
+</section>
+
+{% endblock %}

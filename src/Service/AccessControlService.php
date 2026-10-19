@@ -14,16 +14,33 @@ namespace App\Service;
  */
 class AccessControlService
 {
+    // Patient permissions
     public const PATIENT_VIEW = 'patient.view';
     public const PATIENT_CREATE = 'patient.create';
     public const PATIENT_EDIT = 'patient.edit';
     public const PATIENT_STATUS = 'patient.status';
+
+    // Front Desk Management permissions
+    public const FDM_VIEW = 'fdm.view';
+    public const FDM_APPOINTMENT_CREATE = 'fdm.appointment.create';
+    public const FDM_APPOINTMENT_EDIT = 'fdm.appointment.edit';
+    public const FDM_APPOINTMENT_CANCEL = 'fdm.appointment.cancel';
+    public const FDM_CHECK_IN = 'fdm.check_in';
+    public const FDM_QUEUE_UPDATE = 'fdm.queue.update';
+    public const FDM_REPORTS = 'fdm.reports';
 
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,
         self::PATIENT_EDIT,
         self::PATIENT_STATUS,
+        self::FDM_VIEW,
+        self::FDM_APPOINTMENT_CREATE,
+        self::FDM_APPOINTMENT_EDIT,
+        self::FDM_APPOINTMENT_CANCEL,
+        self::FDM_CHECK_IN,
+        self::FDM_QUEUE_UPDATE,
+        self::FDM_REPORTS,
     ];
 
     public function __construct(

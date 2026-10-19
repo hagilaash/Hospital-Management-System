@@ -1,0 +1,220 @@
+{% extends 'fdm/_layout.html.twig' %}
+
+{#
+  Variables from FDMController::reports():
+    report (FDMReportDTO), doctors
+  Row keys come straight from the PostgreSQL report functions (sql/fdm_function_signatures.json).
+#}
+
+{% block title %}Reports | HMS{% endblock %}
+
+{% block fdm_content %}
+
+<div class="page-header">
+    <div>
+        <h1>Front desk reports</h1>
+        <p class="subtitle">{{ report.dateFrom|date('d M Y') }} &ndash; {{ report.dateTo|date('d M Y') }}</p>
+    </div>
+</div>
+
+<form method="get" action="{{ path('fdm_reports') }}" class="card filters">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="date_from">From</label>
+            <input type="date" id="date_from" name="date_from" value="{{ report.dateFrom }}">
+        </div>
+        <div class="field">
+            <label for="date_to">To</label>
+            <input type="date" id="date_to" name="date_to" value="{{ report.dateTo }}">
+        </div>
+        <div class="field">
+            <label for="doctor_id">Doctor <span class="muted">(appointment and queue reports)</span></label>
+            <select id="doctor_id" name="doctor_id">
+                <option value="">All doctors</option>
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {{ report.doctorId == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Show report</button>
+        <a class="btn btn-secondary" href="{{ path('fdm_reports') }}">Last 7 days</a>
+    </div>
+    <p class="hint">A range is limited to 366 days. The cancellation and registration reports cover all doctors.</p>
+</form>
+
+{# ---------------- Registrations ---------------- #}
+<section class="card" aria-labelledby="reg-heading">
+    <h2 id="reg-heading">Daily patient registrations</h2>
+    {% if report.isUnavailable('registrations') %}
+        <div class="alert alert-error" role="alert">This report could not be loaded. Please try again later.</div>
+    {% elseif report.registrations is empty %}
+        <p class="muted">No days in this range.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead><tr><th scope="col">Date</th><th scope="col" class="num">Patients registered</th></tr></thead>
+                <tbody>
+                {% for row in report.registrations %}
+                    <tr>
+                        <td data-label="Date">{{ row.report_date|date('D, d M Y') }}</td>
+                        <td data-label="Patients registered" class="num">{{ row.registrations }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot><tr><th scope="row">Total</th><td class="num"><strong>{{ report.registrationTotal }}</strong></td></tr></tfoot>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{# ---------------- Appointments ---------------- #}
+<section class="card" aria-labelledby="appt-heading">
+    <h2 id="appt-heading">Appointment summary by doctor</h2>
+    {% if report.isUnavailable('appointments') %}
+        <div class="alert alert-error" role="alert">This report could not be loaded. Please try again later.</div>
+    {% elseif report.appointments is empty %}
+        <p class="muted">No appointments in this range.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Doctor</th>
+                        <th scope="col" class="num">Total</th>
+                        <th scope="col" class="num">Scheduled</th>
+                        <th scope="col" class="num">Checked in</th>
+                        <th scope="col" class="num">Completed</th>
+                        <th scope="col" class="num">Cancelled</th>
+                        <th scope="col" class="num">No-show</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in report.appointments %}
+                    <tr>
+                        <td data-label="Doctor">{{ row.doctor_name }}<br><span class="muted">{{ row.specialization }}</span></td>
+                        <td data-label="Total" class="num">{{ row.total }}</td>
+                        <td data-label="Scheduled" class="num">{{ row.scheduled }}</td>
+                        <td data-label="Checked in" class="num">{{ row.checked_in }}</td>
+                        <td data-label="Completed" class="num">{{ row.completed }}</td>
+                        <td data-label="Cancelled" class="num">{{ row.cancelled }}</td>
+                        <td data-label="No-show" class="num">{{ row.no_show }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th scope="row">All doctors</th>
+                        <td class="num"><strong>{{ report.appointmentTotals.total }}</strong></td>
+                        <td class="num"><strong>{{ report.appointmentTotals.scheduled }}</strong></td>
+                        <td class="num"><strong>{{ report.appointmentTotals.checked_in }}</strong></td>
+                        <td class="num"><strong>{{ report.appointmentTotals.completed }}</strong></td>
+                        <td class="num"><strong>{{ report.appointmentTotals.cancelled }}</strong></td>
+                        <td class="num"><strong>{{ report.appointmentTotals.no_show }}</strong></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{# ---------------- Queue ---------------- #}
+<section class="card" aria-labelledby="queue-heading">
+    <h2 id="queue-heading">Consultation queue summary by doctor</h2>
+    {% if report.isUnavailable('queue') %}
+        <div class="alert alert-error" role="alert">This report could not be loaded. Please try again later.</div>
+    {% elseif report.queue is empty %}
+        <p class="muted">No queue activity in this range.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Doctor</th>
+                        <th scope="col" class="num">Patients</th>
+                        <th scope="col" class="num">Walk-ins</th>
+                        <th scope="col" class="num">Waiting now</th>
+                        <th scope="col" class="num">In consultation</th>
+                        <th scope="col" class="num">Completed</th>
+                        <th scope="col" class="num">Cancelled</th>
+                        <th scope="col" class="num">Avg. wait (min)</th>
+                        <th scope="col" class="num">Avg. consultation (min)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in report.queue %}
+                    <tr>
+                        <td data-label="Doctor">{{ row.doctor_name }}<br><span class="muted">{{ row.specialization }}</span></td>
+                        <td data-label="Patients" class="num">{{ row.total }}</td>
+                        <td data-label="Walk-ins" class="num">{{ row.walk_ins }}</td>
+                        <td data-label="Waiting now" class="num">{{ row.waiting }}</td>
+                        <td data-label="In consultation" class="num">{{ row.in_consultation }}</td>
+                        <td data-label="Completed" class="num">{{ row.completed }}</td>
+                        <td data-label="Cancelled" class="num">{{ row.cancelled }}</td>
+                        <td data-label="Avg. wait (min)" class="num">{{ row.avg_wait_minutes is null ? '—' : row.avg_wait_minutes }}</td>
+                        <td data-label="Avg. consultation (min)" class="num">{{ row.avg_consultation_minutes is null ? '—' : row.avg_consultation_minutes }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th scope="row">All doctors</th>
+                        <td class="num"><strong>{{ report.queueTotals.total }}</strong></td>
+                        <td class="num"><strong>{{ report.queueTotals.walk_ins }}</strong></td>
+                        <td class="num"><strong>{{ report.queueTotals.waiting }}</strong></td>
+                        <td class="num"><strong>{{ report.queueTotals.in_consultation }}</strong></td>
+                        <td class="num"><strong>{{ report.queueTotals.completed }}</strong></td>
+                        <td class="num"><strong>{{ report.queueTotals.cancelled }}</strong></td>
+                        <td class="num">&mdash;</td>
+                        <td class="num">&mdash;</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{# ---------------- Cancellations ---------------- #}
+<section class="card" aria-labelledby="cancel-heading">
+    <h2 id="cancel-heading">Cancelled appointments</h2>
+    {% if report.isUnavailable('cancellations') %}
+        <div class="alert alert-error" role="alert">This report could not be loaded. Please try again later.</div>
+    {% elseif report.cancellations is empty %}
+        <p class="muted">No cancelled appointments in this range.</p>
+    {% else %}
+        <p class="result-summary">{{ report.cancellations|length }} cancelled {{ report.cancellations|length == 1 ? 'appointment' : 'appointments' }}
+            {% if report.cancellationsTruncated %}<strong>(showing the first 500 &ndash; narrow the date range to see the rest)</strong>{% endif %}</p>
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Appointment</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Was booked for</th>
+                        <th scope="col">Reason</th>
+                        <th scope="col">Cancelled</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for row in report.cancellations %}
+                    <tr>
+                        <td data-label="Appointment"><a href="{{ path('fdm_appointment_show', {id: row.appointment_id}) }}">{{ row.appointment_code }}</a></td>
+                        <td data-label="Patient">{{ row.patient_name }}<br><span class="muted">{{ row.patient_code }}</span></td>
+                        <td data-label="Doctor">{{ row.doctor_name }}</td>
+                        <td data-label="Was booked for">{{ row.appointment_date|date('d M Y') }}, {{ row.start_time|slice(0, 5) }}</td>
+                        <td data-label="Reason">{{ row.cancel_reason }}</td>
+                        <td data-label="Cancelled">
+                            {{ row.cancelled_at|date('d M Y, H:i') }}
+                            {% if row.cancelled_by %}<br><span class="muted">by {{ row.cancelled_by }}</span>{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

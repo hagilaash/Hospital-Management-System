@@ -122,6 +122,18 @@
             {{ module.module_name }}
         </a>
 
+    {% elseif module.module_name == 'Patients' %}
+
+        <a href="{{ path('patient_list') }}" class="module">
+            {{ module.module_name }}
+        </a>
+
+    {% elseif module.module_name|lower == 'fdm' %}
+
+        <a href="{{ path('fdm_dashboard') }}" class="module">
+            {{ module.module_name }}
+        </a>
+
     {% else %}
 
         <div class="module">

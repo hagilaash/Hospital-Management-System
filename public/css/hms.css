@@ -642,3 +642,350 @@ select {
         flex-basis: auto;
     }
 }
+
+/* =====================================================================
+   Front Desk Management (FDM) - added after the Patient module styles.
+   Uses the same palette variables defined at the top of this file.
+   ===================================================================== */
+
+/* ---- sub-navigation ------------------------------------------------ */
+
+.fdm-subnav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 20px;
+    padding: 6px;
+    background: var(--hms-card);
+    border-radius: var(--hms-radius);
+    box-shadow: var(--hms-shadow);
+}
+
+.fdm-subnav a {
+    padding: 8px 14px;
+    border-radius: 4px;
+    color: var(--hms-primary);
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.fdm-subnav a:hover {
+    background: #eef3f8;
+}
+
+.fdm-subnav a.is-active {
+    background: var(--hms-primary);
+    color: #ffffff;
+}
+
+/* ---- dashboard ------------------------------------------------------ */
+
+.stat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 18px;
+    background: var(--hms-card);
+    border-left: 5px solid var(--hms-border);
+    border-radius: var(--hms-radius);
+    box-shadow: var(--hms-shadow);
+    color: var(--hms-text);
+    text-decoration: none;
+}
+
+.stat-card:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
+.stat-card-accent {
+    border-left-color: var(--hms-primary);
+}
+
+.stat-card-warn {
+    border-left-color: var(--hms-warning);
+}
+
+.stat-card-ok {
+    border-left-color: var(--hms-success);
+}
+
+.stat-value {
+    font-size: 30px;
+    font-weight: bold;
+    line-height: 1.1;
+    color: var(--hms-primary);
+}
+
+.stat-label {
+    font-size: 14px;
+    color: var(--hms-muted);
+}
+
+.quick-actions {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+}
+
+.quick-action {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 14px;
+    border: 1px solid var(--hms-border);
+    border-radius: var(--hms-radius);
+    color: var(--hms-text);
+    text-decoration: none;
+}
+
+.quick-action:hover {
+    background: #f7f9fb;
+    border-color: var(--hms-primary);
+}
+
+.quick-action strong {
+    color: var(--hms-primary);
+}
+
+.quick-action span {
+    font-size: 13px;
+    color: var(--hms-muted);
+}
+
+/* ---- status badges -------------------------------------------------- */
+
+.badge-scheduled {
+    background: #e3f0fb;
+    color: #0d47a1;
+}
+
+.badge-checkedin {
+    background: #e0f4f1;
+    color: #00695c;
+}
+
+.badge-completed {
+    background: #e8f5e9;
+    color: var(--hms-success-dark);
+}
+
+.badge-cancelled {
+    background: #fdecea;
+    color: var(--hms-danger-dark);
+}
+
+.badge-noshow {
+    background: #fff4e0;
+    color: #6b4200;
+}
+
+.badge-waiting {
+    background: #fff4e0;
+    color: #6b4200;
+}
+
+.badge-consulting {
+    background: #e0f4f1;
+    color: #00695c;
+}
+
+.badge-walkin {
+    background: #ede7f6;
+    color: #4527a0;
+}
+
+.token-badge {
+    display: inline-block;
+    min-width: 42px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    background: var(--hms-primary);
+    color: #ffffff;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.token-chip {
+    margin-left: 6px;
+    padding: 1px 7px;
+    border: 1px solid var(--hms-border);
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--hms-muted);
+}
+
+/* ---- filters --------------------------------------------------------- */
+
+.filters {
+    padding-bottom: 18px;
+}
+
+.filters .hint {
+    margin: 12px 0 0;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px 16px;
+}
+
+.filter-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 14px;
+}
+
+/* ---- inline cancel form ---------------------------------------------- */
+
+.cancel-details {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.cancel-details summary {
+    list-style: none;
+    cursor: pointer;
+}
+
+.cancel-details summary::-webkit-details-marker {
+    display: none;
+}
+
+.cancel-form {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 230px;
+    margin-top: 8px;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid var(--hms-border);
+    border-radius: 4px;
+    text-align: left;
+    white-space: normal;
+}
+
+.danger-zone {
+    border-left: 5px solid var(--hms-danger);
+}
+
+.danger-zone .cancel-form {
+    max-width: 480px;
+    margin-top: 0;
+    padding: 0;
+    border: 0;
+}
+
+/* ---- patient picker and walk-in -------------------------------------- */
+
+.selected-patient {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: #eef6fb;
+    border: 1px solid #c9deee;
+    border-radius: var(--hms-radius);
+}
+
+.selected-patient > div {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.walkin-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+    margin: 14px 0 8px;
+}
+
+.walkin-form .field {
+    flex: 1 1 280px;
+}
+
+.card-links {
+    margin: 12px 0 0;
+    font-size: 14px;
+}
+
+/* ---- reports ----------------------------------------------------------- */
+
+.table-compact th,
+.table-compact td {
+    padding: 8px 10px;
+}
+
+.table .num {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.table tfoot th,
+.table tfoot td {
+    border-top: 2px solid var(--hms-border);
+    border-bottom: 0;
+    background: #f7f9fb;
+}
+
+.table tfoot th {
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--hms-text);
+}
+
+@media (max-width: 860px) {
+    .table tfoot,
+    .table tfoot tr {
+        display: block;
+        width: 100%;
+    }
+
+    .table tfoot th,
+    .table tfoot td {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 12px;
+    }
+
+    .cancel-details {
+        display: block;
+    }
+}
+
+@media (max-width: 600px) {
+    .fdm-subnav a {
+        flex: 1 1 auto;
+        text-align: center;
+    }
+
+    .stat-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .stat-value {
+        font-size: 24px;
+    }
+
+    .filter-actions .btn,
+    .walkin-form .btn {
+        width: 100%;
+    }
+}
