@@ -44,7 +44,7 @@ class FDMController extends AbstractController
     public function __construct(
         private FDMService $fdmService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -135,7 +135,7 @@ class FDMController extends AbstractController
         $patient = $this->loadPatient($this->digitsOrNull($request->query->getString('patient_id')));
         $search = $request->query->getString('q');
         $patients = null;
-        if ($patient === null) {
+        if (null === $patient) {
             $patients = $this->searchPatients($search, $request->query->getInt('page', 1));
         }
 
@@ -148,7 +148,7 @@ class FDMController extends AbstractController
     {
         $appointment = AppointmentDTO::fromInput($request->request->all());
         $patient = $this->loadPatient($appointment->patientId);
-        $patients = $patient === null ? $this->searchPatients('', 1) : null;
+        $patients = null === $patient ? $this->searchPatients('', 1) : null;
 
         if (!$this->isCsrfTokenValid('fdm_appointment_new', $request->request->getString('_token'))) {
             return $this->renderAppointmentForm('new', $appointment, $patient, $patients, '', [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
@@ -243,7 +243,7 @@ class FDMController extends AbstractController
         $appointment->patientName = $existing->patientName;
         $appointment->patientCode = $existing->patientCode;
 
-        if (!$this->isCsrfTokenValid('fdm_appointment_edit_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('fdm_appointment_edit_'.$id, $request->request->getString('_token'))) {
             return $this->renderAppointmentForm('edit', $appointment, $patient, null, '', [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -288,7 +288,7 @@ class FDMController extends AbstractController
     {
         $redirect = $this->redirectAfterAppointmentAction($id, $request);
 
-        if (!$this->isCsrfTokenValid('fdm_appointment_cancel_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('fdm_appointment_cancel_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $redirect;
@@ -319,7 +319,7 @@ class FDMController extends AbstractController
     {
         $redirect = $this->redirectAfterAppointmentAction($id, $request);
 
-        if (!$this->isCsrfTokenValid('fdm_appointment_no_show_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('fdm_appointment_no_show_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $redirect;
@@ -375,7 +375,7 @@ class FDMController extends AbstractController
         $walkInPatient = $this->loadPatient($this->digitsOrNull($query->getString('walkin_patient_id')));
         $patientSearch = $query->getString('q');
         $patientResults = null;
-        if ($walkInPatient === null && trim($patientSearch) !== '') {
+        if (null === $walkInPatient && '' !== trim($patientSearch)) {
             $patientResults = $this->searchPatients($patientSearch, $query->getInt('qpage', 1));
         }
 
@@ -404,7 +404,7 @@ class FDMController extends AbstractController
             default => $this->redirectToRoute('fdm_check_in'),
         };
 
-        if (!$this->isCsrfTokenValid('fdm_check_in_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('fdm_check_in_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $redirect;
@@ -436,7 +436,7 @@ class FDMController extends AbstractController
         $doctorId = $this->digitsOrNull($request->request->getString('doctor_id'));
 
         // On any failure the walk-in form is shown again with the same patient selected.
-        $retry = $this->redirectToRoute('fdm_check_in', $patientId !== null ? ['walkin_patient_id' => $patientId] : []);
+        $retry = $this->redirectToRoute('fdm_check_in', null !== $patientId ? ['walkin_patient_id' => $patientId] : []);
 
         if (!$this->isCsrfTokenValid('fdm_walk_in', $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
@@ -459,7 +459,7 @@ class FDMController extends AbstractController
             return $this->redirectToRoute('fdm_check_in');
         }
 
-        $message = $result['errors'] !== [] ? implode('. ', $result['errors']) : $result['message'];
+        $message = [] !== $result['errors'] ? implode('. ', $result['errors']) : $result['message'];
         $this->addFlash('error', $message);
 
         return $retry;
@@ -512,7 +512,7 @@ class FDMController extends AbstractController
     {
         $redirect = $this->redirectToQueue($request);
 
-        if (!$this->isCsrfTokenValid('fdm_queue_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('fdm_queue_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $redirect;
@@ -585,7 +585,7 @@ class FDMController extends AbstractController
     {
         $value = trim((string) $value);
 
-        return $value !== '' && ctype_digit($value) && strlen($value) <= 9 && (int) $value >= 1 ? (int) $value : null;
+        return '' !== $value && ctype_digit($value) && strlen($value) <= 9 && (int) $value >= 1 ? (int) $value : null;
     }
 
     /**
@@ -620,7 +620,7 @@ class FDMController extends AbstractController
 
     private function loadPatient(?int $patientId): ?PatientDTO
     {
-        if ($patientId === null) {
+        if (null === $patientId) {
             return null;
         }
 
@@ -634,7 +634,7 @@ class FDMController extends AbstractController
         }
 
         // Only active patients can be given appointments or checked in.
-        return $patient !== null && $patient->isActive ? $patient : null;
+        return null !== $patient && $patient->isActive ? $patient : null;
     }
 
     private function searchPatients(string $search, int $page): ?PatientListDTO
@@ -664,7 +664,7 @@ class FDMController extends AbstractController
             return $this->redirectToRoute('fdm_appointment_list');
         }
 
-        if ($appointment === null) {
+        if (null === $appointment) {
             $this->addFlash('error', self::MESSAGE_NOT_FOUND);
 
             return $this->redirectToRoute('fdm_appointment_list');
@@ -676,10 +676,10 @@ class FDMController extends AbstractController
     /** "Appointment APT-... checked in. Queue token: #7" (the database generated both numbers). */
     private function checkInMessage(array $result): string
     {
-        if ($result['success'] && $result['token_number'] !== null) {
+        if ($result['success'] && null !== $result['token_number']) {
             return sprintf('%s. Queue token: #%d', $result['message'], $result['token_number']);
         }
-        if (!$result['success'] && $result['token_number'] !== null) {
+        if (!$result['success'] && null !== $result['token_number']) {
             return sprintf('%s (queue token #%d)', $result['message'], $result['token_number']);
         }
 
@@ -694,10 +694,10 @@ class FDMController extends AbstractController
     private function redirectAfterAppointmentAction(int $id, Request $request): RedirectResponse
     {
         $return = $request->request->getString('return');
-        if ($return === 'show') {
+        if ('show' === $return) {
             return $this->redirectToRoute('fdm_appointment_show', ['id' => $id]);
         }
-        if ($return === 'checkin') {
+        if ('checkin' === $return) {
             return $this->redirectToRoute('fdm_check_in');
         }
 
@@ -745,9 +745,9 @@ class FDMController extends AbstractController
         AppointmentDTO $appointment,
         ?PatientDTO $patient,
         ?PatientListDTO $patients,
-        array $result
+        array $result,
     ): Response {
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderAppointmentForm($mode, $appointment, $patient, $patients, '', $result['errors'], $status, $result['message']);
     }
@@ -763,7 +763,7 @@ class FDMController extends AbstractController
         string $patientSearch = '',
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('fdm/appointment_form.html.twig', [
             'mode' => $mode,

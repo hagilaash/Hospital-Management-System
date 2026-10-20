@@ -119,7 +119,7 @@ class AppointmentDTO
 
     public function isScheduled(): bool
     {
-        return $this->status === 'Scheduled';
+        return 'Scheduled' === $this->status;
     }
 
     /** Only a Scheduled appointment can be edited or cancelled directly. */
@@ -149,7 +149,7 @@ class AppointmentDTO
     /** '10:00:00' -> '10:00'. */
     private static function shortTime(mixed $value): ?string
     {
-        if (!is_scalar($value) || (string) $value === '') {
+        if (!is_scalar($value) || '' === (string) $value) {
             return null;
         }
 

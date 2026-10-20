@@ -168,26 +168,26 @@ class FDMServiceTest extends TestCase
     public static function invalidAppointmentProvider(): array
     {
         return [
-            'no patient'                 => [['patientId' => null], 'patientId'],
-            'patient id zero'            => [['patientId' => 0], 'patientId'],
-            'no doctor'                  => [['doctorId' => null], 'doctorId'],
-            'date blank'                 => [['appointmentDate' => '  '], 'appointmentDate'],
-            'date not a date'            => [['appointmentDate' => 'tomorrow'], 'appointmentDate'],
-            'date wrong format'          => [['appointmentDate' => '20/11/2026'], 'appointmentDate'],
-            'date impossible'            => [['appointmentDate' => '2026-02-31'], 'appointmentDate'],
-            'date invalid UTF-8'         => [['appointmentDate' => "\xB1\x31"], 'appointmentDate'],
-            'time blank'                 => [['startTime' => ''], 'startTime'],
-            'time out of range'          => [['startTime' => '25:00'], 'startTime'],
-            'time not a time'            => [['startTime' => 'noon'], 'startTime'],
-            'time not on a 5-min mark'   => [['startTime' => '10:07'], 'startTime'],
-            'time with seconds'          => [['startTime' => '10:00:30'], 'startTime'],
-            'duration blank'             => [['durationInput' => ''], 'durationMinutes'],
-            'duration not a multiple'    => [['durationInput' => '7'], 'durationMinutes'],
-            'duration too short'         => [['durationInput' => '0'], 'durationMinutes'],
-            'duration too long'          => [['durationInput' => '125'], 'durationMinutes'],
-            'duration not a number'      => [['durationInput' => 'abc'], 'durationMinutes'],
-            'duration negative'          => [['durationInput' => '-5'], 'durationMinutes'],
-            'reason too long'            => [['reason' => str_repeat('x', 256)], 'reason'],
+            'no patient' => [['patientId' => null], 'patientId'],
+            'patient id zero' => [['patientId' => 0], 'patientId'],
+            'no doctor' => [['doctorId' => null], 'doctorId'],
+            'date blank' => [['appointmentDate' => '  '], 'appointmentDate'],
+            'date not a date' => [['appointmentDate' => 'tomorrow'], 'appointmentDate'],
+            'date wrong format' => [['appointmentDate' => '20/11/2026'], 'appointmentDate'],
+            'date impossible' => [['appointmentDate' => '2026-02-31'], 'appointmentDate'],
+            'date invalid UTF-8' => [['appointmentDate' => "\xB1\x31"], 'appointmentDate'],
+            'time blank' => [['startTime' => ''], 'startTime'],
+            'time out of range' => [['startTime' => '25:00'], 'startTime'],
+            'time not a time' => [['startTime' => 'noon'], 'startTime'],
+            'time not on a 5-min mark' => [['startTime' => '10:07'], 'startTime'],
+            'time with seconds' => [['startTime' => '10:00:30'], 'startTime'],
+            'duration blank' => [['durationInput' => ''], 'durationMinutes'],
+            'duration not a multiple' => [['durationInput' => '7'], 'durationMinutes'],
+            'duration too short' => [['durationInput' => '0'], 'durationMinutes'],
+            'duration too long' => [['durationInput' => '125'], 'durationMinutes'],
+            'duration not a number' => [['durationInput' => 'abc'], 'durationMinutes'],
+            'duration negative' => [['durationInput' => '-5'], 'durationMinutes'],
+            'reason too long' => [['reason' => str_repeat('x', 256)], 'reason'],
         ];
     }
 
@@ -248,7 +248,7 @@ class FDMServiceTest extends TestCase
         $result = $this->service->createAppointment($this->validAppointment(), 'admin');
 
         $this->assertFalse($result['success']);
-        if ($expectedField === null) {
+        if (null === $expectedField) {
             $this->assertSame([], $result['errors']);
         } else {
             $this->assertSame([$expectedField => $message], $result['errors']);
@@ -258,17 +258,17 @@ class FDMServiceTest extends TestCase
     public static function databaseMessageProvider(): array
     {
         return [
-            'patient missing'    => ['Patient not found', 'patientId'],
-            'patient inactive'   => ['Inactive patients cannot be given appointments', 'patientId'],
-            'doctor missing'     => ['Doctor not found', 'doctorId'],
-            'doctor inactive'    => ['Doctor is not active', 'doctorId'],
-            'in the past'        => ['Appointment time cannot be in the past', 'startTime'],
-            'boundary'           => ['Appointment time must be on a 5-minute boundary (for example 10:00 or 10:05)', 'startTime'],
-            'midnight'           => ['Appointment must finish before midnight', 'startTime'],
-            'too far ahead'      => ['Appointments can be booked at most 365 days ahead', 'appointmentDate'],
-            'duration'           => ['Duration must be between 5 and 120 minutes, in steps of 5', 'durationMinutes'],
-            'reason'             => ['Reason must be 255 characters or fewer', 'reason'],
-            'general message'    => ['One or more values are not valid', null],
+            'patient missing' => ['Patient not found', 'patientId'],
+            'patient inactive' => ['Inactive patients cannot be given appointments', 'patientId'],
+            'doctor missing' => ['Doctor not found', 'doctorId'],
+            'doctor inactive' => ['Doctor is not active', 'doctorId'],
+            'in the past' => ['Appointment time cannot be in the past', 'startTime'],
+            'boundary' => ['Appointment time must be on a 5-minute boundary (for example 10:00 or 10:05)', 'startTime'],
+            'midnight' => ['Appointment must finish before midnight', 'startTime'],
+            'too far ahead' => ['Appointments can be booked at most 365 days ahead', 'appointmentDate'],
+            'duration' => ['Duration must be between 5 and 120 minutes, in steps of 5', 'durationMinutes'],
+            'reason' => ['Reason must be 255 characters or fewer', 'reason'],
+            'general message' => ['One or more values are not valid', null],
         ];
     }
 
@@ -642,16 +642,16 @@ class FDMServiceTest extends TestCase
     public static function appointmentStatusProvider(): array
     {
         return [
-            'exact'              => ['Scheduled', 'Scheduled'],
-            'lower case'         => ['scheduled', 'Scheduled'],
-            'upper case'         => ['CHECKED-IN', 'Checked-In'],
-            'no-show'            => ['no-show', 'No-Show'],
-            'cancelled spaced'   => ['  Cancelled ', 'Cancelled'],
-            'all'                => ['all', 'all'],
-            'unknown'            => ['Deleted', 'all'],
-            'injection attempt'  => ["Scheduled' OR 1=1 --", 'all'],
-            'empty'              => ['', 'all'],
-            'null'               => [null, 'all'],
+            'exact' => ['Scheduled', 'Scheduled'],
+            'lower case' => ['scheduled', 'Scheduled'],
+            'upper case' => ['CHECKED-IN', 'Checked-In'],
+            'no-show' => ['no-show', 'No-Show'],
+            'cancelled spaced' => ['  Cancelled ', 'Cancelled'],
+            'all' => ['all', 'all'],
+            'unknown' => ['Deleted', 'all'],
+            'injection attempt' => ["Scheduled' OR 1=1 --", 'all'],
+            'empty' => ['', 'all'],
+            'null' => [null, 'all'],
         ];
     }
 
@@ -672,13 +672,13 @@ class FDMServiceTest extends TestCase
     public static function idFilterProvider(): array
     {
         return [
-            'a number'      => ['5', 5],
-            'blank'         => ['', null],
-            'null'          => [null, null],
-            'zero'          => ['0', null],
-            'negative'      => ['-1', null],
-            'not a number'  => ['abc', null],
-            'decimal'       => ['5.5', null],
+            'a number' => ['5', 5],
+            'blank' => ['', null],
+            'null' => [null, null],
+            'zero' => ['0', null],
+            'negative' => ['-1', null],
+            'not a number' => ['abc', null],
+            'decimal' => ['5.5', null],
             'too many digits' => ['12345678901', null],
         ];
     }
@@ -727,12 +727,12 @@ class FDMServiceTest extends TestCase
     public static function searchProvider(): array
     {
         return [
-            'null'                  => [null, null],
-            'blank'                 => ['   ', null],
+            'null' => [null, null],
+            'blank' => ['   ', null],
             'trimmed and collapsed' => ['  anita   raman ', 'anita raman'],
-            'appointment number'    => ['APT-2026-000001', 'APT-2026-000001'],
-            'truncated to 100'      => [str_repeat('a', 150), str_repeat('a', 100)],
-            'invalid UTF-8'         => ["\xB1\x31", null],
+            'appointment number' => ['APT-2026-000001', 'APT-2026-000001'],
+            'truncated to 100' => [str_repeat('a', 150), str_repeat('a', 100)],
+            'invalid UTF-8' => ["\xB1\x31", null],
         ];
     }
 
@@ -787,14 +787,14 @@ class FDMServiceTest extends TestCase
     public static function queueStatusProvider(): array
     {
         return [
-            'open'            => ['open', 'open'],
-            'waiting'         => ['waiting', 'Waiting'],
+            'open' => ['open', 'open'],
+            'waiting' => ['waiting', 'Waiting'],
             'in consultation' => ['in consultation', 'In Consultation'],
-            'completed'       => ['COMPLETED', 'Completed'],
-            'all'             => ['all', 'all'],
-            'unknown'         => ['Done', 'open'],
-            'empty'           => ['', 'open'],
-            'null'            => [null, 'open'],
+            'completed' => ['COMPLETED', 'Completed'],
+            'all' => ['all', 'all'],
+            'unknown' => ['Done', 'open'],
+            'empty' => ['', 'open'],
+            'null' => [null, 'open'],
         ];
     }
 

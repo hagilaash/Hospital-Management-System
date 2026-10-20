@@ -15,7 +15,7 @@ use App\DTO\QueueEntryDTO;
 class FDMRepository
 {
     public function __construct(
-        private FDMDAO $fdmDAO
+        private FDMDAO $fdmDAO,
     ) {
     }
 
@@ -63,7 +63,7 @@ class FDMRepository
     {
         $row = $this->fdmDAO->getAppointmentById($appointmentId);
 
-        return $row === null ? null : AppointmentDTO::fromRow($row);
+        return null === $row ? null : AppointmentDTO::fromRow($row);
     }
 
     /**
@@ -77,7 +77,7 @@ class FDMRepository
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         $rows = $this->fdmDAO->getAppointmentsList(
             $dateFrom,
@@ -102,7 +102,7 @@ class FDMRepository
         ?int $doctorId,
         ?int $patientId,
         ?string $status,
-        ?string $search
+        ?string $search,
     ): int {
         return $this->fdmDAO->countAppointments($dateFrom, $dateTo, $doctorId, $patientId, $status, $search);
     }
@@ -134,7 +134,7 @@ class FDMRepository
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         $rows = $this->fdmDAO->getQueueList($visitDate, $doctorId, $status, $search, $limit, $offset);
 

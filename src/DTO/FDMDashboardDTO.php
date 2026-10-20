@@ -20,7 +20,7 @@ class FDMDashboardDTO
         public readonly int $queueInConsultation,
         public readonly int $queueCompleted,
         public readonly int $queueCancelled,
-        public readonly int $walkIns
+        public readonly int $walkIns,
     ) {
     }
 

@@ -24,7 +24,7 @@ class AppointmentListDTO
         public readonly ?int $patientId,
         public readonly string $status,
         public readonly ?string $search,
-        public readonly string $today
+        public readonly string $today,
     ) {
     }
 
@@ -40,12 +40,12 @@ class AppointmentListDTO
 
     public function getFirstItemNumber(): int
     {
-        return $this->total === 0 ? 0 : ($this->page - 1) * $this->perPage + 1;
+        return 0 === $this->total ? 0 : ($this->page - 1) * $this->perPage + 1;
     }
 
     public function getLastItemNumber(): int
     {
-        if ($this->total === 0) {
+        if (0 === $this->total) {
             return 0;
         }
 

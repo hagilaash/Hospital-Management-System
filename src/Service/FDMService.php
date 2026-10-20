@@ -70,7 +70,7 @@ class FDMService
         private FDMRepository $fdmRepository,
         private PatientService $patientService,
         private DoctorService $doctorService,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -149,13 +149,13 @@ class FDMService
         ?string $patientId,
         ?string $status,
         ?string $search,
-        int $page = 1
+        int $page = 1,
     ): AppointmentListDTO {
         $today = $this->fdmRepository->getHospitalToday();
 
         $from = $this->normalizeDateFilter($dateFrom, $today);
         $to = $this->normalizeDateFilter($dateTo, $today);
-        if ($from !== null && $to !== null && $from > $to) {
+        if (null !== $from && null !== $to && $from > $to) {
             [$from, $to] = [$to, $from];
         }
         $doctor = $this->positiveInt($doctorId);
@@ -204,13 +204,13 @@ class FDMService
     public function createAppointment(AppointmentDTO $input, string $performedBy): array
     {
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $appointment = $this->normalizeAppointment($input);
         $errors = $this->validateAppointment($appointment, true);
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -223,13 +223,13 @@ class FDMService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $appointment = $this->normalizeAppointment($input);
         $errors = $this->validateAppointment($appointment, false);
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -242,16 +242,16 @@ class FDMService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $reason = $this->nullIfEmpty($this->clean($reason));
-        if ($reason === null) {
+        if (null === $reason) {
             return $this->failure('Cancellation reason is required', ['reason' => 'Cancellation reason is required']);
         }
         if (mb_strlen($reason) > self::MAX_REASON_LENGTH) {
-            $message = 'Cancellation reason must be ' . self::MAX_REASON_LENGTH . ' characters or fewer';
+            $message = 'Cancellation reason must be '.self::MAX_REASON_LENGTH.' characters or fewer';
 
             return $this->failure($message, ['reason' => $message]);
         }
@@ -265,7 +265,7 @@ class FDMService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -282,7 +282,7 @@ class FDMService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -298,12 +298,12 @@ class FDMService
         if ($doctorId < 1) {
             $errors['doctorId'] = 'Select a doctor';
         }
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -324,7 +324,7 @@ class FDMService
         ?string $doctorId,
         ?string $status,
         ?string $search,
-        int $page = 1
+        int $page = 1,
     ): QueueListDTO {
         $today = $this->fdmRepository->getHospitalToday();
 
@@ -366,17 +366,17 @@ class FDMService
             return $this->failure('Invalid queue status');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $reason = $this->nullIfEmpty($this->clean($reason));
-        if ($newStatus === 'Cancelled') {
-            if ($reason === null) {
+        if ('Cancelled' === $newStatus) {
+            if (null === $reason) {
                 return $this->failure('Cancellation reason is required', ['reason' => 'Cancellation reason is required']);
             }
             if (mb_strlen($reason) > self::MAX_REASON_LENGTH) {
-                $message = 'Cancellation reason must be ' . self::MAX_REASON_LENGTH . ' characters or fewer';
+                $message = 'Cancellation reason must be '.self::MAX_REASON_LENGTH.' characters or fewer';
 
                 return $this->failure($message, ['reason' => $message]);
             }
@@ -404,11 +404,11 @@ class FDMService
         $to = $this->isValidDate((string) $dateTo) ? (string) $dateTo : $today;
         $from = $this->isValidDate((string) $dateFrom)
             ? (string) $dateFrom
-            : (new \DateTimeImmutable($to))->modify('-' . (self::REPORT_DEFAULT_DAYS - 1) . ' days')->format('Y-m-d');
+            : (new \DateTimeImmutable($to))->modify('-'.(self::REPORT_DEFAULT_DAYS - 1).' days')->format('Y-m-d');
         if ($from > $to) {
             [$from, $to] = [$to, $from];
         }
-        $earliest = (new \DateTimeImmutable($to))->modify('-' . (self::REPORT_MAX_DAYS - 1) . ' days')->format('Y-m-d');
+        $earliest = (new \DateTimeImmutable($to))->modify('-'.(self::REPORT_MAX_DAYS - 1).' days')->format('Y-m-d');
         if ($from < $earliest) {
             $from = $earliest;
         }
@@ -421,7 +421,7 @@ class FDMService
         $cancellations = $this->loadSection('cancellations', $unavailable, fn (): array => $this->fdmRepository->reportCancellations($from, $to));
         $queue = $this->loadSection('queue', $unavailable, fn (): array => $this->fdmRepository->reportQueueSummary($from, $to));
 
-        if ($doctor !== null) {
+        if (null !== $doctor) {
             $appointments = $this->filterByDoctor($appointments, $doctor);
             $queue = $this->filterByDoctor($queue, $doctor);
         }
@@ -469,7 +469,7 @@ class FDMService
     /** '09:30:00' -> '09:30'; anything else is returned unchanged and fails validation. */
     private function normalizeTime(string $time): string
     {
-        return preg_match('/^(\d{2}:\d{2}):00$/', $time, $m) === 1 ? $m[1] : $time;
+        return 1 === preg_match('/^(\d{2}:\d{2}):00$/', $time, $m) ? $m[1] : $time;
     }
 
     /**
@@ -479,34 +479,34 @@ class FDMService
      */
     private function clean(?string $value): string
     {
-        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
+        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value);
-        if ($value === null) {
+        if (null === $value) {
             return '';
         }
 
         $value = preg_replace('/\s+/u', ' ', $value);
 
-        return $value === null ? '' : trim($value);
+        return null === $value ? '' : trim($value);
     }
 
     private function nullIfEmpty(string $value): ?string
     {
-        return $value === '' ? null : $value;
+        return '' === $value ? null : $value;
     }
 
     private function normalizeSearch(?string $search): ?string
     {
-        if ($search === null) {
+        if (null === $search) {
             return null;
         }
 
         $clean = trim(mb_substr($this->clean($search), 0, self::MAX_SEARCH_LENGTH));
 
-        return $clean === '' ? null : $clean;
+        return '' === $clean ? null : $clean;
     }
 
     /**
@@ -519,7 +519,7 @@ class FDMService
     {
         $status = trim((string) $status);
         foreach ($allowed as $candidate) {
-            if (strcasecmp($status, $candidate) === 0) {
+            if (0 === strcasecmp($status, $candidate)) {
                 return $candidate;
             }
         }
@@ -530,11 +530,11 @@ class FDMService
     /** null = not sent -> today; '' = cleared -> null (no limit); invalid -> today. */
     private function normalizeDateFilter(?string $value, string $today): ?string
     {
-        if ($value === null) {
+        if (null === $value) {
             return $today;
         }
         $value = trim($value);
-        if ($value === '') {
+        if ('' === $value) {
             return null;
         }
 
@@ -545,7 +545,7 @@ class FDMService
     private function positiveInt(?string $value): ?int
     {
         $value = trim((string) $value);
-        if ($value === '' || !ctype_digit($value) || strlen($value) > 9) {
+        if ('' === $value || !ctype_digit($value) || strlen($value) > 9) {
             return null;
         }
         $number = (int) $value;
@@ -559,8 +559,8 @@ class FDMService
         $problems = \DateTimeImmutable::getLastErrors();
 
         // The round-trip comparison also catches rolled-over dates such as 2026-02-31.
-        return $date !== false
-            && ($problems === false || ($problems['warning_count'] === 0 && $problems['error_count'] === 0))
+        return false !== $date
+            && (false === $problems || (0 === $problems['warning_count'] && 0 === $problems['error_count']))
             && $date->format('Y-m-d') === $value;
     }
 
@@ -578,36 +578,36 @@ class FDMService
     {
         $errors = [];
 
-        if ($requirePatient && ($appointment->patientId === null || $appointment->patientId < 1)) {
+        if ($requirePatient && (null === $appointment->patientId || $appointment->patientId < 1)) {
             $errors['patientId'] = 'Select a patient';
         }
-        if ($appointment->doctorId === null || $appointment->doctorId < 1) {
+        if (null === $appointment->doctorId || $appointment->doctorId < 1) {
             $errors['doctorId'] = 'Select a doctor';
         }
 
-        if ($appointment->appointmentDate === '') {
+        if ('' === $appointment->appointmentDate) {
             $errors['appointmentDate'] = 'Appointment date is required';
         } elseif (!$this->isValidDate($appointment->appointmentDate)) {
             $errors['appointmentDate'] = 'Enter a valid date (YYYY-MM-DD)';
         }
 
-        if ($appointment->startTime === '') {
+        if ('' === $appointment->startTime) {
             $errors['startTime'] = 'Appointment time is required';
-        } elseif (preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $appointment->startTime, $m) !== 1) {
+        } elseif (1 !== preg_match('/^([01]\d|2[0-3]):([0-5]\d)$/', $appointment->startTime, $m)) {
             $errors['startTime'] = 'Enter a valid time (HH:MM)';
-        } elseif ((int) $m[2] % 5 !== 0) {
+        } elseif (0 !== (int) $m[2] % 5) {
             $errors['startTime'] = 'Time must be on a 5-minute boundary (for example 10:00 or 10:05)';
         }
 
         if ($appointment->durationMinutes < 5
             || $appointment->durationMinutes > 120
-            || $appointment->durationMinutes % 5 !== 0
+            || 0 !== $appointment->durationMinutes % 5
         ) {
             $errors['durationMinutes'] = 'Duration must be between 5 and 120 minutes, in steps of 5';
         }
 
-        if ($appointment->reason !== null && mb_strlen($appointment->reason) > self::MAX_REASON_LENGTH) {
-            $errors['reason'] = 'Reason must be ' . self::MAX_REASON_LENGTH . ' characters or fewer';
+        if (null !== $appointment->reason && mb_strlen($appointment->reason) > self::MAX_REASON_LENGTH) {
+            $errors['reason'] = 'Reason must be '.self::MAX_REASON_LENGTH.' characters or fewer';
         }
 
         return $errors;
@@ -652,7 +652,7 @@ class FDMService
 
         if (!$success) {
             $field = $this->fieldForMessage($message);
-            if ($field !== null) {
+            if (null !== $field) {
                 $result['errors'][$field] = $message;
             }
         }
@@ -707,7 +707,7 @@ class FDMService
 
     private function isTrue(mixed $value): bool
     {
-        return $value === true || $value === 't' || $value === 'true' || $value === 1 || $value === '1';
+        return true === $value || 't' === $value || 'true' === $value || 1 === $value || '1' === $value;
     }
 
     // ------------------------------------------------------------------
@@ -715,7 +715,7 @@ class FDMService
     // ------------------------------------------------------------------
 
     /**
-     * @param list<string> $unavailable collects the names of sections that failed
+     * @param list<string>                                 $unavailable collects the names of sections that failed
      * @param callable(): array<int, array<string, mixed>> $load
      *
      * @return list<array<string, mixed>>
@@ -747,7 +747,7 @@ class FDMService
 
     /**
      * @param list<array<string, mixed>> $rows
-     * @param list<string> $columns
+     * @param list<string>               $columns
      *
      * @return array<string, int>
      */

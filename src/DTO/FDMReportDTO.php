@@ -12,13 +12,13 @@ namespace App\DTO;
 class FDMReportDTO
 {
     /**
-     * @param list<array<string, mixed>> $registrations  report_date, registrations
-     * @param list<array<string, mixed>> $appointments   one row per doctor
-     * @param list<array<string, mixed>> $cancellations  cancelled appointments (max 500)
-     * @param list<array<string, mixed>> $queue          one row per doctor
+     * @param list<array<string, mixed>> $registrations     report_date, registrations
+     * @param list<array<string, mixed>> $appointments      one row per doctor
+     * @param list<array<string, mixed>> $cancellations     cancelled appointments (max 500)
+     * @param list<array<string, mixed>> $queue             one row per doctor
      * @param array<string, int>         $appointmentTotals
      * @param array<string, int>         $queueTotals
-     * @param list<string>               $unavailable    names of sections that could not be loaded
+     * @param list<string>               $unavailable       names of sections that could not be loaded
      */
     public function __construct(
         public readonly string $dateFrom,
@@ -31,7 +31,7 @@ class FDMReportDTO
         public readonly array $appointmentTotals,
         public readonly array $queueTotals,
         public readonly int $registrationTotal,
-        public readonly array $unavailable = []
+        public readonly array $unavailable = [],
     ) {
     }
 

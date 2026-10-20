@@ -54,7 +54,7 @@ class QueueEntryDTO
         $dto->appointmentId = self::nullableInt($row['appointment_id'] ?? null);
         $dto->appointmentCode = self::nullableString($row['appointment_code'] ?? null);
         $time = $row['appointment_time'] ?? null;
-        $dto->appointmentTime = is_scalar($time) && (string) $time !== '' ? substr((string) $time, 0, 5) : null;
+        $dto->appointmentTime = is_scalar($time) && '' !== (string) $time ? substr((string) $time, 0, 5) : null;
         $dto->isWalkIn = self::toBool($row['is_walk_in'] ?? false);
 
         $dto->visitDate = self::nullableString($row['visit_date'] ?? null);
@@ -69,17 +69,17 @@ class QueueEntryDTO
 
     public function isOpen(): bool
     {
-        return $this->status === 'Waiting' || $this->status === 'In Consultation';
+        return 'Waiting' === $this->status || 'In Consultation' === $this->status;
     }
 
     public function canStart(): bool
     {
-        return $this->status === 'Waiting';
+        return 'Waiting' === $this->status;
     }
 
     public function canComplete(): bool
     {
-        return $this->status === 'In Consultation';
+        return 'In Consultation' === $this->status;
     }
 
     public function canCancel(): bool

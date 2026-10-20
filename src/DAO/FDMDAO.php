@@ -13,7 +13,7 @@ use App\DTO\AppointmentDTO;
 class FDMDAO
 {
     public function __construct(
-        private FDMDatabaseFunction $fdmDatabaseFunction
+        private FDMDatabaseFunction $fdmDatabaseFunction,
     ) {
     }
 
@@ -73,7 +73,7 @@ class FDMDAO
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->fdmDatabaseFunction->getAppointmentsList(
             $dateFrom,
@@ -93,7 +93,7 @@ class FDMDAO
         ?int $doctorId,
         ?int $patientId,
         ?string $status,
-        ?string $search
+        ?string $search,
     ): int {
         return $this->fdmDatabaseFunction->countAppointments($dateFrom, $dateTo, $doctorId, $patientId, $status, $search);
     }
@@ -116,7 +116,7 @@ class FDMDAO
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->fdmDatabaseFunction->getQueueList($visitDate, $doctorId, $status, $search, $limit, $offset);
     }

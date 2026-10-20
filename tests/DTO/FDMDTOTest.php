@@ -144,15 +144,15 @@ class FDMDTOTest extends TestCase
     public static function idInputProvider(): array
     {
         return [
-            'digits'          => ['5', 5],
-            'int'             => [5, 5],
-            'blank'           => ['', null],
-            'negative'        => ['-1', null],
-            'decimal'         => ['5.5', null],
-            'letters'         => ['abc', null],
-            'array'           => [['1'], null],
+            'digits' => ['5', 5],
+            'int' => [5, 5],
+            'blank' => ['', null],
+            'negative' => ['-1', null],
+            'decimal' => ['5.5', null],
+            'letters' => ['abc', null],
+            'array' => [['1'], null],
             'too many digits' => ['12345678901', null],
-            'null'            => [null, null],
+            'null' => [null, null],
         ];
     }
 
@@ -250,10 +250,10 @@ class FDMDTOTest extends TestCase
     public static function queueActionsProvider(): array
     {
         return [
-            'waiting'         => ['Waiting', true, true, false, true],
+            'waiting' => ['Waiting', true, true, false, true],
             'in consultation' => ['In Consultation', true, false, true, true],
-            'completed'       => ['Completed', false, false, false, false],
-            'cancelled'       => ['Cancelled', false, false, false, false],
+            'completed' => ['Completed', false, false, false, false],
+            'cancelled' => ['Cancelled', false, false, false, false],
         ];
     }
 

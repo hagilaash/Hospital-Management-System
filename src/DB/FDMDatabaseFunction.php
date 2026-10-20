@@ -17,7 +17,7 @@ use Doctrine\DBAL\Connection;
 class FDMDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
@@ -32,7 +32,7 @@ class FDMDatabaseFunction
     // ------------------------------------------------------------------
 
     /**
-     * ecs_create_appointment(7 params)
+     * ecs_create_appointment(7 params).
      *
      * @return array{success: bool, message: string, appointment_id: ?int, appointment_code: ?string}
      */
@@ -43,7 +43,7 @@ class FDMDatabaseFunction
         string $startTime,
         int $durationMinutes,
         ?string $reason,
-        string $createdBy
+        string $createdBy,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_create_appointment(
@@ -70,7 +70,7 @@ class FDMDatabaseFunction
     }
 
     /**
-     * ecs_update_appointment(7 params)
+     * ecs_update_appointment(7 params).
      *
      * @return array{success: bool, message: string, appointment_id: ?int, appointment_code: ?string}
      */
@@ -81,7 +81,7 @@ class FDMDatabaseFunction
         string $startTime,
         int $durationMinutes,
         ?string $reason,
-        string $updatedBy
+        string $updatedBy,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_update_appointment(
@@ -108,7 +108,7 @@ class FDMDatabaseFunction
     }
 
     /**
-     * ecs_cancel_appointment(3 params)
+     * ecs_cancel_appointment(3 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -131,7 +131,7 @@ class FDMDatabaseFunction
     }
 
     /**
-     * ecs_mark_appointment_no_show(2 params)
+     * ecs_mark_appointment_no_show(2 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -161,7 +161,7 @@ class FDMDatabaseFunction
             ['appointment_id' => $appointmentId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /**
@@ -177,7 +177,7 @@ class FDMDatabaseFunction
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->connection->fetchAllAssociative(
             'SELECT * FROM ecs_get_appointments_list(
@@ -210,7 +210,7 @@ class FDMDatabaseFunction
         ?int $doctorId,
         ?int $patientId,
         ?string $status,
-        ?string $search
+        ?string $search,
     ): int {
         $total = $this->connection->fetchOne(
             'SELECT ecs_count_appointments(
@@ -239,7 +239,7 @@ class FDMDatabaseFunction
     // ------------------------------------------------------------------
 
     /**
-     * ecs_check_in_appointment(2 params)
+     * ecs_check_in_appointment(2 params).
      *
      * @return array{success: bool, message: string, queue_id: ?int, token_number: ?int}
      */
@@ -260,7 +260,7 @@ class FDMDatabaseFunction
     }
 
     /**
-     * ecs_check_in_walk_in(3 params)
+     * ecs_check_in_walk_in(3 params).
      *
      * @return array{success: bool, message: string, queue_id: ?int, token_number: ?int}
      */
@@ -293,7 +293,7 @@ class FDMDatabaseFunction
         ?string $status,
         ?string $search,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->connection->fetchAllAssociative(
             'SELECT * FROM ecs_get_queue_list(
@@ -431,7 +431,7 @@ class FDMDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 
