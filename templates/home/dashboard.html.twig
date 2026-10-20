@@ -82,12 +82,24 @@
         }
 
         .module {
-            width: 200px;
+            display: block;
+            box-sizing: border-box;
+            width: 260px;
             padding: 30px;
             background-color: rgba(255, 255, 255, 0.9);
             border-radius: 8px;
             text-align: center;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            color: #1f4e79;
+            text-decoration: none;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        a.module:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
     </style>
 </head>
@@ -114,31 +126,40 @@
 
     <div class="modules">
 
-        {% for module in modules %}
+    {% for module in modules %}
 
-    {% if module.module_name == 'Doctors' %}
+        {% set moduleName = module['module_name']|trim %}
+        {% set moduleKey = moduleName|lower %}
 
-        <a href="{{ path('doctors') }}" class="module">
-            {{ module.module_name }}
-        </a>
+        {% if moduleKey == 'doctors' %}
 
-    {% elseif module.module_name == 'Patients' %}
+            <a href="{{ path('doctors') }}" class="module">
+                {{ moduleName }}
+            </a>
 
-        <a href="{{ path('patient_list') }}" class="module">
-            {{ module.module_name }}
-        </a>
+        {% elseif moduleKey == 'patients' %}
 
-    {% else %}
+            <a href="{{ path('patient_list') }}" class="module">
+                {{ moduleName }}
+            </a>
 
-        <div class="module">
-            {{ module.module_name }}
-        </div>
+        {% elseif moduleKey == 'fdm' %}
 
-    {% endif %}
+            <a href="{{ path('fdm_dashboard') }}" class="module">
+                Front Desk
+            </a>
 
-{% endfor %}
+        {% else %}
 
-    </div>
+            <div class="module">
+                {{ moduleName }}
+            </div>
+
+        {% endif %}
+
+    {% endfor %}
+
+</div>
 
 </body>
 </html>

@@ -1,0 +1,29 @@
+{#
+    Front Desk Module (FDM) Layout
+    Location: templates/fdm/_layout.html.twig
+
+    Reuses the shared HMS layout and connects the FDM-specific
+    fdm_content block to the shared content block.
+#}
+
+{% extends 'layout/_layout.html.twig' %}
+
+{% block title %}Front Desk | HMS{% endblock %}
+
+{% block content %}
+    <div class="fdm-module">
+
+        <nav class="fdm-subnav" aria-label="Front Desk Navigation">
+            <a href="{{ path('fdm_dashboard') }}">Overview</a>
+            <a href="{{ path('fdm_appointment_list') }}">Appointments</a>
+            <a href="{{ path('fdm_check_in') }}">Check-in</a>
+            <a href="{{ path('fdm_queue') }}">Patient Queue</a>
+            <a href="{{ path('fdm_reports') }}">Reports</a>
+        </nav>
+
+        <div class="fdm-content">
+            {% block fdm_content %}{% endblock %}
+        </div>
+
+    </div>
+{% endblock %}

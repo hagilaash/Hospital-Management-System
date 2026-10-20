@@ -1,0 +1,1036 @@
+{
+  "ecs_hospital_now": {
+    "params": [],
+    "returns_table": null,
+    "returns_scalar": "timestamp without time zone"
+  },
+  "ecs_hospital_today": {
+    "params": [],
+    "returns_table": null,
+    "returns_scalar": "date"
+  },
+  "ecs_generate_appointment_code": {
+    "params": [],
+    "returns_table": null,
+    "returns_scalar": "character varying"
+  },
+  "ecs_next_queue_token": {
+    "params": [
+      {
+        "name": "p_visit_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      }
+    ],
+    "returns_table": null,
+    "returns_scalar": "integer"
+  },
+  "ecs_validate_appointment_input": {
+    "params": [
+      {
+        "name": "p_appointment_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_start_time",
+        "type": "time without time zone",
+        "has_default": false
+      },
+      {
+        "name": "p_duration_minutes",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_reason",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": null,
+    "returns_scalar": "character varying"
+  },
+  "ecs_appointment_conflict_message": {
+    "params": [
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_start",
+        "type": "timestamp without time zone",
+        "has_default": false
+      },
+      {
+        "name": "p_end",
+        "type": "timestamp without time zone",
+        "has_default": false
+      },
+      {
+        "name": "p_exclude_appointment_id",
+        "type": "integer",
+        "has_default": true
+      }
+    ],
+    "returns_table": null,
+    "returns_scalar": "character varying"
+  },
+  "ecs_create_appointment": {
+    "params": [
+      {
+        "name": "p_patient_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_appointment_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_start_time",
+        "type": "time without time zone",
+        "has_default": false
+      },
+      {
+        "name": "p_duration_minutes",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_reason",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_created_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_update_appointment": {
+    "params": [
+      {
+        "name": "p_appointment_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_appointment_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_start_time",
+        "type": "time without time zone",
+        "has_default": false
+      },
+      {
+        "name": "p_duration_minutes",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_reason",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_updated_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_cancel_appointment": {
+    "params": [
+      {
+        "name": "p_appointment_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_reason",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_cancelled_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_mark_appointment_no_show": {
+    "params": [
+      {
+        "name": "p_appointment_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_updated_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_get_appointment_by_id": {
+    "params": [
+      {
+        "name": "p_appointment_id",
+        "type": "integer",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_id",
+        "type": "integer"
+      },
+      {
+        "name": "patient_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_name",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_phone",
+        "type": "character varying"
+      },
+      {
+        "name": "doctor_id",
+        "type": "integer"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "specialization",
+        "type": "character varying"
+      },
+      {
+        "name": "department",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_date",
+        "type": "date"
+      },
+      {
+        "name": "start_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "end_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "duration_minutes",
+        "type": "integer"
+      },
+      {
+        "name": "status",
+        "type": "character varying"
+      },
+      {
+        "name": "reason",
+        "type": "character varying"
+      },
+      {
+        "name": "cancel_reason",
+        "type": "character varying"
+      },
+      {
+        "name": "cancelled_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "cancelled_by",
+        "type": "character varying"
+      },
+      {
+        "name": "queue_id",
+        "type": "integer"
+      },
+      {
+        "name": "token_number",
+        "type": "integer"
+      },
+      {
+        "name": "queue_status",
+        "type": "character varying"
+      },
+      {
+        "name": "arrival_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "created_by",
+        "type": "character varying"
+      },
+      {
+        "name": "updated_by",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_get_appointments_list": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_patient_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_status",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_search",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_limit",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_offset",
+        "type": "integer",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_id",
+        "type": "integer"
+      },
+      {
+        "name": "patient_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_name",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_phone",
+        "type": "character varying"
+      },
+      {
+        "name": "doctor_id",
+        "type": "integer"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "specialization",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_date",
+        "type": "date"
+      },
+      {
+        "name": "start_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "end_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "duration_minutes",
+        "type": "integer"
+      },
+      {
+        "name": "status",
+        "type": "character varying"
+      },
+      {
+        "name": "reason",
+        "type": "character varying"
+      },
+      {
+        "name": "queue_status",
+        "type": "character varying"
+      },
+      {
+        "name": "token_number",
+        "type": "integer"
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_count_appointments": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_patient_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_status",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_search",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": null,
+    "returns_scalar": "bigint"
+  },
+  "ecs_check_in_appointment": {
+    "params": [
+      {
+        "name": "p_appointment_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_checked_in_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      },
+      {
+        "name": "queue_id",
+        "type": "integer"
+      },
+      {
+        "name": "token_number",
+        "type": "integer"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_check_in_walk_in": {
+    "params": [
+      {
+        "name": "p_patient_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_checked_in_by",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      },
+      {
+        "name": "queue_id",
+        "type": "integer"
+      },
+      {
+        "name": "token_number",
+        "type": "integer"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_get_queue_list": {
+    "params": [
+      {
+        "name": "p_visit_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_status",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_search",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_limit",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_offset",
+        "type": "integer",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "queue_id",
+        "type": "integer"
+      },
+      {
+        "name": "token_number",
+        "type": "integer"
+      },
+      {
+        "name": "patient_id",
+        "type": "integer"
+      },
+      {
+        "name": "patient_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_name",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_phone",
+        "type": "character varying"
+      },
+      {
+        "name": "doctor_id",
+        "type": "integer"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "specialization",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "is_walk_in",
+        "type": "boolean"
+      },
+      {
+        "name": "visit_date",
+        "type": "date"
+      },
+      {
+        "name": "arrival_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "status",
+        "type": "character varying"
+      },
+      {
+        "name": "consultation_started_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "completed_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "waiting_minutes",
+        "type": "integer"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_count_queue": {
+    "params": [
+      {
+        "name": "p_visit_date",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_doctor_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_status",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_search",
+        "type": "character varying",
+        "has_default": false
+      }
+    ],
+    "returns_table": null,
+    "returns_scalar": "bigint"
+  },
+  "ecs_update_queue_status": {
+    "params": [
+      {
+        "name": "p_queue_id",
+        "type": "integer",
+        "has_default": false
+      },
+      {
+        "name": "p_new_status",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_updated_by",
+        "type": "character varying",
+        "has_default": false
+      },
+      {
+        "name": "p_reason",
+        "type": "character varying",
+        "has_default": true
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "success",
+        "type": "boolean"
+      },
+      {
+        "name": "message",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_get_fdm_dashboard_summary": {
+    "params": [
+      {
+        "name": "p_date",
+        "type": "date",
+        "has_default": true
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "report_date",
+        "type": "date"
+      },
+      {
+        "name": "registrations",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_total",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_scheduled",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_checked_in",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_completed",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_cancelled",
+        "type": "bigint"
+      },
+      {
+        "name": "appointments_no_show",
+        "type": "bigint"
+      },
+      {
+        "name": "queue_waiting",
+        "type": "bigint"
+      },
+      {
+        "name": "queue_in_consultation",
+        "type": "bigint"
+      },
+      {
+        "name": "queue_completed",
+        "type": "bigint"
+      },
+      {
+        "name": "queue_cancelled",
+        "type": "bigint"
+      },
+      {
+        "name": "walk_ins",
+        "type": "bigint"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_report_registrations": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "report_date",
+        "type": "date"
+      },
+      {
+        "name": "registrations",
+        "type": "bigint"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_report_appointments": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "doctor_id",
+        "type": "integer"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "specialization",
+        "type": "character varying"
+      },
+      {
+        "name": "total",
+        "type": "bigint"
+      },
+      {
+        "name": "scheduled",
+        "type": "bigint"
+      },
+      {
+        "name": "checked_in",
+        "type": "bigint"
+      },
+      {
+        "name": "completed",
+        "type": "bigint"
+      },
+      {
+        "name": "cancelled",
+        "type": "bigint"
+      },
+      {
+        "name": "no_show",
+        "type": "bigint"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_report_cancellations": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "appointment_id",
+        "type": "integer"
+      },
+      {
+        "name": "appointment_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_code",
+        "type": "character varying"
+      },
+      {
+        "name": "patient_name",
+        "type": "character varying"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "appointment_date",
+        "type": "date"
+      },
+      {
+        "name": "start_time",
+        "type": "time without time zone"
+      },
+      {
+        "name": "cancel_reason",
+        "type": "character varying"
+      },
+      {
+        "name": "cancelled_at",
+        "type": "timestamp with time zone"
+      },
+      {
+        "name": "cancelled_by",
+        "type": "character varying"
+      }
+    ],
+    "returns_scalar": null
+  },
+  "ecs_report_queue_summary": {
+    "params": [
+      {
+        "name": "p_date_from",
+        "type": "date",
+        "has_default": false
+      },
+      {
+        "name": "p_date_to",
+        "type": "date",
+        "has_default": false
+      }
+    ],
+    "returns_table": [
+      {
+        "name": "doctor_id",
+        "type": "integer"
+      },
+      {
+        "name": "doctor_name",
+        "type": "character varying"
+      },
+      {
+        "name": "specialization",
+        "type": "character varying"
+      },
+      {
+        "name": "total",
+        "type": "bigint"
+      },
+      {
+        "name": "walk_ins",
+        "type": "bigint"
+      },
+      {
+        "name": "waiting",
+        "type": "bigint"
+      },
+      {
+        "name": "in_consultation",
+        "type": "bigint"
+      },
+      {
+        "name": "completed",
+        "type": "bigint"
+      },
+      {
+        "name": "cancelled",
+        "type": "bigint"
+      },
+      {
+        "name": "avg_wait_minutes",
+        "type": "numeric"
+      },
+      {
+        "name": "avg_consultation_minutes",
+        "type": "numeric"
+      }
+    ],
+    "returns_scalar": null
+  }
+}
