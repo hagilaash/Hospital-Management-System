@@ -71,6 +71,7 @@ class WorklistEntryDTO
     public function hasConsultation(): bool
     {
         return $this->consultationId !== null;
+        print_r($this->consultationId);
     }
 
     private static function nullableString(mixed $value): ?string
