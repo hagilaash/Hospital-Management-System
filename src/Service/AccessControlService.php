@@ -29,6 +29,10 @@ class AccessControlService
     public const FDM_QUEUE_UPDATE = 'fdm.queue.update';
     public const FDM_REPORTS = 'fdm.reports';
 
+    // OP Consultation permissions
+    public const OPC_VIEW = 'opc.view';
+    public const OPC_MANAGE = 'opc.manage';
+
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,
@@ -41,6 +45,8 @@ class AccessControlService
         self::FDM_CHECK_IN,
         self::FDM_QUEUE_UPDATE,
         self::FDM_REPORTS,
+        self::OPC_VIEW,
+        self::OPC_MANAGE,
     ];
 
     public function __construct(
