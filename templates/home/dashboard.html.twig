@@ -148,6 +148,12 @@
             <a href="{{ path('fdm_dashboard') }}" class="module">
                 Front Desk
             </a>
+            
+        {% elseif moduleKey == 'op consultation' %}
+
+            <a href="{{ path('opc_dashboard') }}" class="module">
+                {{ moduleName }}
+            </a>    
 
         {% else %}
 

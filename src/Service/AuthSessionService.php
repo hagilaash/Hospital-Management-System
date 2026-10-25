@@ -5,12 +5,6 @@ namespace App\Service;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 
-/**
- * Owns the "who is logged in" part of the PHP session.
- *
- * Nothing else in the application reads or writes the authentication keys,
- * so the storage format can change in one place.
- */
 class AuthSessionService
 {
     private const KEY_USERNAME = 'auth.username';

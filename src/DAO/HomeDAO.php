@@ -2,17 +2,17 @@
 
 namespace App\DAO;
 
-use App\DB\DatabaseFunction;
+use App\DB\HomeDatabaseFunction;
 
 class HomeDAO
 {
     public function __construct(
-        private DatabaseFunction $databaseFunction,
+        private HomeDatabaseFunction $homeDatabaseFunction
     ) {
     }
 
     public function getHomeModules(): array
     {
-        return $this->databaseFunction->getHomeModules();
+        return $this->homeDatabaseFunction->getHomeModules();
     }
 }

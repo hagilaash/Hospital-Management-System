@@ -1,0 +1,22 @@
+{# Frame for the OP Consultation / Billing / Payment / RCM pages: the shared shell plus a workflow sub-navigation. #}
+{# Later batches add their own tabs to the list below. #}
+{% extends 'layout/_layout.html.twig' %}
+
+{% block content %}
+    {% set current = app.request.attributes.get('_route') ?? '' %}
+
+    <nav class="fdm-subnav" aria-label="Clinical workflow">
+        {% for item in [
+            {prefix: 'opc_dashboard', route: 'opc_dashboard', label: "Today's worklist"},
+            {prefix: 'opc_list', route: 'opc_list', label: 'Consultations'}
+        ] %}
+            {% if current starts with item.prefix %}
+                <a href="{{ path(item.route) }}" class="is-active" aria-current="page">{{ item.label }}</a>
+            {% else %}
+                <a href="{{ path(item.route) }}">{{ item.label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    {% block workflow_content %}{% endblock %}
+{% endblock %}

@@ -1,143 +1,84 @@
+{# Small helpers shared by the Front Desk pages. Import inside a block:  {% import 'fdm/_macros.html.twig' as ui %} #}
+
+{# A coloured status label for appointment and queue statuses. #}
 {% macro status_badge(status) %}
-{% set value = status|default('unknown')|lower %}
-{% set class = 'secondary' %}
-
-```
-{% if value in ['scheduled', 'waiting', 'checked_in', 'checked in', 'active'] %}
-    {% set class = 'primary' %}
-{% elseif value in ['completed', 'done'] %}
-    {% set class = 'success' %}
-{% elseif value in ['cancelled', 'canceled', 'no_show', 'no-show'] %}
-    {% set class = 'danger' %}
-{% elseif value in ['in_progress', 'in progress'] %}
-    {% set class = 'warning' %}
-{% endif %}
-
-<span class="badge bg-{{ class }}">
-    {{ status|default('Unknown')|replace({'_': ' '})|title }}
-</span>
-```
-
+    {% set classes = {
+        'Scheduled': 'badge-scheduled',
+        'Checked-In': 'badge-checkedin',
+        'Completed': 'badge-completed',
+        'Cancelled': 'badge-cancelled',
+        'No-Show': 'badge-noshow',
+        'Waiting': 'badge-waiting',
+        'In Consultation': 'badge-consulting',
+        'In Progress': 'badge-consulting',
+        'Ready for Billing': 'badge-waiting',
+        'Unpaid': 'badge-unpaid',
+        'Partially Paid': 'badge-partial',
+        'Paid': 'badge-paid',
+        'Recorded': 'badge-completed',
+        'Reversed': 'badge-cancelled',
+        'Pending Review': 'badge-waiting',
+        'Reviewed': 'badge-checkedin',
+        'Finalized': 'badge-completed'
+    } %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status }}</span>
 {% endmacro %}
 
-{% macro minutes(value) %}
-{% set mins = value|default(0) %}
-{% if mins < 0 %}
-{{ mins }} min
-{% elseif mins < 60 %}
-{{ mins }} min
-{% else %}
-{{ (mins / 60)|round(0, 'floor') }}h {{ mins % 60 }}m
-{% endif %}
-{% endmacro %}
+{# Previous / numbered / next links. params are the filters to keep; page_param is the query key for the page number. #}
+{% macro pager(route, params, page, total_pages, page_param) %}
+    {% if total_pages > 1 %}
+        {% set first_shown = max(1, page - 2) %}
+        {% set last_shown = min(total_pages, page + 2) %}
 
-{% macro pager(route, params, currentPage, totalPages, pageParameter) %}
-{% if totalPages > 1 %} <nav aria-label="Pagination"> <ul class="pagination justify-content-center">
+        <nav class="pager" aria-label="Pages">
+            {% if page > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page - 1})) }}">&laquo; Previous</a>
+            {% endif %}
 
-```
-            <li class="page-item {{ currentPage <= 1 ? 'disabled' : '' }}">
-                {% set previousParams = params|merge({(pageParameter): currentPage - 1}) %}
-                <a class="page-link"
-                   href="{{ currentPage > 1 ? path(route, previousParams) : '#' }}"
-                   aria-label="Previous page">
-                    Previous
-                </a>
-            </li>
+            {% if first_shown > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): 1})) }}">1</a>
+                {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+            {% endif %}
 
-            {% for page in 1..totalPages %}
-                {% set pageParams = params|merge({(pageParameter): page}) %}
-
-                <li class="page-item {{ page == currentPage ? 'active' : '' }}">
-                    <a class="page-link"
-                       href="{{ path(route, pageParams) }}"
-                       {% if page == currentPage %}aria-current="page"{% endif %}>
-                        {{ page }}
-                    </a>
-                </li>
+            {% for n in range(first_shown, last_shown) %}
+                {% if n == page %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                {% else %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): n})) }}">{{ n }}</a>
+                {% endif %}
             {% endfor %}
 
-            <li class="page-item {{ currentPage >= totalPages ? 'disabled' : '' }}">
-                {% set nextParams = params|merge({(pageParameter): currentPage + 1}) %}
-                <a class="page-link"
-                   href="{{ currentPage < totalPages ? path(route, nextParams) : '#' }}"
-                   aria-label="Next page">
-                    Next
-                </a>
-            </li>
+            {% if last_shown < total_pages %}
+                {% if last_shown < total_pages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): total_pages})) }}">{{ total_pages }}</a>
+            {% endif %}
 
-        </ul>
-    </nav>
-{% endif %}
-```
-
+            {% if page < total_pages %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page + 1})) }}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
 {% endmacro %}
 
-{% macro appointment_filters(list) %} <form method="get" class="row g-2 align-items-end mb-3"> <div class="col-md-5"> <label class="form-label" for="appointment-search">Search</label> <input
-             id="appointment-search"
-             type="search"
-             name="search"
-             class="form-control"
-             value="{{ list.search|default('') }}"
-             placeholder="Patient name or appointment code"
-         > </div>
-
-```
-    <div class="col-md-3">
-        <label class="form-label" for="appointment-status">Status</label>
-        <select id="appointment-status" name="status" class="form-select">
-            {% set selectedStatus = list.status|default('') %}
-            <option value="" {{ selectedStatus == '' ? 'selected' : '' }}>All statuses</option>
-            {% for status in ['scheduled', 'checked_in', 'in_progress', 'completed', 'cancelled', 'no_show'] %}
-                <option value="{{ status }}" {{ selectedStatus == status ? 'selected' : '' }}>
-                    {{ status|replace({'_': ' '})|title }}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Filter</button>
-    </div>
-
-    <div class="col-md-2">
-        <a href="{{ path('fdm_appointment_list') }}" class="btn btn-outline-secondary w-100">Reset</a>
-    </div>
-</form>
-```
-
+{# Hidden fields that carry the appointment-list filters through a POST, so the user returns to the same view. #}
+{% macro appointment_filters(list) %}
+    <input type="hidden" name="date_from" value="{{ list.dateFrom ?? '' }}">
+    <input type="hidden" name="date_to" value="{{ list.dateTo ?? '' }}">
+    <input type="hidden" name="doctor_id" value="{{ list.doctorId ?? '' }}">
+    <input type="hidden" name="patient_id" value="{{ list.patientId ?? '' }}">
+    <input type="hidden" name="status" value="{{ list.status }}">
+    <input type="hidden" name="search" value="{{ list.search ?? '' }}">
+    <input type="hidden" name="page" value="{{ list.page }}">
 {% endmacro %}
 
-{% macro queue_filters(queue) %} <form method="get" class="row g-2 align-items-end mb-3"> <div class="col-md-4"> <label class="form-label" for="queue-date">Date</label> <input
-             id="queue-date"
-             type="date"
-             name="date"
-             class="form-control"
-             value="{{ queue.date|default('') }}"
-         > </div>
-
-```
-    <div class="col-md-4">
-        <label class="form-label" for="queue-status">Status</label>
-        <select id="queue-status" name="status" class="form-select">
-            {% set selectedStatus = queue.status|default('') %}
-            <option value="" {{ selectedStatus == '' ? 'selected' : '' }}>All statuses</option>
-            {% for status in ['waiting', 'in_progress', 'completed', 'cancelled', 'no_show'] %}
-                <option value="{{ status }}" {{ selectedStatus == status ? 'selected' : '' }}>
-                    {{ status|replace({'_': ' '})|title }}
-                </option>
-            {% endfor %}
-        </select>
-    </div>
-
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-primary w-100">Filter</button>
-    </div>
-
-    <div class="col-md-2">
-        <a href="{{ path('fdm_queue') }}" class="btn btn-outline-secondary w-100">Reset</a>
-    </div>
-</form>
-```
-
+{# Same idea for the queue filters. #}
+{% macro queue_filters(queue) %}
+    <input type="hidden" name="date" value="{{ queue.visitDate ?? '' }}">
+    <input type="hidden" name="doctor_id" value="{{ queue.doctorId ?? '' }}">
+    <input type="hidden" name="status" value="{{ queue.status }}">
+    <input type="hidden" name="search" value="{{ queue.search ?? '' }}">
+    <input type="hidden" name="page" value="{{ queue.page }}">
 {% endmacro %}
 
+{# "1 h 5 min" / "12 min" #}
+{% macro minutes(value) %}{% if value >= 60 %}{{ value // 60 }} h {{ value % 60 }} min{% else %}{{ value }} min{% endif %}{% endmacro %}

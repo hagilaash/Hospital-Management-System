@@ -23,19 +23,20 @@ class LoginController extends AbstractController
     #[Route('/login', name: 'login', methods: ['GET', 'POST'])]
     public function login(Request $request): Response
     {
-        if ($this->authSession->isAuthenticated()) {
+        $this->logger->info('Login page requested');  // Log the request for the login page
+        if ($this->authSession->isAuthenticated()) {  // Redirect to home if already logged in
             return $this->redirectToRoute('home');
         }
 
         if (!$request->isMethod('POST')) {
-            return $this->render('login/login.html.twig');
+            return $this->render('login/login.html.twig'); // Render the login page for GET requests
         }
 
         if (!$this->isCsrfTokenValid('login', $request->request->getString('_token'))) {
             return $this->render('login/login.html.twig', [
                 'error' => 'Your session has expired. Please try again.',
             ], new Response('', Response::HTTP_BAD_REQUEST));
-        }
+        } // Check for CSRF token validity to prevent CSRF attacks
 
         $username = $request->request->getString('username');
         $password = $request->request->getString('password');
@@ -57,10 +58,10 @@ class LoginController extends AbstractController
                 'username' => $username,
             ], new Response('', Response::HTTP_SERVICE_UNAVAILABLE));
         }
-
+        
         if (($result['success'] ?? false) === true) {
+            $this->logger->info('User login successful.', [ 'username' => $username, ]); 
             $this->authSession->login($username);
-
             return $this->redirectToRoute('home');
         }
 

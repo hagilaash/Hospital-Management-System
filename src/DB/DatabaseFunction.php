@@ -22,12 +22,12 @@ class DatabaseFunction
         );
     }
 
-    public function getHomeModules(): array
-    {
-        $sql = 'SELECT * FROM function_get_home_modules()';
+    // public function getHomeModules(): array
+    // {
+    //     $sql = 'SELECT * FROM function_get_home_modules()';
 
-        return $this->connection->fetchAllAssociative($sql);
-    }
+    //     return $this->connection->fetchAllAssociative($sql);
+    // }
 
     /**
      * ecs_count_doctors().

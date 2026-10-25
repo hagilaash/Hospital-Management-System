@@ -1,0 +1,217 @@
+{% extends 'workflow/_layout.html.twig' %}
+
+{#
+  Variables from ConsultationController::dashboard():
+    worklist (PagedListDTO of WorklistEntryDTO), doctors, patient (selected active patient or null),
+    patients (PatientListDTO search results or null), patient_search
+#}
+
+{% block title %}OP Consultation | HMS{% endblock %}
+
+{% block workflow_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>OP Consultation</h1>
+        <p class="subtitle">
+            {% if worklist.today %}Today &ndash; {{ worklist.today|date('l, d F Y') }}{% else %}Today{% endif %}
+        </p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('opc_list') }}">All consultations</a>
+</div>
+
+{# ------------------------------------------------------------------ #}
+{#  A. Today's worklist: patients who are waiting or in consultation    #}
+{# ------------------------------------------------------------------ #}
+<section class="card" aria-labelledby="worklist-heading">
+    <h2 id="worklist-heading">Patients waiting for consultation</h2>
+
+    <form method="get" action="{{ path('opc_dashboard') }}" class="toolbar" role="search">
+        <div class="toolbar-field toolbar-grow">
+            <label for="search">Search by patient ID, name, phone or appointment number</label>
+            <input type="search" id="search" name="search" value="{{ worklist.filters.search ?? '' }}" maxlength="100">
+        </div>
+        <div class="toolbar-field">
+            <label for="doctor_id">Doctor</label>
+            <select id="doctor_id" name="doctor_id">
+                <option value="">All doctors</option>
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {{ worklist.filters.doctor_id == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="toolbar-actions">
+            <button type="submit" class="btn btn-primary">Search</button>
+            <a class="btn btn-secondary" href="{{ path('opc_dashboard') }}">Clear</a>
+        </div>
+    </form>
+
+    <p class="result-summary" aria-live="polite">
+        {% if worklist.total > 0 %}
+            {{ worklist.total }} {{ worklist.total == 1 ? 'patient' : 'patients' }} in the queue today
+        {% else %}
+            Nobody is waiting. Patients appear here after they are checked in at the front desk.
+        {% endif %}
+    </p>
+
+    {% if worklist.total == 0 %}
+        <div class="empty-state">
+            <a class="btn btn-secondary" href="{{ path('fdm_check_in') }}">Open front desk check-in</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Token</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Visit</th>
+                        <th scope="col">Arrived</th>
+                        <th scope="col">Queue</th>
+                        <th scope="col">Consultation</th>
+                        <th scope="col"><span class="sr-only">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for e in worklist.items %}
+                    <tr>
+                        <td data-label="Token"><span class="token-badge">#{{ e.tokenNumber }}</span></td>
+                        <td data-label="Patient">{{ e.patientName }}<br><span class="muted">{{ e.patientCode }} &middot; {{ e.patientPhone }}</span></td>
+                        <td data-label="Doctor">{{ e.doctorName }}<br><span class="muted">{{ e.specialization }}</span></td>
+                        <td data-label="Visit">
+                            {% if e.isWalkIn %}
+                                <span class="badge badge-walkin">Walk-in</span>
+                            {% else %}
+                                {{ e.appointmentCode }}<br><span class="muted">booked for {{ e.appointmentTime }}</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Arrived">{% if e.arrivalAt %}{{ e.arrivalAt|date('H:i') }}{% else %}&mdash;{% endif %}</td>
+                        <td data-label="Queue">{{ ui.status_badge(e.queueStatus) }}</td>
+                        <td data-label="Consultation">
+                            {% if e.hasConsultation %}
+                                {{ e.consultationCode }}<br>{{ ui.status_badge(e.consultationStatus) }}
+                            {% else %}
+                                <span class="muted">Not started</span>
+                            {% endif %}
+                        </td>
+                        <td data-label="Action" class="actions">
+                            {% if e.hasConsultation %}
+                                <a class="btn btn-primary btn-sm" href="{{ path('opc_show', {id: e.consultationId}) }}">Open</a>
+                            {% else %}
+                                <form method="post" action="{{ path('opc_start_queue', {id: e.queueId}) }}" class="inline-form">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('opc_start_queue_' ~ e.queueId) }}">
+                                    <button type="submit" class="btn btn-success btn-sm">Start consultation</button>
+                                </form>
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('opc_dashboard', {search: worklist.filters.search, doctor_id: worklist.filters.doctor_id}, worklist.page, worklist.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{# ------------------------------------------------------------------ #}
+{#  B. Start a consultation for a registered patient                     #}
+{# ------------------------------------------------------------------ #}
+<section class="card" aria-labelledby="patient-heading">
+    <h2 id="patient-heading">Start a consultation for a registered patient</h2>
+
+    {% if patient is not null %}
+
+        <div class="selected-patient">
+            <div>
+                <span class="muted">Patient</span>
+                <strong>{{ patient.fullName }}</strong>
+                <span class="muted">{{ patient.patientCode }} &middot; {{ patient.phone }}</span>
+            </div>
+            <a class="btn btn-secondary btn-sm" href="{{ path('opc_dashboard') }}">Change patient</a>
+        </div>
+
+        {% if doctors is empty %}
+            <div class="alert alert-warning" role="alert">There are no active doctors to choose from.</div>
+        {% endif %}
+
+        <form method="post" action="{{ path('opc_start_patient') }}" class="walkin-form">
+            <input type="hidden" name="_token" value="{{ csrf_token('opc_start_patient') }}">
+            <input type="hidden" name="patient_id" value="{{ patient.patientId }}">
+
+            <div class="field">
+                <label for="start_doctor">Doctor <span class="req" aria-hidden="true">*</span></label>
+                <select id="start_doctor" name="doctor_id" required>
+                    <option value="">Select a doctor&hellip;</option>
+                    {% for d in doctors %}
+                        <option value="{{ d.id }}">{{ d.name }} &ndash; {{ d.specialization }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Start consultation</button>
+        </form>
+        <p class="hint">
+            The patient record is used as it is; no new patient is created. If the patient has no appointment today, they are
+            added to today's queue as a walk-in. A patient with a scheduled appointment today must be checked in through the
+            appointment at the <a href="{{ path('fdm_check_in') }}">front desk</a>.
+        </p>
+
+    {% else %}
+
+        <p class="hint">Search for the patient by patient ID, name or phone number. Newly registered patients appear immediately.
+            Not registered yet? <a href="{{ path('patient_new') }}">Register the patient first</a>.</p>
+
+        <form method="get" action="{{ path('opc_dashboard') }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Patient ID, name or phone</label>
+                <input type="search" id="q" name="q" value="{{ patient_search }}" maxlength="100">
+            </div>
+            <div class="toolbar-actions">
+                <button type="submit" class="btn btn-primary">Find patient</button>
+            </div>
+        </form>
+
+        {% if patients is not null %}
+            {% if patients.total == 0 %}
+                <div class="empty-state">
+                    <p>No active patients match this search.</p>
+                    <a class="btn btn-secondary" href="{{ path('patient_new') }}">Register a new patient</a>
+                </div>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Patient ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Date of birth</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col"><span class="sr-only">Select</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in patients.patients %}
+                            <tr>
+                                <td data-label="Patient ID"><strong>{{ p.patientCode }}</strong></td>
+                                <td data-label="Name">{{ p.fullName }}</td>
+                                <td data-label="Date of birth">{{ p.dateOfBirth|date('d M Y') }}</td>
+                                <td data-label="Phone">{{ p.phone }}</td>
+                                <td data-label="Select" class="actions">
+                                    <a class="btn btn-primary btn-sm" href="{{ path('opc_dashboard', {patient_id: p.patientId}) }}">Select</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {{ ui.pager('opc_dashboard', {q: patients.search}, patients.page, patients.totalPages, 'qpage') }}
+            {% endif %}
+        {% endif %}
+
+    {% endif %}
+</section>
+
+{% endblock %}

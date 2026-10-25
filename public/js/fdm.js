@@ -11,10 +11,12 @@
 
     document.addEventListener('submit', function (event) {
         var form = event.target;
-        if (form && form.hasAttribute && form.hasAttribute('data-confirm')) {
-            if (!window.confirm(form.getAttribute('data-confirm'))) {
-                event.preventDefault();
-            }
+        var button = event.submitter;
+        // A confirmation can sit on the form or on the specific submit button that was pressed.
+        var question = (button && button.getAttribute && button.getAttribute('data-confirm'))
+            || (form && form.getAttribute && form.getAttribute('data-confirm'));
+        if (question && !window.confirm(question)) {
+            event.preventDefault();
         }
     });
 

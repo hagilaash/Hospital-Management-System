@@ -1,0 +1,40 @@
+{# Shared layout for clinical workflow modules #}
+
+{% extends 'layout/_layout.html.twig' %}
+
+{% block title %}Clinical Workflow | HMS{% endblock %}
+
+{% block content %}
+
+    {% set current = app.request.attributes.get('_route') ?? '' %}
+
+    <div class="fdm-module">
+
+        <nav class="fdm-subnav" aria-label="Clinical workflow">
+
+            {% for item in [
+                {prefix: 'opc_dashboard', route: 'opc_dashboard', label: "Today's worklist"},
+                {prefix: 'opc_list', route: 'opc_list', label: 'Consultations'}
+            ] %}
+
+                {% if current starts with item.prefix %}
+                    <a href="{{ path(item.route) }}"
+                       class="is-active"
+                       aria-current="page">
+                        {{ item.label }}
+                    </a>
+                {% else %}
+                    <a href="{{ path(item.route) }}">
+                        {{ item.label }}
+                    </a>
+                {% endif %}
+
+            {% endfor %}
+
+        </nav>
+
+        {% block workflow_content %}{% endblock %}
+
+    </div>
+
+{% endblock %}
