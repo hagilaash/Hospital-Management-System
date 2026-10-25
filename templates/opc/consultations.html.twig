@@ -1,0 +1,116 @@
+{% extends 'workflow/_layout.html.twig' %}
+
+{#
+  Variables from ConsultationController::consultations():
+    list (PagedListDTO of ConsultationDTO), doctors, statuses
+#}
+
+{% block title %}Consultations | HMS{% endblock %}
+
+{% block workflow_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <h1>Consultations</h1>
+    <a class="btn btn-secondary" href="{{ path('opc_dashboard') }}">Today's worklist</a>
+</div>
+
+<form method="get" action="{{ path('opc_list') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100"
+                   placeholder="Consultation no., patient ID, name or phone">
+        </div>
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                {% for s in statuses %}
+                    <option value="{{ s }}" {{ list.filters.status == s ? 'selected' }}>{{ s == 'all' ? 'All statuses' : s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="doctor_id">Doctor</label>
+            <select id="doctor_id" name="doctor_id">
+                <option value="">All doctors</option>
+                {% for d in doctors %}
+                    <option value="{{ d.id }}" {{ list.filters.doctor_id == d.id ? 'selected' }}>{{ d.name }} &ndash; {{ d.specialization }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="date_from">Started from</label>
+            <input type="date" id="date_from" name="date_from" value="{{ list.filters.date_from ?? '' }}">
+        </div>
+        <div class="field">
+            <label for="date_to">Started to</label>
+            <input type="date" id="date_to" name="date_to" value="{{ list.filters.date_to ?? '' }}">
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('opc_list') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}
+            Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }}
+            {{ list.total == 1 ? 'consultation' : 'consultations' }}
+        {% else %}
+            No consultations found.
+        {% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>No consultations match these filters.</p>
+            <a class="btn btn-primary" href="{{ path('opc_dashboard') }}">Start a consultation</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Consultation</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Visit</th>
+                        <th scope="col">Started</th>
+                        <th scope="col">Diagnosis</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in list.items %}
+                    <tr>
+                        <td data-label="Consultation"><a href="{{ path('opc_show', {id: c.consultationId}) }}"><strong>{{ c.consultationCode }}</strong></a></td>
+                        <td data-label="Patient">{{ c.patientName }}<br><span class="muted">{{ c.patientCode }}</span></td>
+                        <td data-label="Doctor">{{ c.doctorName }}<br><span class="muted">{{ c.specialization }}</span></td>
+                        <td data-label="Visit">
+                            {% if c.appointmentCode %}{{ c.appointmentCode }}{% else %}<span class="badge badge-walkin">Walk-in</span>{% endif %}
+                            <span class="token-chip" title="Queue token">#{{ c.tokenNumber }}</span>
+                        </td>
+                        <td data-label="Started">{{ c.startedAt|date('d M Y, H:i') }}</td>
+                        <td data-label="Diagnosis">{{ c.diagnosis ? c.diagnosis|slice(0, 60) : '—' }}{% if c.diagnosis and c.diagnosis|length > 60 %}&hellip;{% endif %}</td>
+                        <td data-label="Status">{{ ui.status_badge(c.status) }}</td>
+                        <td data-label="Open" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('opc_show', {id: c.consultationId}) }}">Open</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('opc_list', {
+            status: list.filters.status, doctor_id: list.filters.doctor_id, search: list.filters.search,
+            date_from: list.filters.date_from, date_to: list.filters.date_to
+        }, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}
