@@ -16,12 +16,12 @@ use Doctrine\DBAL\Connection;
 class ConsultationDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
     /**
-     * ecs_start_consultation(2 params)
+     * ecs_start_consultation(2 params).
      *
      * @return array{success: bool, message: string, consultation_id: ?int, consultation_code: ?string}
      */
@@ -39,7 +39,7 @@ class ConsultationDatabaseFunction
     }
 
     /**
-     * ecs_start_consultation_for_patient(3 params)
+     * ecs_start_consultation_for_patient(3 params).
      *
      * @return array{success: bool, message: string, consultation_id: ?int, consultation_code: ?string}
      */
@@ -58,7 +58,7 @@ class ConsultationDatabaseFunction
     }
 
     /**
-     * ecs_save_consultation(7 params)
+     * ecs_save_consultation(7 params).
      *
      * @return array{success: bool, message: string, status: ?string}
      */
@@ -69,7 +69,7 @@ class ConsultationDatabaseFunction
         ?string $advice,
         ?string $notes,
         bool $sendToBilling,
-        string $updatedBy
+        string $updatedBy,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_save_consultation(
@@ -103,7 +103,7 @@ class ConsultationDatabaseFunction
             ['consultation_id' => $consultationId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_consultations_list(7 params) */
@@ -114,7 +114,7 @@ class ConsultationDatabaseFunction
         ?string $dateFrom,
         ?string $dateTo,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->connection->fetchAllAssociative(
             'SELECT * FROM ecs_get_consultations_list(
@@ -144,7 +144,7 @@ class ConsultationDatabaseFunction
         ?int $doctorId,
         ?string $search,
         ?string $dateFrom,
-        ?string $dateTo
+        ?string $dateTo,
     ): int {
         $total = $this->connection->fetchOne(
             'SELECT ecs_count_consultations(
@@ -201,7 +201,7 @@ class ConsultationDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 

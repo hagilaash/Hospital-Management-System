@@ -39,7 +39,7 @@ class ConsultationController extends AbstractController
     public function __construct(
         private ConsultationService $consultationService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -74,7 +74,7 @@ class ConsultationController extends AbstractController
         $patient = $this->loadActivePatient(Input::positiveInt($query->getString('patient_id')));
         $patientSearch = $query->getString('q');
         $patients = null;
-        if ($patient === null && trim($patientSearch) !== '') {
+        if (null === $patient && '' !== trim($patientSearch)) {
             $patients = $this->searchPatients($patientSearch, $query->getInt('qpage', 1));
         }
 
@@ -141,7 +141,7 @@ class ConsultationController extends AbstractController
     {
         $back = $this->redirectToRoute('opc_dashboard');
 
-        if (!$this->isCsrfTokenValid('opc_start_queue_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('opc_start_queue_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -171,7 +171,7 @@ class ConsultationController extends AbstractController
         $doctorId = Input::positiveInt($request->request->getString('doctor_id'));
 
         // On any failure the page is shown again with the same patient selected.
-        $back = $this->redirectToRoute('opc_dashboard', $patientId !== null ? ['patient_id' => $patientId] : []);
+        $back = $this->redirectToRoute('opc_dashboard', null !== $patientId ? ['patient_id' => $patientId] : []);
 
         if (!$this->isCsrfTokenValid('opc_start_patient', $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
@@ -188,7 +188,7 @@ class ConsultationController extends AbstractController
             return $back;
         }
 
-        if (!$result['success'] && $result['errors'] !== []) {
+        if (!$result['success'] && [] !== $result['errors']) {
             $result['message'] = implode('. ', $result['errors']);
         }
 
@@ -241,11 +241,11 @@ class ConsultationController extends AbstractController
         $consultation->advice = $typed->advice;
         $consultation->notes = $typed->notes;
 
-        if (!$this->isCsrfTokenValid('opc_save_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('opc_save_'.$id, $request->request->getString('_token'))) {
             return $this->renderConsultation($consultation, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
-        $send = $request->request->getString('action') === 'send';
+        $send = 'send' === $request->request->getString('action');
 
         try {
             $result = $this->consultationService->saveConsultation($id, $typed, $send, $this->currentUsername());
@@ -261,7 +261,7 @@ class ConsultationController extends AbstractController
             return $this->redirectToRoute('opc_show', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderConsultation($consultation, $result['errors'], $status, $result['message']);
     }
@@ -283,7 +283,7 @@ class ConsultationController extends AbstractController
      */
     private function afterStart(array $result, RedirectResponse $back): Response
     {
-        if ($result['consultation_id'] !== null && $result['success']) {
+        if (null !== $result['consultation_id'] && $result['success']) {
             $this->addFlash('success', sprintf('%s. Consultation number: %s', $result['message'], $result['consultation_code']));
 
             return $this->redirectToRoute('opc_show', ['id' => $result['consultation_id']]);
@@ -315,7 +315,7 @@ class ConsultationController extends AbstractController
     /** The patient, only when active (inactive patients cannot be consulted). */
     private function loadActivePatient(?int $patientId): ?PatientDTO
     {
-        if ($patientId === null) {
+        if (null === $patientId) {
             return null;
         }
 
@@ -328,7 +328,7 @@ class ConsultationController extends AbstractController
             return null;
         }
 
-        return $patient !== null && $patient->isActive ? $patient : null;
+        return null !== $patient && $patient->isActive ? $patient : null;
     }
 
     private function searchPatients(string $search, int $page): ?PatientListDTO
@@ -355,7 +355,7 @@ class ConsultationController extends AbstractController
             return $this->redirectToRoute('opc_dashboard');
         }
 
-        if ($consultation === null) {
+        if (null === $consultation) {
             $this->addFlash('error', self::MESSAGE_NOT_FOUND);
 
             return $this->redirectToRoute('opc_dashboard');
@@ -371,7 +371,7 @@ class ConsultationController extends AbstractController
         ConsultationDTO $consultation,
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('opc/show.html.twig', [
             'consultation' => $consultation,

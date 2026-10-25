@@ -77,7 +77,7 @@ class ConsultationDTO
         $dto->appointmentCode = self::nullableString($row['appointment_code'] ?? null);
         $dto->appointmentDate = self::nullableString($row['appointment_date'] ?? null);
         $time = $row['appointment_time'] ?? null;
-        $dto->appointmentTime = is_scalar($time) && (string) $time !== '' ? substr((string) $time, 0, 5) : null;
+        $dto->appointmentTime = is_scalar($time) && '' !== (string) $time ? substr((string) $time, 0, 5) : null;
 
         $dto->queueId = self::nullableInt($row['queue_id'] ?? null);
         $dto->tokenNumber = self::nullableInt($row['token_number'] ?? null);
@@ -121,17 +121,17 @@ class ConsultationDTO
     /** Only a consultation in progress can be edited. */
     public function isEditable(): bool
     {
-        return $this->status === self::STATUS_IN_PROGRESS;
+        return self::STATUS_IN_PROGRESS === $this->status;
     }
 
     public function isReadyForBilling(): bool
     {
-        return $this->status === self::STATUS_READY_FOR_BILLING;
+        return self::STATUS_READY_FOR_BILLING === $this->status;
     }
 
     public function isCompleted(): bool
     {
-        return $this->status === self::STATUS_COMPLETED;
+        return self::STATUS_COMPLETED === $this->status;
     }
 
     private static function nullableString(mixed $value): ?string

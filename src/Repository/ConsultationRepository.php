@@ -14,7 +14,7 @@ use App\DTO\WorklistEntryDTO;
 class ConsultationRepository
 {
     public function __construct(
-        private ConsultationDAO $consultationDAO
+        private ConsultationDAO $consultationDAO,
     ) {
     }
 
@@ -46,7 +46,7 @@ class ConsultationRepository
     {
         $row = $this->consultationDAO->getConsultationById($consultationId);
 
-        return $row === null ? null : ConsultationDTO::fromRow($row);
+        return null === $row ? null : ConsultationDTO::fromRow($row);
     }
 
     /**
@@ -59,7 +59,7 @@ class ConsultationRepository
         ?string $dateFrom,
         ?string $dateTo,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         $rows = $this->consultationDAO->getConsultationsList($status, $doctorId, $search, $dateFrom, $dateTo, $limit, $offset);
 

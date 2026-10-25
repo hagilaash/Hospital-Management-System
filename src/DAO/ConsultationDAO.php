@@ -13,7 +13,7 @@ use App\DTO\ConsultationDTO;
 class ConsultationDAO
 {
     public function __construct(
-        private ConsultationDatabaseFunction $consultationDatabaseFunction
+        private ConsultationDatabaseFunction $consultationDatabaseFunction,
     ) {
     }
 
@@ -52,7 +52,7 @@ class ConsultationDAO
         ?string $dateFrom,
         ?string $dateTo,
         int $limit,
-        int $offset
+        int $offset,
     ): array {
         return $this->consultationDatabaseFunction->getConsultationsList($status, $doctorId, $search, $dateFrom, $dateTo, $limit, $offset);
     }

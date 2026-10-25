@@ -20,18 +20,18 @@ final class Input
      */
     public static function clean(?string $value): string
     {
-        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
+        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value);
-        if ($value === null) {
+        if (null === $value) {
             return '';
         }
 
         $value = preg_replace('/\s+/u', ' ', $value);
 
-        return $value === null ? '' : trim($value);
+        return null === $value ? '' : trim($value);
     }
 
     /**
@@ -41,38 +41,38 @@ final class Input
      */
     public static function cleanMultiline(?string $value): string
     {
-        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
+        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = str_replace(["\r\n", "\r"], "\n", $value);
         $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/u', '', $value);
 
-        return $value === null ? '' : trim($value);
+        return null === $value ? '' : trim($value);
     }
 
     public static function nullIfEmpty(string $value): ?string
     {
-        return $value === '' ? null : $value;
+        return '' === $value ? null : $value;
     }
 
     /** A search term: cleaned, cut to $max characters, null when empty. */
     public static function search(?string $value, int $max = 100): ?string
     {
-        if ($value === null) {
+        if (null === $value) {
             return null;
         }
 
         $clean = trim(mb_substr(self::clean($value), 0, $max));
 
-        return $clean === '' ? null : $clean;
+        return '' === $clean ? null : $clean;
     }
 
     /** Digits only, 1..999999999 (fits a PostgreSQL integer); anything else is null. */
     public static function positiveInt(?string $value): ?int
     {
         $value = trim((string) $value);
-        if ($value === '' || !ctype_digit($value) || strlen($value) > 9) {
+        if ('' === $value || !ctype_digit($value) || strlen($value) > 9) {
             return null;
         }
         $number = (int) $value;
@@ -86,8 +86,8 @@ final class Input
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         $problems = \DateTimeImmutable::getLastErrors();
 
-        return $date !== false
-            && ($problems === false || ($problems['warning_count'] === 0 && $problems['error_count'] === 0))
+        return false !== $date
+            && (false === $problems || (0 === $problems['warning_count'] && 0 === $problems['error_count']))
             && $date->format('Y-m-d') === $value;
     }
 
@@ -96,7 +96,7 @@ final class Input
     {
         $value = trim((string) $value);
 
-        return $value !== '' && self::isValidDate($value) ? $value : null;
+        return '' !== $value && self::isValidDate($value) ? $value : null;
     }
 
     /**
@@ -109,7 +109,7 @@ final class Input
     {
         $value = trim((string) $value);
         foreach ($allowed as $candidate) {
-            if (strcasecmp($value, $candidate) === 0) {
+            if (0 === strcasecmp($value, $candidate)) {
                 return $candidate;
             }
         }
@@ -120,6 +120,6 @@ final class Input
     /** Booleans arrive from PDO as true/false or as 't'/'f' text depending on the driver. */
     public static function isTrue(mixed $value): bool
     {
-        return $value === true || $value === 't' || $value === 'true' || $value === 1 || $value === '1';
+        return true === $value || 't' === $value || 'true' === $value || 1 === $value || '1' === $value;
     }
 }

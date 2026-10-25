@@ -54,7 +54,7 @@ class WorklistEntryDTO
         $dto->appointmentId = self::nullableInt($row['appointment_id'] ?? null);
         $dto->appointmentCode = self::nullableString($row['appointment_code'] ?? null);
         $time = $row['appointment_time'] ?? null;
-        $dto->appointmentTime = is_scalar($time) && (string) $time !== '' ? substr((string) $time, 0, 5) : null;
+        $dto->appointmentTime = is_scalar($time) && '' !== (string) $time ? substr((string) $time, 0, 5) : null;
         $walkIn = $row['is_walk_in'] ?? false;
         $dto->isWalkIn = is_bool($walkIn) ? $walkIn : in_array(strtolower((string) $walkIn), ['t', 'true', '1', 'y', 'yes', 'on'], true);
 
@@ -70,7 +70,7 @@ class WorklistEntryDTO
 
     public function hasConsultation(): bool
     {
-        return $this->consultationId !== null;
+        return null !== $this->consultationId;
         print_r($this->consultationId);
     }
 

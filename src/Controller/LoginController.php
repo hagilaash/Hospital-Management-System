@@ -58,10 +58,11 @@ class LoginController extends AbstractController
                 'username' => $username,
             ], new Response('', Response::HTTP_SERVICE_UNAVAILABLE));
         }
-        
+
         if (($result['success'] ?? false) === true) {
-            $this->logger->info('User login successful.', [ 'username' => $username, ]); 
+            $this->logger->info('User login successful.', ['username' => $username]);
             $this->authSession->login($username);
+
             return $this->redirectToRoute('home');
         }
 

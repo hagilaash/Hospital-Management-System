@@ -7,7 +7,7 @@ use App\DB\HomeDatabaseFunction;
 class HomeDAO
 {
     public function __construct(
-        private HomeDatabaseFunction $homeDatabaseFunction
+        private HomeDatabaseFunction $homeDatabaseFunction,
     ) {
     }
 

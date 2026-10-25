@@ -51,7 +51,7 @@ class ConsultationService
     public function __construct(
         private ConsultationRepository $consultationRepository,
         private PatientService $patientService,
-        private FDMService $fdmService
+        private FDMService $fdmService,
     ) {
     }
 
@@ -127,14 +127,14 @@ class ConsultationService
         ?string $search,
         ?string $dateFrom,
         ?string $dateTo,
-        int $page = 1
+        int $page = 1,
     ): PagedListDTO {
         $status = Input::whitelist($status, self::STATUS_FILTERS, 'all');
         $doctor = Input::positiveInt($doctorId);
         $search = Input::search($search);
         $from = Input::dateOrNull($dateFrom);
         $to = Input::dateOrNull($dateTo);
-        if ($from !== null && $to !== null && $from > $to) {
+        if (null !== $from && null !== $to && $from > $to) {
             [$from, $to] = [$to, $from];
         }
 
@@ -168,7 +168,7 @@ class ConsultationService
             return $this->failure('Queue entry not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -185,11 +185,11 @@ class ConsultationService
         if ($doctorId < 1) {
             $errors['doctorId'] = 'Select a doctor';
         }
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -211,13 +211,13 @@ class ConsultationService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $consultation = $this->normalize($input);
         $errors = $this->validate($consultation, $sendToBilling);
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -229,7 +229,7 @@ class ConsultationService
         $result['status'] = isset($db['status']) ? (string) $db['status'] : null;
         if (!$result['success']) {
             $field = $this->fieldForMessage($result['message']);
-            if ($field !== null) {
+            if (null !== $field) {
                 $result['errors'][$field] = $result['message'];
             }
         }
@@ -258,24 +258,24 @@ class ConsultationService
     {
         $errors = [];
 
-        if ($consultation->chiefComplaint !== null && mb_strlen($consultation->chiefComplaint) > self::MAX_CHIEF_COMPLAINT) {
-            $errors['chiefComplaint'] = 'Chief complaint must be ' . self::MAX_CHIEF_COMPLAINT . ' characters or fewer';
+        if (null !== $consultation->chiefComplaint && mb_strlen($consultation->chiefComplaint) > self::MAX_CHIEF_COMPLAINT) {
+            $errors['chiefComplaint'] = 'Chief complaint must be '.self::MAX_CHIEF_COMPLAINT.' characters or fewer';
         }
-        if ($consultation->diagnosis !== null && mb_strlen($consultation->diagnosis) > self::MAX_LONG_TEXT) {
-            $errors['diagnosis'] = 'Diagnosis must be ' . self::MAX_LONG_TEXT . ' characters or fewer';
+        if (null !== $consultation->diagnosis && mb_strlen($consultation->diagnosis) > self::MAX_LONG_TEXT) {
+            $errors['diagnosis'] = 'Diagnosis must be '.self::MAX_LONG_TEXT.' characters or fewer';
         }
-        if ($consultation->advice !== null && mb_strlen($consultation->advice) > self::MAX_LONG_TEXT) {
-            $errors['advice'] = 'Advice must be ' . self::MAX_LONG_TEXT . ' characters or fewer';
+        if (null !== $consultation->advice && mb_strlen($consultation->advice) > self::MAX_LONG_TEXT) {
+            $errors['advice'] = 'Advice must be '.self::MAX_LONG_TEXT.' characters or fewer';
         }
-        if ($consultation->notes !== null && mb_strlen($consultation->notes) > self::MAX_NOTES) {
-            $errors['notes'] = 'Notes must be ' . self::MAX_NOTES . ' characters or fewer';
+        if (null !== $consultation->notes && mb_strlen($consultation->notes) > self::MAX_NOTES) {
+            $errors['notes'] = 'Notes must be '.self::MAX_NOTES.' characters or fewer';
         }
 
         if ($sendToBilling) {
-            if ($consultation->chiefComplaint === null) {
+            if (null === $consultation->chiefComplaint) {
                 $errors['chiefComplaint'] ??= 'A chief complaint is required before sending to billing';
             }
-            if ($consultation->diagnosis === null) {
+            if (null === $consultation->diagnosis) {
                 $errors['diagnosis'] ??= 'A diagnosis is required before sending to billing';
             }
         }
