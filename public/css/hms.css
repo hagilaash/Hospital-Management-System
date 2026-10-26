@@ -989,3 +989,55 @@ select {
         width: 100%;
     }
 }
+
+/* =====================================================================
+   Workflow modules (OP Consultation, Billing, Payment, RCM) - Batch 1.
+   Appended after the Patient and FDM styles; nothing above is changed.
+   ===================================================================== */
+
+textarea {
+    width: 100%;
+    min-height: 72px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--hms-text);
+    background: #ffffff;
+    border: 1px solid #b9c2cd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+textarea:focus-visible {
+    outline: 3px solid #7aa7d1;
+    outline-offset: 2px;
+}
+
+.field-invalid textarea {
+    border-color: var(--hms-danger);
+    background: #fff8f7;
+}
+
+/* Status labels used by billing, payment and RCM (added now so the macro can use them). */
+.badge-unpaid {
+    background: #fdecea;
+    color: var(--hms-danger-dark);
+}
+
+.badge-partial {
+    background: #fff4e0;
+    color: #6b4200;
+}
+
+.badge-paid {
+    background: #e8f5e9;
+    color: var(--hms-success-dark);
+}
+
+/* Money columns: right aligned, digits of equal width. */
+.money {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
