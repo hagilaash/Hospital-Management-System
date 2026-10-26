@@ -1,0 +1,143 @@
+{% extends 'workflow/_layout.html.twig' %}
+
+{#
+  Variables from ConsultationController::renderConsultation():
+    consultation (ConsultationDTO), errors (propertyName => message), form_error
+#}
+
+{% block title %}{{ consultation.consultationCode }} | HMS{% endblock %}
+
+{% block workflow_content %}
+{% import 'fdm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ consultation.consultationCode }}</h1>
+        <p class="subtitle">
+            {{ ui.status_badge(consultation.status) }}
+            <span class="muted">started {{ consultation.startedAt|date('d M Y, H:i') }}</span>
+        </p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('opc_dashboard') }}">&laquo; Worklist</a>
+        <a class="btn btn-secondary" href="{{ path('patient_show', {id: consultation.patientId}) }}">Patient record</a>
+    </div>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+{% if consultation.isReadyForBilling %}
+    <div class="alert alert-success" role="status">
+        This consultation has been sent to billing and can no longer be edited.
+        {% if consultation.readyForBillingAt %}<span class="muted">(sent {{ consultation.readyForBillingAt|date('d M Y, H:i') }})</span>{% endif %}
+    </div>
+{% elseif consultation.isCompleted %}
+    <div class="alert alert-success" role="status">This visit has been finalized.</div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ consultation.patientName }}</dd></div>
+            <div><dt>Patient ID</dt><dd>{{ consultation.patientCode }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ consultation.patientPhone|default('Not recorded') }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ consultation.patientGender|default('Not recorded') }}</dd></div>
+            <div>
+                <dt>Date of birth</dt>
+                <dd>
+                    {% if consultation.patientDob %}
+                        {{ consultation.patientDob|date('d M Y') }}
+                        <span class="muted">({{ date().diff(date(consultation.patientDob)).y }} years)</span>
+                    {% else %}Not recorded{% endif %}
+                </dd>
+            </div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Visit</h2>
+        <dl class="detail-list">
+            <div><dt>Doctor</dt><dd>{{ consultation.doctorName }}<br><span class="muted">{{ consultation.specialization }}</span></dd></div>
+            <div>
+                <dt>Appointment</dt>
+                <dd>
+                    {% if consultation.appointmentId %}
+                        <a href="{{ path('fdm_appointment_show', {id: consultation.appointmentId}) }}">{{ consultation.appointmentCode }}</a>
+                        <span class="muted">{{ consultation.appointmentDate|date('d M Y') }}, {{ consultation.appointmentTime }}</span>
+                    {% else %}
+                        <span class="badge badge-walkin">Walk-in</span> <span class="muted">no appointment</span>
+                    {% endif %}
+                </dd>
+            </div>
+            <div><dt>Queue token</dt><dd>#{{ consultation.tokenNumber }} {{ ui.status_badge(consultation.queueStatus) }}</dd></div>
+            <div><dt>Last updated</dt><dd>{{ consultation.updatedAt|date('d M Y, H:i') }}{% if consultation.updatedBy %} <span class="muted">by {{ consultation.updatedBy }}</span>{% endif %}</dd></div>
+        </dl>
+    </section>
+
+</div>
+
+<section class="card" aria-labelledby="clinical-heading">
+    <h2 id="clinical-heading">Consultation notes</h2>
+
+    {% if consultation.isEditable %}
+
+        <form method="post" action="{{ path('opc_save', {id: consultation.consultationId}) }}" class="patient-form" novalidate>
+            <input type="hidden" name="_token" value="{{ csrf_token('opc_save_' ~ consultation.consultationId) }}">
+
+            <div class="form-grid">
+                <div class="field field-wide {{ errors.chiefComplaint is defined ? 'field-invalid' }}">
+                    <label for="chief_complaint">Chief complaint <span class="req" aria-hidden="true">*</span></label>
+                    <textarea id="chief_complaint" name="chief_complaint" rows="2" maxlength="500"
+                              {% if errors.chiefComplaint is defined %}aria-invalid="true" aria-describedby="chief_complaint-error"{% endif %}>{{ consultation.chiefComplaint }}</textarea>
+                    <small class="hint">Required before the consultation is sent to billing.</small>
+                    {% if errors.chiefComplaint is defined %}<p class="field-error" id="chief_complaint-error">{{ errors.chiefComplaint }}</p>{% endif %}
+                </div>
+
+                <div class="field field-wide {{ errors.diagnosis is defined ? 'field-invalid' }}">
+                    <label for="diagnosis">Diagnosis <span class="req" aria-hidden="true">*</span></label>
+                    <textarea id="diagnosis" name="diagnosis" rows="3" maxlength="1000"
+                              {% if errors.diagnosis is defined %}aria-invalid="true" aria-describedby="diagnosis-error"{% endif %}>{{ consultation.diagnosis }}</textarea>
+                    <small class="hint">Required before the consultation is sent to billing.</small>
+                    {% if errors.diagnosis is defined %}<p class="field-error" id="diagnosis-error">{{ errors.diagnosis }}</p>{% endif %}
+                </div>
+
+                <div class="field field-wide {{ errors.advice is defined ? 'field-invalid' }}">
+                    <label for="advice">Treatment advice</label>
+                    <textarea id="advice" name="advice" rows="3" maxlength="1000"
+                              {% if errors.advice is defined %}aria-invalid="true" aria-describedby="advice-error"{% endif %}>{{ consultation.advice }}</textarea>
+                    {% if errors.advice is defined %}<p class="field-error" id="advice-error">{{ errors.advice }}</p>{% endif %}
+                </div>
+
+                <div class="field field-wide {{ errors.notes is defined ? 'field-invalid' }}">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" rows="3" maxlength="2000"
+                              {% if errors.notes is defined %}aria-invalid="true" aria-describedby="notes-error"{% endif %}>{{ consultation.notes }}</textarea>
+                    {% if errors.notes is defined %}<p class="field-error" id="notes-error">{{ errors.notes }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" name="action" value="save" class="btn btn-secondary">Save</button>
+                <button type="submit" name="action" value="send" class="btn btn-primary"
+                        data-confirm="Send this consultation to billing? It can no longer be edited afterwards.">Save and send to billing</button>
+            </div>
+            <p class="hint"><span class="req" aria-hidden="true">*</span> Required to send to billing. The appointment is not finalized by this step.</p>
+        </form>
+
+    {% else %}
+
+        <dl class="detail-list">
+            <div><dt>Chief complaint</dt><dd>{{ consultation.chiefComplaint|default('Not recorded')|nl2br }}</dd></div>
+            <div><dt>Diagnosis</dt><dd>{{ consultation.diagnosis|default('Not recorded')|nl2br }}</dd></div>
+            <div><dt>Treatment advice</dt><dd>{{ consultation.advice|default('Not recorded')|nl2br }}</dd></div>
+            <div><dt>Notes</dt><dd>{{ consultation.notes|default('Not recorded')|nl2br }}</dd></div>
+        </dl>
+
+    {% endif %}
+</section>
+
+{% endblock %}
