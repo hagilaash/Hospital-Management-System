@@ -2,12 +2,12 @@
 
 namespace App\DAO;
 
-use App\DB\DatabaseFunction;
+use App\DB\DoctorDatabaseFunction;
 
 class DoctorDAO
 {
     public function __construct(
-        private DatabaseFunction $databaseFunction,
+        private DoctorDatabaseFunction $doctorDatabaseFunction,
     ) {
     }
 
@@ -19,7 +19,7 @@ class DoctorDAO
         ?string $department = null,
         string $status = 'Active',
     ): array {
-        return $this->databaseFunction->getDoctorsList(
+        return $this->doctorDatabaseFunction->getDoctorsList(
             $limit,
             $offset,
             $search,
@@ -35,7 +35,7 @@ class DoctorDAO
         ?string $department = null,
         string $status = 'Active',
     ): int {
-        return $this->databaseFunction->countDoctors(
+        return $this->doctorDatabaseFunction->countDoctors(
             $search,
             $specialization,
             $department,
@@ -45,6 +45,6 @@ class DoctorDAO
 
     public function registerDoctor(array $data): array
     {
-        return $this->databaseFunction->registerDoctor($data);
+        return $this->doctorDatabaseFunction->registerDoctor($data);
     }
 }
