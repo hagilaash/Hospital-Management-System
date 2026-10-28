@@ -20,18 +20,18 @@ final class Input
      */
     public static function clean(?string $value): string
     {
-        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
+        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = preg_replace('/[\x00-\x1F\x7F]+/u', ' ', $value);
-        if (null === $value) {
+        if ($value === null) {
             return '';
         }
 
         $value = preg_replace('/\s+/u', ' ', $value);
 
-        return null === $value ? '' : trim($value);
+        return $value === null ? '' : trim($value);
     }
 
     /**
@@ -41,38 +41,38 @@ final class Input
      */
     public static function cleanMultiline(?string $value): string
     {
-        if (null === $value || !mb_check_encoding($value, 'UTF-8')) {
+        if ($value === null || !mb_check_encoding($value, 'UTF-8')) {
             return '';
         }
 
         $value = str_replace(["\r\n", "\r"], "\n", $value);
         $value = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]+/u', '', $value);
 
-        return null === $value ? '' : trim($value);
+        return $value === null ? '' : trim($value);
     }
 
     public static function nullIfEmpty(string $value): ?string
     {
-        return '' === $value ? null : $value;
+        return $value === '' ? null : $value;
     }
 
     /** A search term: cleaned, cut to $max characters, null when empty. */
     public static function search(?string $value, int $max = 100): ?string
     {
-        if (null === $value) {
+        if ($value === null) {
             return null;
         }
 
         $clean = trim(mb_substr(self::clean($value), 0, $max));
 
-        return '' === $clean ? null : $clean;
+        return $clean === '' ? null : $clean;
     }
 
     /** Digits only, 1..999999999 (fits a PostgreSQL integer); anything else is null. */
     public static function positiveInt(?string $value): ?int
     {
         $value = trim((string) $value);
-        if ('' === $value || !ctype_digit($value) || strlen($value) > 9) {
+        if ($value === '' || !ctype_digit($value) || strlen($value) > 9) {
             return null;
         }
         $number = (int) $value;
@@ -86,8 +86,8 @@ final class Input
         $date = \DateTimeImmutable::createFromFormat('!Y-m-d', $value);
         $problems = \DateTimeImmutable::getLastErrors();
 
-        return false !== $date
-            && (false === $problems || (0 === $problems['warning_count'] && 0 === $problems['error_count']))
+        return $date !== false
+            && ($problems === false || ($problems['warning_count'] === 0 && $problems['error_count'] === 0))
             && $date->format('Y-m-d') === $value;
     }
 
@@ -96,7 +96,7 @@ final class Input
     {
         $value = trim((string) $value);
 
-        return '' !== $value && self::isValidDate($value) ? $value : null;
+        return $value !== '' && self::isValidDate($value) ? $value : null;
     }
 
     /**
@@ -109,7 +109,7 @@ final class Input
     {
         $value = trim((string) $value);
         foreach ($allowed as $candidate) {
-            if (0 === strcasecmp($value, $candidate)) {
+            if (strcasecmp($value, $candidate) === 0) {
                 return $candidate;
             }
         }
@@ -117,9 +117,35 @@ final class Input
         return $default;
     }
 
+    /**
+     * A money amount typed as plain digits with at most 2 decimals ("150", "150.5",
+     * "150.50"), normalised to exactly 2 decimals as a STRING ("150.00"). Money is
+     * never held in a float. Returns null for anything else (signs, commas,
+     * exponents, more than $maxIntegerDigits integer digits).
+     */
+    public static function money(?string $value, int $maxIntegerDigits = 8): ?string
+    {
+        $value = trim((string) $value);
+        if (preg_match('/^(\d{1,' . $maxIntegerDigits . '})(?:\.(\d{1,2}))?$/', $value, $m) !== 1) {
+            return null;
+        }
+
+        $whole = ltrim($m[1], '0');
+
+        return ($whole === '' ? '0' : $whole) . '.' . str_pad($m[2] ?? '', 2, '0');
+    }
+
+    /** A percentage from 0 to 100 with at most 2 decimals, as a 2-decimal string; otherwise null. */
+    public static function percent(?string $value): ?string
+    {
+        $percent = self::money($value, 3);
+
+        return $percent !== null && (int) str_replace('.', '', $percent) <= 10000 ? $percent : null;
+    }
+
     /** Booleans arrive from PDO as true/false or as 't'/'f' text depending on the driver. */
     public static function isTrue(mixed $value): bool
     {
-        return true === $value || 't' === $value || 'true' === $value || 1 === $value || '1' === $value;
+        return $value === true || $value === 't' || $value === 'true' || $value === 1 || $value === '1';
     }
 }
