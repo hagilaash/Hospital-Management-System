@@ -1,0 +1,111 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::bills():
+    list (PagedListDTO of BillDTO; list.filters = status, search, date_from, date_to), statuses
+#}
+
+{% block title %}Bills | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <h1>Bills</h1>
+    <a class="btn btn-primary" href="{{ path('billing_new') }}">+ New bill</a>
+</div>
+
+<form method="get" action="{{ path('billing_list') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100"
+                   placeholder="Bill number, patient ID, name or phone">
+        </div>
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                {% for s in statuses %}
+                    <option value="{{ s }}" {{ list.filters.status == s ? 'selected' }}>{{ s == 'all' ? 'All statuses' : s }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="date_from">Billed from</label>
+            <input type="date" id="date_from" name="date_from" value="{{ list.filters.date_from ?? '' }}">
+        </div>
+        <div class="field">
+            <label for="date_to">Billed to</label>
+            <input type="date" id="date_to" name="date_to" value="{{ list.filters.date_to ?? '' }}">
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('billing_list') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}
+            Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }}
+            {{ list.total == 1 ? 'bill' : 'bills' }}
+        {% else %}
+            No bills found.
+        {% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>No bills match these filters.</p>
+            <a class="btn btn-primary" href="{{ path('billing_new') }}">Create a bill</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Bill</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Date</th>
+                        <th scope="col" class="money">Total</th>
+                        <th scope="col" class="money">Paid</th>
+                        <th scope="col" class="money">Balance</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for b in list.items %}
+                    <tr class="{{ b.isCancelled ? 'row-inactive' : '' }}">
+                        <td data-label="Bill">
+                            <a href="{{ path('billing_show', {id: b.billId}) }}"><strong>{{ b.billNumber }}</strong></a>
+                            {% if b.consultationCode %}<br><span class="muted">{{ b.consultationCode }}</span>{% endif %}
+                        </td>
+                        <td data-label="Patient">{{ b.patientName }}<br><span class="muted">{{ b.patientCode }}</span></td>
+                        <td data-label="Date">{{ b.billDate|date('d M Y, H:i') }}</td>
+                        <td data-label="Total" class="money">{{ ui.money(b.totalAmount) }}</td>
+                        <td data-label="Paid" class="money">{{ ui.money(b.paidAmount) }}</td>
+                        <td data-label="Balance" class="money">{{ ui.money(b.balanceAmount) }}</td>
+                        <td data-label="Status">{{ ui.status_badge(b.status) }}</td>
+                        <td data-label="Actions" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('billing_show', {id: b.billId}) }}">View</a>
+                            {% if b.canPay %}
+                                <a class="btn btn-success btn-sm" href="{{ path('billing_pay', {id: b.billId}) }}">Pay</a>
+                            {% endif %}
+                            <a class="btn btn-secondary btn-sm" href="{{ path('billing_invoice', {id: b.billId}) }}">Invoice</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('billing_list', {
+            status: list.filters.status, search: list.filters.search,
+            date_from: list.filters.date_from, date_to: list.filters.date_to
+        }, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}

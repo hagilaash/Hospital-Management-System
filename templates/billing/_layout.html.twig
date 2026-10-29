@@ -1,0 +1,27 @@
+{# Frame for every Billing page: the shared shell plus the Billing sub-navigation and billing.js. #}
+{% extends 'layout/_layout.html.twig' %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/js/billing.js" defer></script>
+{% endblock %}
+
+{% block content %}
+    {% set current = app.request.attributes.get('_route') ?? '' %}
+
+    <nav class="fdm-subnav no-print" aria-label="Billing">
+        {% for item in [
+            {routes: ['billing_dashboard'], route: 'billing_dashboard', label: 'Overview'},
+            {routes: ['billing_list', 'billing_show', 'billing_pay', 'billing_invoice'], route: 'billing_list', label: 'Bills'},
+            {routes: ['billing_new'], route: 'billing_new', label: 'New bill'}
+        ] %}
+            {% if current in item.routes %}
+                <a href="{{ path(item.route) }}" class="is-active" aria-current="page">{{ item.label }}</a>
+            {% else %}
+                <a href="{{ path(item.route) }}">{{ item.label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    {% block billing_content %}{% endblock %}
+{% endblock %}

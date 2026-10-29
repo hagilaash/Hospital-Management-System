@@ -33,6 +33,12 @@ class AccessControlService
     public const OPC_VIEW = 'opc.view';
     public const OPC_MANAGE = 'opc.manage';
 
+    // billing permissions
+    public const BILLING_VIEW = 'billing.view';
+    public const BILLING_CREATE = 'billing.create';
+    public const BILLING_PAYMENT = 'billing.payment';
+    public const BILLING_CANCEL = 'billing.cancel';
+
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,
@@ -47,6 +53,10 @@ class AccessControlService
         self::FDM_REPORTS,
         self::OPC_VIEW,
         self::OPC_MANAGE,
+        self::BILLING_VIEW,
+        self::BILLING_CREATE,
+        self::BILLING_PAYMENT,
+        self::BILLING_CANCEL,
     ];
 
     public function __construct(

@@ -1,0 +1,51 @@
+{# Helpers for the Billing pages. Import inside a block:  {% import 'billing/_macros.html.twig' as ui %} #}
+
+{# A coloured label for a bill status. #}
+{% macro status_badge(status) %}
+    {% set classes = {
+        'Pending': 'badge-pending',
+        'Partially Paid': 'badge-partial',
+        'Paid': 'badge-paid',
+        'Cancelled': 'badge-cancelled'
+    } %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status }}</span>
+{% endmacro %}
+
+{# An amount with the currency symbol, e.g. "₹ 1,250.00". The symbol comes from the "hospital" Twig global. #}
+{% macro money(value) %}{{ hospital.currency|default('₹') }}&nbsp;{{ value|number_format(2) }}{% endmacro %}
+
+{# Previous / numbered / next links. params are the filters to keep; page_param is the query key for the page number. #}
+{% macro pager(route, params, page, total_pages, page_param) %}
+    {% if total_pages > 1 %}
+        {% set first_shown = max(1, page - 2) %}
+        {% set last_shown = min(total_pages, page + 2) %}
+
+        <nav class="pager no-print" aria-label="Pages">
+            {% if page > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page - 1})) }}">&laquo; Previous</a>
+            {% endif %}
+
+            {% if first_shown > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): 1})) }}">1</a>
+                {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+            {% endif %}
+
+            {% for n in range(first_shown, last_shown) %}
+                {% if n == page %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                {% else %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): n})) }}">{{ n }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if last_shown < total_pages %}
+                {% if last_shown < total_pages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): total_pages})) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page + 1})) }}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endmacro %}

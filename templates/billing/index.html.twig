@@ -1,0 +1,139 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::dashboard():
+    summary (array of counts and 2-decimal amount strings), recent (list of BillDTO),
+    billable (consultations sent to billing that have no bill yet)
+#}
+
+{% block title %}Billing | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Billing</h1>
+        <p class="subtitle">Bills, payments and outstanding balances</p>
+    </div>
+    <a class="btn btn-primary" href="{{ path('billing_new') }}">+ New bill</a>
+</div>
+
+<section aria-label="Billing summary">
+    <div class="stat-grid">
+        <a class="stat-card" href="{{ path('billing_list') }}">
+            <span class="stat-value">{{ summary.total_bills }}</span>
+            <span class="stat-label">Total bills</span>
+        </a>
+        <a class="stat-card stat-card-ok" href="{{ path('billing_list', {status: 'Paid'}) }}">
+            <span class="stat-value">{{ summary.paid_bills }}</span>
+            <span class="stat-label">Paid bills</span>
+        </a>
+        <a class="stat-card stat-card-warn" href="{{ path('billing_list', {status: 'Pending'}) }}">
+            <span class="stat-value">{{ summary.pending_bills }}</span>
+            <span class="stat-label">Pending bills</span>
+        </a>
+        <a class="stat-card stat-card-warn" href="{{ path('billing_list', {status: 'Partially Paid'}) }}">
+            <span class="stat-value">{{ summary.partially_paid_bills }}</span>
+            <span class="stat-label">Partially paid</span>
+        </a>
+        <a class="stat-card stat-card-accent" href="{{ path('billing_list') }}">
+            <span class="stat-value">{{ ui.money(summary.total_outstanding) }}</span>
+            <span class="stat-label">Total outstanding</span>
+        </a>
+        <a class="stat-card" href="{{ path('billing_list') }}">
+            <span class="stat-value">{{ ui.money(summary.total_collected) }}</span>
+            <span class="stat-label">Collected</span>
+        </a>
+        <a class="stat-card" href="{{ path('billing_list') }}">
+            <span class="stat-value">{{ ui.money(summary.total_billed) }}</span>
+            <span class="stat-label">Total billed</span>
+        </a>
+        <a class="stat-card" href="{{ path('billing_list', {status: 'Cancelled'}) }}">
+            <span class="stat-value">{{ summary.cancelled_bills }}</span>
+            <span class="stat-label">Cancelled bills</span>
+        </a>
+    </div>
+    <p class="hint">Amounts exclude cancelled bills.</p>
+</section>
+
+{% if billable is not empty %}
+    <section class="card" aria-labelledby="billable-heading">
+        <h2 id="billable-heading">Consultations ready for billing</h2>
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Consultation</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Doctor</th>
+                        <th scope="col">Visit</th>
+                        <th scope="col">Diagnosis</th>
+                        <th scope="col"><span class="sr-only">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in billable %}
+                    <tr>
+                        <td data-label="Consultation"><strong>{{ c.consultation_code }}</strong></td>
+                        <td data-label="Patient">{{ c.patient_name }}<br><span class="muted">{{ c.patient_code }}</span></td>
+                        <td data-label="Doctor">{{ c.doctor_name }}<br><span class="muted">{{ c.specialization }}</span></td>
+                        <td data-label="Visit">
+                            {% if c.appointment_code %}{{ c.appointment_code }}{% else %}<span class="badge badge-walkin">Walk-in</span>{% endif %}
+                        </td>
+                        <td data-label="Diagnosis">{{ c.diagnosis ? c.diagnosis|slice(0, 60) : '—' }}</td>
+                        <td data-label="Action" class="actions">
+                            <a class="btn btn-primary btn-sm" href="{{ path('billing_new', {consultation_id: c.consultation_id}) }}">Create bill</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+
+<section class="card" aria-labelledby="recent-heading">
+    <h2 id="recent-heading">Recent bills</h2>
+
+    {% if recent is empty %}
+        <div class="empty-state">
+            <p>No bills have been created yet.</p>
+            <a class="btn btn-primary" href="{{ path('billing_new') }}">Create the first bill</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Bill</th>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Date</th>
+                        <th scope="col" class="money">Total</th>
+                        <th scope="col" class="money">Balance</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for b in recent %}
+                    <tr>
+                        <td data-label="Bill"><a href="{{ path('billing_show', {id: b.billId}) }}"><strong>{{ b.billNumber }}</strong></a></td>
+                        <td data-label="Patient">{{ b.patientName }}<br><span class="muted">{{ b.patientCode }}</span></td>
+                        <td data-label="Date">{{ b.billDate|date('d M Y, H:i') }}</td>
+                        <td data-label="Total" class="money">{{ ui.money(b.totalAmount) }}</td>
+                        <td data-label="Balance" class="money">{{ ui.money(b.balanceAmount) }}</td>
+                        <td data-label="Status">{{ ui.status_badge(b.status) }}</td>
+                        <td data-label="Open" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('billing_show', {id: b.billId}) }}">View</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="card-links"><a href="{{ path('billing_list') }}">All bills &raquo;</a></p>
+    {% endif %}
+</section>
+
+{% endblock %}
