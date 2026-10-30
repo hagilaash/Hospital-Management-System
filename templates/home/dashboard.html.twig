@@ -155,6 +155,12 @@
                 {{ moduleName }}
             </a>    
 
+        {% elseif moduleKey == 'billing' %}
+
+            <a href="{{ path('billing_dashboard') }}" class="module">
+                Billing
+            </a>    
+
         {% else %}
 
             <div class="module">

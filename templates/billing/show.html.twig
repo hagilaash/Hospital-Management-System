@@ -1,0 +1,162 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::show():
+    bill (BillDTO with items and payments)
+#}
+
+{% block title %}{{ bill.billNumber }} | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ bill.billNumber }}</h1>
+        <p class="subtitle">
+            {{ ui.status_badge(bill.status) }}
+            <span class="muted">{{ bill.billDate|date('d M Y, H:i') }}{% if bill.createdBy %} &middot; by {{ bill.createdBy }}{% endif %}</span>
+        </p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('billing_list') }}">&laquo; Bills</a>
+        <a class="btn btn-secondary" href="{{ path('billing_invoice', {id: bill.billId}) }}">Print invoice</a>
+        {% if bill.canPay %}
+            <a class="btn btn-success" href="{{ path('billing_pay', {id: bill.billId}) }}">Record payment</a>
+        {% endif %}
+    </div>
+</div>
+
+{% if bill.isCancelled %}
+    <div class="alert alert-warning" role="status">
+        This bill was cancelled{% if bill.cancelledAt %} on {{ bill.cancelledAt|date('d M Y, H:i') }}{% endif %}{% if bill.cancelledBy %} by {{ bill.cancelledBy }}{% endif %}.
+        <strong>Reason:</strong> {{ bill.cancelReason|default('Not recorded') }}
+    </div>
+{% elseif bill.isPaid %}
+    <div class="alert alert-success" role="status">This bill is fully paid.</div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ bill.patientName }}</dd></div>
+            <div><dt>Patient ID</dt><dd>{{ bill.patientCode }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ bill.patientPhone|default('Not recorded') }}</dd></div>
+        </dl>
+        <p class="card-links"><a href="{{ path('patient_show', {id: bill.patientId}) }}">Patient record</a></p>
+    </section>
+
+    <section class="card">
+        <h2>Visit</h2>
+        <dl class="detail-list">
+            <div><dt>Doctor</dt><dd>{% if bill.doctorName %}{{ bill.doctorName }}<br><span class="muted">{{ bill.specialization }}</span>{% else %}Not linked{% endif %}</dd></div>
+            <div>
+                <dt>Appointment</dt>
+                <dd>
+                    {% if bill.appointmentId %}
+                        <a href="{{ path('fdm_appointment_show', {id: bill.appointmentId}) }}">{{ bill.appointmentCode }}</a>
+                        {% if bill.appointmentDate %}<span class="muted">{{ bill.appointmentDate|date('d M Y') }}</span>{% endif %}
+                    {% else %}Not linked{% endif %}
+                </dd>
+            </div>
+            <div><dt>Consultation</dt><dd>{{ bill.consultationCode|default('Not linked') }}</dd></div>
+        </dl>
+    </section>
+
+</div>
+
+<section class="card" aria-labelledby="items-heading">
+    <h2 id="items-heading">Charges</h2>
+    <div class="table-wrap">
+        <table class="table table-compact">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Description</th>
+                    <th scope="col" class="money">Qty</th>
+                    <th scope="col" class="money">Unit price</th>
+                    <th scope="col" class="money">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in bill.items %}
+                <tr>
+                    <td data-label="#">{{ item.line_no }}</td>
+                    <td data-label="Description">{{ item.description }}</td>
+                    <td data-label="Qty" class="money">{{ item.quantity }}</td>
+                    <td data-label="Unit price" class="money">{{ ui.money(item.unit_price) }}</td>
+                    <td data-label="Amount" class="money">{{ ui.money(item.line_total) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <dl class="totals-list">
+        <div><dt>Subtotal</dt><dd>{{ ui.money(bill.subtotalAmount) }}</dd></div>
+        <div>
+            <dt>Discount{% if bill.discountReason %} <span class="muted">({{ bill.discountReason }})</span>{% endif %}</dt>
+            <dd>&minus; {{ ui.money(bill.discountAmount) }}</dd>
+        </div>
+        <div><dt>Tax ({{ bill.taxPercent|number_format(2) }}%)</dt><dd>{{ ui.money(bill.taxAmount) }}</dd></div>
+        <div class="totals-final"><dt>Total</dt><dd>{{ ui.money(bill.totalAmount) }}</dd></div>
+        <div><dt>Amount paid</dt><dd>{{ ui.money(bill.paidAmount) }}</dd></div>
+        <div class="totals-final"><dt>Outstanding balance</dt><dd>{{ ui.money(bill.balanceAmount) }}</dd></div>
+    </dl>
+
+    {% if bill.notes %}<p class="hint"><strong>Notes:</strong> {{ bill.notes|nl2br }}</p>{% endif %}
+</section>
+
+<section class="card" aria-labelledby="payments-heading">
+    <h2 id="payments-heading">Payment history</h2>
+    {% if bill.payments is empty %}
+        <p class="muted">No payments have been recorded yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Transaction ref.</th>
+                        <th scope="col">Received by</th>
+                        <th scope="col" class="money">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for pay in bill.payments %}
+                    <tr>
+                        <td data-label="Reference"><strong>{{ pay.payment_reference }}</strong></td>
+                        <td data-label="Date">{{ pay.paid_at|date('d M Y, H:i') }}</td>
+                        <td data-label="Method">{{ pay.method }}</td>
+                        <td data-label="Transaction ref.">{{ pay.transaction_ref|default('—') }}</td>
+                        <td data-label="Received by">{{ pay.received_by|default('—') }}</td>
+                        <td data-label="Amount" class="money">{{ ui.money(pay.amount) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+    {% if bill.canPay %}
+        <p><a class="btn btn-success" href="{{ path('billing_pay', {id: bill.billId}) }}">Record payment</a></p>
+    {% endif %}
+</section>
+
+{% if bill.canCancel %}
+    <section class="card danger-zone no-print">
+        <h2>Cancel this bill</h2>
+        <p class="hint">Only a bill with no payments can be cancelled. The bill is kept for the records.</p>
+        <form method="post" action="{{ path('billing_cancel', {id: bill.billId}) }}" class="cancel-form" data-confirm="Cancel this bill?">
+            <input type="hidden" name="_token" value="{{ csrf_token('billing_cancel_' ~ bill.billId) }}">
+            <label for="cancel-reason">Reason for cancelling <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="cancel-reason" name="reason" maxlength="255" required>
+            <button type="submit" class="btn btn-danger">Cancel bill</button>
+        </form>
+    </section>
+{% endif %}
+
+{% endblock %}

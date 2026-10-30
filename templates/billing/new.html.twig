@@ -1,0 +1,220 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::renderNewBill():
+    bill (BillDTO as typed), patient (selected active patient or null), patients (search results or null),
+    patient_search, consultations (rows ready to bill), errors (field => message), form_error, min_rows
+  Totals shown on this page are only an ESTIMATE for the cashier; PostgreSQL recalculates everything on save.
+#}
+
+{% block title %}New bill | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <h1>New bill</h1>
+    <a class="btn btn-secondary" href="{{ path('billing_dashboard') }}">Cancel</a>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+{% if patient is null %}
+
+    {# ---------------- Step 1: choose the patient ---------------- #}
+    <section class="card" aria-labelledby="find-patient-heading">
+        <h2 id="find-patient-heading">1. Find the patient</h2>
+        <p class="hint">Search the registered patients by patient ID, name or phone number.
+            Not registered yet? <a href="{{ path('patient_new') }}">Register the patient first</a>.</p>
+
+        {% if errors.patientId is defined %}
+            <p class="field-error" role="alert">{{ errors.patientId }}</p>
+        {% endif %}
+
+        <form method="get" action="{{ path('billing_new') }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Patient ID, name or phone</label>
+                <input type="search" id="q" name="q" value="{{ patient_search }}" maxlength="100" autofocus>
+            </div>
+            <div class="toolbar-actions">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </div>
+        </form>
+
+        {% if patients is not null %}
+            {% if patients.total == 0 %}
+                <div class="empty-state">
+                    <p>No active patients match this search.</p>
+                    <a class="btn btn-secondary" href="{{ path('patient_new') }}">Register a new patient</a>
+                </div>
+            {% else %}
+                <div class="table-wrap">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Patient ID</th>
+                                <th scope="col">Name</th>
+                                <th scope="col">Date of birth</th>
+                                <th scope="col">Phone</th>
+                                <th scope="col"><span class="sr-only">Select</span></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for p in patients.patients %}
+                            <tr>
+                                <td data-label="Patient ID"><strong>{{ p.patientCode }}</strong></td>
+                                <td data-label="Name">{{ p.fullName }}</td>
+                                <td data-label="Date of birth">{{ p.dateOfBirth|date('d M Y') }}</td>
+                                <td data-label="Phone">{{ p.phone }}</td>
+                                <td data-label="Select" class="actions">
+                                    <a class="btn btn-primary btn-sm" href="{{ path('billing_new', {patient_id: p.patientId}) }}">Select</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {{ ui.pager('billing_new', {q: patients.search}, patients.page, patients.totalPages, 'qpage') }}
+            {% endif %}
+        {% endif %}
+    </section>
+
+{% else %}
+
+    {# ---------------- Step 2: the bill ---------------- #}
+    <section class="card selected-patient" aria-label="Patient">
+        <div>
+            <span class="muted">Patient</span>
+            <strong>{{ patient.fullName }}</strong>
+            <span class="muted">{{ patient.patientCode }} &middot; {{ patient.phone }}</span>
+        </div>
+        <a class="btn btn-secondary btn-sm" href="{{ path('billing_new') }}">Change patient</a>
+    </section>
+
+    <form method="post" action="{{ path('billing_new') }}" class="card patient-form" novalidate data-bill-form>
+        <input type="hidden" name="_token" value="{{ csrf_token('billing_new') }}">
+        <input type="hidden" name="patient_id" value="{{ patient.patientId }}">
+
+        <fieldset>
+            <legend>Link to a consultation</legend>
+            <div class="field">
+                <label for="consultation_id">OP consultation</label>
+                <select id="consultation_id" name="consultation_id">
+                    <option value="">No consultation (general services)</option>
+                    {% for c in consultations %}
+                        <option value="{{ c.consultation_id }}" {{ bill.consultationId == c.consultation_id ? 'selected' }}>
+                            {{ c.consultation_code }} &middot; {{ c.doctor_name }}{% if c.appointment_code %} &middot; {{ c.appointment_code }}{% endif %}{% if c.diagnosis %} &middot; {{ c.diagnosis|slice(0, 40) }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+                <small class="hint">
+                    {% if consultations is empty %}This patient has no consultation waiting to be billed.{% else %}Linking brings in the doctor and the appointment. A consultation can be billed only once.{% endif %}
+                </small>
+            </div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Bill items</legend>
+
+            {% if errors.items is defined %}
+                <p class="field-error" role="alert">{{ errors.items }}</p>
+            {% endif %}
+
+            <div class="table-wrap">
+                <table class="table table-compact items-table" data-items-table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Description</th>
+                            <th scope="col" class="money">Qty</th>
+                            <th scope="col" class="money">Unit price</th>
+                            <th scope="col" class="money">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody data-items-body>
+                    {% set rows = max(min_rows, bill.items|length) %}
+                    {% for i in 0..(rows - 1) %}
+                        {% set row = bill.items[i] ?? null %}
+                        {% set row_error = errors['item_' ~ i] ?? null %}
+                        <tr class="{{ row_error ? 'field-invalid' }}">
+                            <td data-label="Description">
+                                <input type="text" name="item_description[]" value="{{ row.description ?? '' }}" maxlength="200"
+                                       aria-label="Description of item {{ i + 1 }}" placeholder="e.g. Consultation fee">
+                                {% if row_error %}<p class="field-error">{{ row_error }}</p>{% endif %}
+                            </td>
+                            <td data-label="Qty" class="money">
+                                <input type="text" inputmode="numeric" name="item_quantity[]" value="{{ row.quantity ?? '' }}" maxlength="3"
+                                       class="js-qty" aria-label="Quantity of item {{ i + 1 }}" placeholder="1">
+                            </td>
+                            <td data-label="Unit price" class="money">
+                                <input type="text" inputmode="decimal" name="item_price[]" value="{{ row.unit_price ?? '' }}" maxlength="11"
+                                       class="js-price" aria-label="Unit price of item {{ i + 1 }}" placeholder="0.00">
+                            </td>
+                            <td data-label="Amount" class="money"><span class="js-line-total">&mdash;</span></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm no-print" data-add-row>+ Add another item</button>
+            <p class="hint">Leave unused rows empty. A blank quantity counts as 1.</p>
+        </fieldset>
+
+        <fieldset>
+            <legend>Discount, tax and notes</legend>
+            <div class="form-grid">
+                <div class="field {{ errors.discountAmount is defined ? 'field-invalid' }}">
+                    <label for="discount_amount">Discount amount</label>
+                    <input type="text" inputmode="decimal" id="discount_amount" name="discount_amount" value="{{ bill.discountAmount }}"
+                           maxlength="11" class="js-discount" placeholder="0.00"
+                           {% if errors.discountAmount is defined %}aria-invalid="true" aria-describedby="discount_amount-error"{% endif %}>
+                    {% if errors.discountAmount is defined %}<p class="field-error" id="discount_amount-error">{{ errors.discountAmount }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.discountReason is defined ? 'field-invalid' }}">
+                    <label for="discount_reason">Discount reason</label>
+                    <input type="text" id="discount_reason" name="discount_reason" value="{{ bill.discountReason }}" maxlength="255"
+                           {% if errors.discountReason is defined %}aria-invalid="true" aria-describedby="discount_reason-error"{% endif %}>
+                    <small class="hint">Required when a discount is given.</small>
+                    {% if errors.discountReason is defined %}<p class="field-error" id="discount_reason-error">{{ errors.discountReason }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.taxPercent is defined ? 'field-invalid' }}">
+                    <label for="tax_percent">Tax (%)</label>
+                    <input type="text" inputmode="decimal" id="tax_percent" name="tax_percent" value="{{ bill.taxPercent }}"
+                           maxlength="6" class="js-tax" placeholder="0"
+                           {% if errors.taxPercent is defined %}aria-invalid="true" aria-describedby="tax_percent-error"{% endif %}>
+                    <small class="hint">Calculated on the amount after the discount. Leave empty for no tax.</small>
+                    {% if errors.taxPercent is defined %}<p class="field-error" id="tax_percent-error">{{ errors.taxPercent }}</p>{% endif %}
+                </div>
+
+                <div class="field field-wide {{ errors.notes is defined ? 'field-invalid' }}">
+                    <label for="notes">Notes</label>
+                    <textarea id="notes" name="notes" rows="2" maxlength="500"
+                              {% if errors.notes is defined %}aria-invalid="true" aria-describedby="notes-error"{% endif %}>{{ bill.notes }}</textarea>
+                    {% if errors.notes is defined %}<p class="field-error" id="notes-error">{{ errors.notes }}</p>{% endif %}
+                </div>
+            </div>
+        </fieldset>
+
+        <section class="totals-box" aria-label="Estimated totals">
+            <h3>Estimated totals</h3>
+            <dl class="totals-list">
+                <div><dt>Subtotal</dt><dd data-preview="subtotal">&mdash;</dd></div>
+                <div><dt>Discount</dt><dd data-preview="discount">&mdash;</dd></div>
+                <div><dt>Tax</dt><dd data-preview="tax">&mdash;</dd></div>
+                <div class="totals-final"><dt>Total payable</dt><dd data-preview="total">&mdash;</dd></div>
+            </dl>
+            <p class="hint">This is only an estimate. The saved bill is always calculated again by the server.</p>
+        </section>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create bill</button>
+            <a class="btn btn-secondary" href="{{ path('billing_dashboard') }}">Cancel</a>
+        </div>
+    </form>
+
+{% endif %}
+
+{% endblock %}

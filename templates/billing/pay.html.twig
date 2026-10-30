@@ -1,0 +1,124 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::renderPayment():
+    bill (BillDTO), typed (amount, method, transaction_ref as typed), payment_key (one-time form token),
+    methods, errors (field => message), form_error
+#}
+
+{% block title %}Record payment | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Record payment</h1>
+        <p class="subtitle">{{ bill.billNumber }} {{ ui.status_badge(bill.status) }}</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('billing_show', {id: bill.billId}) }}">&laquo; Back to bill</a>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Bill</h2>
+        <dl class="detail-list">
+            <div><dt>Patient</dt><dd>{{ bill.patientName }}<br><span class="muted">{{ bill.patientCode }}</span></dd></div>
+            <div><dt>Bill date</dt><dd>{{ bill.billDate|date('d M Y, H:i') }}</dd></div>
+        </dl>
+        <dl class="totals-list">
+            <div><dt>Total bill</dt><dd>{{ ui.money(bill.totalAmount) }}</dd></div>
+            <div><dt>Already paid</dt><dd>{{ ui.money(bill.paidAmount) }}</dd></div>
+            <div class="totals-final"><dt>Outstanding balance</dt><dd>{{ ui.money(bill.balanceAmount) }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>New payment</h2>
+
+        <form method="post" action="{{ path('billing_pay', {id: bill.billId}) }}" class="patient-form" novalidate data-payment-form>
+            <input type="hidden" name="_token" value="{{ csrf_token('billing_pay_' ~ bill.billId) }}">
+            <input type="hidden" name="idempotency_key" value="{{ payment_key }}">
+
+            <div class="form-grid">
+                <div class="field field-wide {{ errors.amount is defined ? 'field-invalid' }}">
+                    <label for="amount">Amount <span class="req" aria-hidden="true">*</span></label>
+                    <input type="text" inputmode="decimal" id="amount" name="amount" value="{{ typed.amount }}" maxlength="11" required
+                           placeholder="0.00" data-balance="{{ bill.balanceAmount }}"
+                           {% if errors.amount is defined %}aria-invalid="true" aria-describedby="amount-error"{% endif %}>
+                    <small class="hint">
+                        At most {{ ui.money(bill.balanceAmount) }}.
+                        <button type="button" class="btn btn-secondary btn-sm no-print" data-fill-balance>Pay full balance</button>
+                    </small>
+                    {% if errors.amount is defined %}<p class="field-error" id="amount-error">{{ errors.amount }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.method is defined ? 'field-invalid' }}">
+                    <label for="method">Payment method <span class="req" aria-hidden="true">*</span></label>
+                    <select id="method" name="method" required
+                            {% if errors.method is defined %}aria-invalid="true" aria-describedby="method-error"{% endif %}>
+                        <option value="">Select&hellip;</option>
+                        {% for m in methods %}
+                            <option value="{{ m }}" {{ typed.method == m ? 'selected' }}>{{ m }}</option>
+                        {% endfor %}
+                    </select>
+                    {% if errors.method is defined %}<p class="field-error" id="method-error">{{ errors.method }}</p>{% endif %}
+                </div>
+
+                <div class="field {{ errors.transactionRef is defined ? 'field-invalid' }}">
+                    <label for="transaction_ref">Transaction reference</label>
+                    <input type="text" id="transaction_ref" name="transaction_ref" value="{{ typed.transaction_ref }}" maxlength="100"
+                           {% if errors.transactionRef is defined %}aria-invalid="true" aria-describedby="transaction_ref-error"{% endif %}>
+                    <small class="hint">Card slip, UPI or bank reference (optional).</small>
+                    {% if errors.transactionRef is defined %}<p class="field-error" id="transaction_ref-error">{{ errors.transactionRef }}</p>{% endif %}
+                </div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success" data-submit-once>Record payment</button>
+                <a class="btn btn-secondary" href="{{ path('billing_show', {id: bill.billId}) }}">Cancel</a>
+            </div>
+            <p class="hint">A payment reference is generated automatically. A payment cannot be edited or deleted once recorded.</p>
+        </form>
+    </section>
+
+</div>
+
+<section class="card" aria-labelledby="history-heading">
+    <h2 id="history-heading">Payment history</h2>
+    {% if bill.payments is empty %}
+        <p class="muted">No payments have been recorded yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Transaction ref.</th>
+                        <th scope="col" class="money">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for pay in bill.payments %}
+                    <tr>
+                        <td data-label="Reference"><strong>{{ pay.payment_reference }}</strong></td>
+                        <td data-label="Date">{{ pay.paid_at|date('d M Y, H:i') }}</td>
+                        <td data-label="Method">{{ pay.method }}</td>
+                        <td data-label="Transaction ref.">{{ pay.transaction_ref|default('—') }}</td>
+                        <td data-label="Amount" class="money">{{ ui.money(pay.amount) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

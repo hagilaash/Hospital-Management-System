@@ -1,0 +1,127 @@
+{% extends 'billing/_layout.html.twig' %}
+
+{#
+  Variables from BillingController::invoice():
+    bill (BillDTO with items and payments)
+  Hospital details come from the "hospital" Twig global (config/packages/twig.yaml).
+#}
+
+{% block title %}Invoice {{ bill.billNumber }} | HMS{% endblock %}
+
+{% block billing_content %}
+{% import 'billing/_macros.html.twig' as ui %}
+
+<div class="page-header no-print">
+    <h1>Invoice</h1>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('billing_show', {id: bill.billId}) }}">&laquo; Back to bill</a>
+        <button type="button" class="btn btn-primary" data-print>Print invoice</button>
+    </div>
+</div>
+
+<article class="card invoice" aria-label="Invoice {{ bill.billNumber }}">
+
+    <header class="invoice-header">
+        <div>
+            <h2 class="invoice-hospital">{{ hospital.name|default('Hospital Management System') }}</h2>
+            {% if hospital.address|default('') %}<p>{{ hospital.address|nl2br }}</p>{% endif %}
+            {% if hospital.phone|default('') or hospital.email|default('') %}
+                <p class="muted">
+                    {% if hospital.phone|default('') %}Tel: {{ hospital.phone }}{% endif %}
+                    {% if hospital.phone|default('') and hospital.email|default('') %} &middot; {% endif %}
+                    {% if hospital.email|default('') %}{{ hospital.email }}{% endif %}
+                </p>
+            {% endif %}
+        </div>
+        <div class="invoice-title">
+            <h2>INVOICE</h2>
+            <p><strong>{{ bill.billNumber }}</strong></p>
+            <p>{{ bill.billDate|date('d M Y, H:i') }}</p>
+            <p>{{ ui.status_badge(bill.status) }}</p>
+        </div>
+    </header>
+
+    <div class="invoice-parties">
+        <div>
+            <h3>Billed to</h3>
+            <p><strong>{{ bill.patientName }}</strong></p>
+            <p>Patient ID: {{ bill.patientCode }}</p>
+            {% if bill.patientPhone %}<p>Phone: {{ bill.patientPhone }}</p>{% endif %}
+            {% if bill.patientAddress %}<p>{{ bill.patientAddress }}</p>{% endif %}
+        </div>
+        <div>
+            <h3>Visit</h3>
+            {% if bill.doctorName %}<p>Doctor: {{ bill.doctorName }}{% if bill.specialization %} ({{ bill.specialization }}){% endif %}</p>{% endif %}
+            {% if bill.appointmentCode %}<p>Appointment: {{ bill.appointmentCode }}{% if bill.appointmentDate %} &middot; {{ bill.appointmentDate|date('d M Y') }}{% endif %}</p>{% endif %}
+            {% if bill.consultationCode %}<p>Consultation: {{ bill.consultationCode }}</p>{% endif %}
+            {% if not bill.doctorName and not bill.appointmentCode and not bill.consultationCode %}<p class="muted">General services</p>{% endif %}
+        </div>
+    </div>
+
+    <table class="table table-compact invoice-items">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Description</th>
+                <th scope="col" class="money">Qty</th>
+                <th scope="col" class="money">Unit price</th>
+                <th scope="col" class="money">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for item in bill.items %}
+            <tr>
+                <td>{{ item.line_no }}</td>
+                <td>{{ item.description }}</td>
+                <td class="money">{{ item.quantity }}</td>
+                <td class="money">{{ ui.money(item.unit_price) }}</td>
+                <td class="money">{{ ui.money(item.line_total) }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <dl class="totals-list invoice-totals">
+        <div><dt>Subtotal</dt><dd>{{ ui.money(bill.subtotalAmount) }}</dd></div>
+        <div><dt>Discount{% if bill.discountReason %} ({{ bill.discountReason }}){% endif %}</dt><dd>&minus; {{ ui.money(bill.discountAmount) }}</dd></div>
+        <div><dt>Tax ({{ bill.taxPercent|number_format(2) }}%)</dt><dd>{{ ui.money(bill.taxAmount) }}</dd></div>
+        <div class="totals-final"><dt>Total</dt><dd>{{ ui.money(bill.totalAmount) }}</dd></div>
+        <div><dt>Amount paid</dt><dd>{{ ui.money(bill.paidAmount) }}</dd></div>
+        <div class="totals-final"><dt>Balance due</dt><dd>{{ ui.money(bill.balanceAmount) }}</dd></div>
+    </dl>
+
+    {% if bill.payments is not empty %}
+        <h3>Payments received</h3>
+        <table class="table table-compact invoice-payments">
+            <thead>
+                <tr>
+                    <th scope="col">Reference</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Method</th>
+                    <th scope="col" class="money">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for pay in bill.payments %}
+                <tr>
+                    <td>{{ pay.payment_reference }}</td>
+                    <td>{{ pay.paid_at|date('d M Y, H:i') }}</td>
+                    <td>{{ pay.method }}{% if pay.transaction_ref %} &middot; {{ pay.transaction_ref }}{% endif %}</td>
+                    <td class="money">{{ ui.money(pay.amount) }}</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+
+    {% if bill.isCancelled %}
+        <p class="invoice-note"><strong>This bill has been cancelled.</strong> {{ bill.cancelReason }}</p>
+    {% endif %}
+    {% if bill.notes %}<p class="invoice-note"><strong>Notes:</strong> {{ bill.notes|nl2br }}</p>{% endif %}
+
+    <footer class="invoice-footer">
+        <p class="muted">This is a computer-generated invoice.</p>
+    </footer>
+</article>
+
+{% endblock %}
