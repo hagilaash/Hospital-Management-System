@@ -15,7 +15,7 @@ use Doctrine\DBAL\Connection;
 class BillingDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
@@ -33,7 +33,7 @@ class BillingDatabaseFunction
         ?string $discountReason,
         string $taxPercent,
         ?string $notes,
-        string $createdBy
+        string $createdBy,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_create_bill(
@@ -62,7 +62,7 @@ class BillingDatabaseFunction
     }
 
     /**
-     * ecs_record_payment(6 params)
+     * ecs_record_payment(6 params).
      *
      * @return array{success: bool, message: string, payment_id: ?int, payment_reference: ?string, duplicate: bool}
      */
@@ -72,7 +72,7 @@ class BillingDatabaseFunction
         string $method,
         ?string $transactionRef,
         string $idempotencyKey,
-        string $receivedBy
+        string $receivedBy,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_record_payment(
@@ -97,7 +97,7 @@ class BillingDatabaseFunction
     }
 
     /**
-     * ecs_cancel_bill(3 params)
+     * ecs_cancel_bill(3 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -123,7 +123,7 @@ class BillingDatabaseFunction
             ['bill_id' => $billId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_bill_items(1 param) */
@@ -211,7 +211,7 @@ class BillingDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 

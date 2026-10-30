@@ -10,6 +10,4 @@ class PatientDatabaseFunction
         private Connection $connection,
     ) {
     }
-
-    
 }

@@ -39,7 +39,7 @@ class BillingController extends AbstractController
     public function __construct(
         private BillingService $billingService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -134,9 +134,9 @@ class BillingController extends AbstractController
         $consultations = [];
 
         // Coming from OP Consultation: the consultation decides the patient.
-        if ($consultationId !== null) {
+        if (null !== $consultationId) {
             $consultations = $this->loadBillable(null, $consultationId);
-            if ($consultations === []) {
+            if ([] === $consultations) {
                 $this->addFlash('error', 'That consultation is not ready for billing, or it has already been billed.');
                 $consultationId = null;
             } else {
@@ -145,19 +145,19 @@ class BillingController extends AbstractController
         }
 
         $patient = $this->loadActivePatient($patientId);
-        if ($patient !== null && $consultations === []) {
+        if (null !== $patient && [] === $consultations) {
             $consultations = $this->loadBillable($patient->patientId, null);
         }
 
         $patientSearch = $query->getString('q');
         $patients = null;
-        if ($patient === null && trim($patientSearch) !== '') {
+        if (null === $patient && '' !== trim($patientSearch)) {
             $patients = $this->searchPatients($patientSearch, $query->getInt('qpage', 1));
         }
 
         $bill = new BillDTO();
         $bill->patientId = $patient?->patientId;
-        $bill->consultationId = $patient !== null ? $consultationId : null;
+        $bill->consultationId = null !== $patient ? $consultationId : null;
 
         return $this->renderNewBill($bill, $patient, $patients, $patientSearch, $consultations);
     }
@@ -166,7 +166,7 @@ class BillingController extends AbstractController
     {
         $bill = BillDTO::fromInput($request->request->all());
         $patient = $this->loadActivePatient($bill->patientId);
-        $consultations = $patient !== null ? $this->loadBillable($patient->patientId, null) : [];
+        $consultations = null !== $patient ? $this->loadBillable($patient->patientId, null) : [];
 
         if (!$this->isCsrfTokenValid('billing_new', $request->request->getString('_token'))) {
             return $this->renderNewBill($bill, $patient, null, '', $consultations, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
@@ -195,7 +195,7 @@ class BillingController extends AbstractController
             return $this->redirectToRoute('billing_show', ['id' => $result['bill_id']]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderNewBill($bill, $patient, null, '', $consultations, $result['errors'], $status, $result['message']);
     }
@@ -272,9 +272,9 @@ class BillingController extends AbstractController
             'transaction_ref' => $request->request->getString('transaction_ref'),
         ];
         $key = $request->request->getString('idempotency_key');
-        $keyForRedisplay = preg_match('/^[A-Za-z0-9]{16,64}$/', $key) === 1 ? $key : $this->billingService->newPaymentKey();
+        $keyForRedisplay = 1 === preg_match('/^[A-Za-z0-9]{16,64}$/', $key) ? $key : $this->billingService->newPaymentKey();
 
-        if (!$this->isCsrfTokenValid('billing_pay_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('billing_pay_'.$id, $request->request->getString('_token'))) {
             return $this->renderPayment($bill, $typed, $keyForRedisplay, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -299,7 +299,7 @@ class BillingController extends AbstractController
             return $this->redirectToRoute('billing_show', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderPayment($bill, $typed, $keyForRedisplay, $result['errors'], $status, $result['message']);
     }
@@ -319,7 +319,7 @@ class BillingController extends AbstractController
     {
         $back = $this->redirectToRoute('billing_show', ['id' => $id]);
 
-        if (!$this->isCsrfTokenValid('billing_cancel_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('billing_cancel_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -369,7 +369,7 @@ class BillingController extends AbstractController
     /** The patient, only when active (inactive patients cannot be billed). */
     private function loadActivePatient(?int $patientId): ?PatientDTO
     {
-        if ($patientId === null) {
+        if (null === $patientId) {
             return null;
         }
 
@@ -382,7 +382,7 @@ class BillingController extends AbstractController
             return null;
         }
 
-        return $patient !== null && $patient->isActive ? $patient : null;
+        return null !== $patient && $patient->isActive ? $patient : null;
     }
 
     private function searchPatients(string $search, int $page): ?PatientListDTO
@@ -409,7 +409,7 @@ class BillingController extends AbstractController
             return $this->redirectToRoute('billing_list');
         }
 
-        if ($bill === null) {
+        if (null === $bill) {
             $this->addFlash('error', self::MESSAGE_NOT_FOUND);
 
             return $this->redirectToRoute('billing_list');
@@ -430,7 +430,7 @@ class BillingController extends AbstractController
         array $consultations,
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('billing/new.html.twig', [
             'bill' => $bill,
@@ -454,7 +454,7 @@ class BillingController extends AbstractController
         string $key,
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('billing/pay.html.twig', [
             'bill' => $bill,

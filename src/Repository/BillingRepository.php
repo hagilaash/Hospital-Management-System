@@ -14,7 +14,7 @@ use App\DTO\BillDTO;
 class BillingRepository
 {
     public function __construct(
-        private BillingDAO $billingDAO
+        private BillingDAO $billingDAO,
     ) {
     }
 
@@ -46,7 +46,7 @@ class BillingRepository
     public function getBill(int $billId): ?BillDTO
     {
         $row = $this->billingDAO->getBillById($billId);
-        if ($row === null) {
+        if (null === $row) {
             return null;
         }
 

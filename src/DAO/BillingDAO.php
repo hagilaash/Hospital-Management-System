@@ -14,7 +14,7 @@ use App\DTO\BillDTO;
 class BillingDAO
 {
     public function __construct(
-        private BillingDatabaseFunction $billingDatabaseFunction
+        private BillingDatabaseFunction $billingDatabaseFunction,
     ) {
     }
 

@@ -51,7 +51,7 @@ class BillingService
 
     public function __construct(
         private BillingRepository $billingRepository,
-        private PatientService $patientService
+        private PatientService $patientService,
     ) {
     }
 
@@ -92,7 +92,7 @@ class BillingService
         $search = Input::search($search);
         $from = Input::dateOrNull($dateFrom);
         $to = Input::dateOrNull($dateTo);
-        if ($from !== null && $to !== null && $from > $to) {
+        if (null !== $from && null !== $to && $from > $to) {
             [$from, $to] = [$to, $from];
         }
 
@@ -158,24 +158,24 @@ class BillingService
     public function createBill(BillDTO $input, string $performedBy): array
     {
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
         $bill = new BillDTO();
 
-        if ($input->patientId === null || $input->patientId < 1) {
+        if (null === $input->patientId || $input->patientId < 1) {
             $errors['patientId'] = 'Select a patient';
         }
         $bill->patientId = $input->patientId;
-        $bill->consultationId = $input->consultationId !== null && $input->consultationId > 0 ? $input->consultationId : null;
+        $bill->consultationId = null !== $input->consultationId && $input->consultationId > 0 ? $input->consultationId : null;
 
         // Items
-        if ($input->items === []) {
+        if ([] === $input->items) {
             $errors['items'] = 'Add at least one bill item';
         } elseif (count($input->items) > self::MAX_ITEMS) {
-            $errors['items'] = 'A bill can have at most ' . self::MAX_ITEMS . ' items';
+            $errors['items'] = 'A bill can have at most '.self::MAX_ITEMS.' items';
         } else {
             foreach ($input->items as $index => $row) {
                 $problems = [];
@@ -183,20 +183,20 @@ class BillingService
                 $quantity = trim((string) ($row['quantity'] ?? ''));
                 $price = Input::money((string) ($row['unit_price'] ?? ''), 7);
 
-                if ($description === '') {
+                if ('' === $description) {
                     $problems[] = 'Description is required';
                 } elseif (mb_strlen($description) > 200) {
                     $problems[] = 'Description must be 200 characters or fewer';
                 }
-                if (preg_match('/^\d{1,3}$/', $quantity) !== 1 || (int) $quantity < 1) {
+                if (1 !== preg_match('/^\d{1,3}$/', $quantity) || (int) $quantity < 1) {
                     $problems[] = 'Quantity must be a whole number from 1 to 999';
                 }
-                if ($price === null) {
+                if (null === $price) {
                     $problems[] = 'Unit price must be an amount with at most 2 decimals';
                 }
 
-                if ($problems !== []) {
-                    $errors['item_' . $index] = implode('. ', $problems);
+                if ([] !== $problems) {
+                    $errors['item_'.$index] = implode('. ', $problems);
                     continue;
                 }
                 $bill->items[] = ['description' => $description, 'quantity' => (string) (int) $quantity, 'unit_price' => (string) $price];
@@ -205,35 +205,35 @@ class BillingService
 
         // Discount
         $discountText = trim($input->discountAmount);
-        $discount = $discountText === '' ? '0.00' : Input::money($discountText, 8);
-        if ($discount === null) {
+        $discount = '' === $discountText ? '0.00' : Input::money($discountText, 8);
+        if (null === $discount) {
             $errors['discountAmount'] = 'Enter a valid discount amount (at most 2 decimals)';
         }
         $reason = Input::nullIfEmpty(Input::clean($input->discountReason));
-        if ($reason !== null && mb_strlen($reason) > 255) {
+        if (null !== $reason && mb_strlen($reason) > 255) {
             $errors['discountReason'] = 'The discount reason must be 255 characters or fewer';
-        } elseif ($discount !== null && $discount !== '0.00' && $reason === null) {
+        } elseif (null !== $discount && '0.00' !== $discount && null === $reason) {
             $errors['discountReason'] = 'A reason is required when a discount is given';
         }
         $bill->discountAmount = $discount ?? '0.00';
-        $bill->discountReason = $discount === '0.00' ? null : $reason;
+        $bill->discountReason = '0.00' === $discount ? null : $reason;
 
         // Tax
         $taxText = trim($input->taxPercent);
-        $tax = $taxText === '' ? '0.00' : Input::percent($taxText);
-        if ($tax === null) {
+        $tax = '' === $taxText ? '0.00' : Input::percent($taxText);
+        if (null === $tax) {
             $errors['taxPercent'] = 'Tax must be between 0 and 100 (at most 2 decimals)';
         }
         $bill->taxPercent = $tax ?? '0.00';
 
         // Notes
         $notes = Input::nullIfEmpty(Input::cleanMultiline($input->notes));
-        if ($notes !== null && mb_strlen($notes) > 500) {
+        if (null !== $notes && mb_strlen($notes) > 500) {
             $errors['notes'] = 'Notes must be 500 characters or fewer';
         }
         $bill->notes = $notes;
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -257,20 +257,20 @@ class BillingService
         ?string $method,
         ?string $transactionRef,
         ?string $idempotencyKey,
-        string $performedBy
+        string $performedBy,
     ): array {
         if ($billId < 1) {
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
 
         $money = Input::money($amount, 8);
-        if ($money === null || $money === '0.00') {
+        if (null === $money || '0.00' === $money) {
             $errors['amount'] = 'Enter a payment amount greater than zero (at most 2 decimals)';
         }
 
@@ -280,16 +280,16 @@ class BillingService
         }
 
         $reference = Input::nullIfEmpty(Input::clean($transactionRef));
-        if ($reference !== null && mb_strlen($reference) > 100) {
+        if (null !== $reference && mb_strlen($reference) > 100) {
             $errors['transactionRef'] = 'The transaction reference must be 100 characters or fewer';
         }
 
         $key = trim((string) $idempotencyKey);
-        if (preg_match('/^[A-Za-z0-9]{16,64}$/', $key) !== 1) {
+        if (1 !== preg_match('/^[A-Za-z0-9]{16,64}$/', $key)) {
             $errors['form'] = 'The payment form has expired. Please reload the page and try again';
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure($errors['form'] ?? self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -314,12 +314,12 @@ class BillingService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $reason = Input::nullIfEmpty(Input::clean($reason));
-        if ($reason === null) {
+        if (null === $reason) {
             return $this->failure('A cancellation reason is required', ['reason' => 'A cancellation reason is required']);
         }
         if (mb_strlen($reason) > 255) {
@@ -377,8 +377,8 @@ class BillingService
     /** "Item 3: quantity ..." from the database belongs to row index 2. */
     private function mapItemMessage(array &$result): void
     {
-        if (!$result['success'] && preg_match('/^Item (\d+):/', $result['message'], $m) === 1) {
-            $result['errors']['item_' . ((int) $m[1] - 1)] = $result['message'];
+        if (!$result['success'] && 1 === preg_match('/^Item (\d+):/', $result['message'], $m)) {
+            $result['errors']['item_'.((int) $m[1] - 1)] = $result['message'];
         }
     }
 

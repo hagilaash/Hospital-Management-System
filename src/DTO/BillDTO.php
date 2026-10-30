@@ -142,7 +142,7 @@ class BillDTO
                 'quantity' => trim((string) self::nullableString($quantities[$i] ?? null)),
                 'unit_price' => trim((string) self::nullableString($prices[$i] ?? null)),
             ];
-            if ($row['description'] === '' && $row['quantity'] === '' && $row['unit_price'] === '') {
+            if ('' === $row['description'] && '' === $row['quantity'] && '' === $row['unit_price']) {
                 continue;
             }
             $dto->items[] = $row;
@@ -153,22 +153,22 @@ class BillDTO
 
     public function isPending(): bool
     {
-        return $this->status === self::STATUS_PENDING;
+        return self::STATUS_PENDING === $this->status;
     }
 
     public function isPartiallyPaid(): bool
     {
-        return $this->status === self::STATUS_PARTIALLY_PAID;
+        return self::STATUS_PARTIALLY_PAID === $this->status;
     }
 
     public function isPaid(): bool
     {
-        return $this->status === self::STATUS_PAID;
+        return self::STATUS_PAID === $this->status;
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === self::STATUS_CANCELLED;
+        return self::STATUS_CANCELLED === $this->status;
     }
 
     /** A payment can be recorded while something is still owed. */
@@ -180,7 +180,7 @@ class BillDTO
     /** Only a bill with nothing paid on it can be cancelled. */
     public function canCancel(): bool
     {
-        return $this->isPending() && $this->paidAmount === '0.00';
+        return $this->isPending() && '0.00' === $this->paidAmount;
     }
 
     private static function nullableString(mixed $value): ?string
