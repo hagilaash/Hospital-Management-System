@@ -1041,3 +1041,241 @@ textarea:focus-visible {
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }
+
+/* =====================================================================
+   Billing module - appended after the Patient, FDM and workflow styles;
+   nothing above is changed. Some rules repeat earlier ones on purpose, so
+   Billing also works if the OP Consultation stylesheet section is missing.
+   ===================================================================== */
+
+textarea {
+    width: 100%;
+    min-height: 72px;
+    padding: 10px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--hms-text);
+    background: #ffffff;
+    border: 1px solid #b9c2cd;
+    border-radius: 4px;
+    resize: vertical;
+}
+
+.money {
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Bill status labels */
+.badge-pending {
+    background: #fff4e0;
+    color: #6b4200;
+}
+
+.badge-partial {
+    background: #e3f0fb;
+    color: #0d47a1;
+}
+
+.badge-paid {
+    background: #e8f5e9;
+    color: var(--hms-success-dark);
+}
+
+/* Item rows of the new-bill form */
+.items-table input {
+    width: 100%;
+    padding: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    border: 1px solid #b9c2cd;
+    border-radius: 4px;
+}
+
+.items-table td {
+    vertical-align: top;
+}
+
+.items-table td.money input {
+    text-align: right;
+}
+
+.items-table .js-line-total {
+    display: inline-block;
+    padding-top: 8px;
+}
+
+.items-table tr.field-invalid input {
+    border-color: var(--hms-danger);
+    background: #fff8f7;
+}
+
+/* Totals */
+.totals-list {
+    max-width: 440px;
+    margin: 16px 0 0 auto;
+}
+
+.totals-list > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 6px 0;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.totals-list dt {
+    color: var(--hms-muted);
+}
+
+.totals-list dd {
+    margin: 0;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.totals-list .totals-final {
+    border-top: 2px solid var(--hms-border);
+    font-weight: bold;
+}
+
+.totals-list .totals-final dt {
+    color: var(--hms-text);
+}
+
+.totals-box {
+    margin: 18px 0;
+    padding: 14px 16px;
+    background: #f7f9fb;
+    border: 1px solid var(--hms-border);
+    border-radius: var(--hms-radius);
+}
+
+.totals-box h3 {
+    margin: 0 0 8px;
+    font-size: 16px;
+}
+
+.totals-box .totals-list {
+    margin-left: 0;
+}
+
+/* Invoice */
+.invoice-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 2px solid var(--hms-primary);
+}
+
+.invoice-hospital {
+    margin: 0 0 4px;
+    color: var(--hms-primary);
+}
+
+.invoice p {
+    margin: 2px 0;
+}
+
+.invoice-title {
+    text-align: right;
+}
+
+.invoice-title h2 {
+    margin: 0 0 4px;
+    letter-spacing: 0.12em;
+}
+
+.invoice-parties {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    margin-bottom: 18px;
+}
+
+.invoice-parties h3,
+.invoice h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+    color: var(--hms-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.invoice-note {
+    margin-top: 14px;
+}
+
+.invoice-footer {
+    margin-top: 24px;
+    padding-top: 10px;
+    border-top: 1px solid var(--hms-border);
+    text-align: center;
+}
+
+@media (max-width: 600px) {
+    .invoice-parties {
+        grid-template-columns: 1fr;
+    }
+
+    .invoice-title {
+        text-align: left;
+    }
+
+    .totals-list {
+        max-width: none;
+    }
+}
+
+/* Printing: only the invoice (or the bill page) is printed, without the application chrome. */
+@media print {
+    body {
+        background: #ffffff;
+        font-size: 12px;
+    }
+
+    .no-print,
+    .hms-topbar,
+    .fdm-subnav,
+    .pager,
+    .alert {
+        display: none !important;
+    }
+
+    .hms-main {
+        max-width: none;
+        padding: 0;
+    }
+
+    .card {
+        padding: 0;
+        box-shadow: none;
+        border: 0;
+    }
+
+    .table th,
+    .table td {
+        padding: 5px 6px;
+    }
+
+    .badge {
+        border: 1px solid #888;
+        background: #ffffff;
+        color: #000000;
+    }
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    @page {
+        margin: 14mm;
+    }
+}
