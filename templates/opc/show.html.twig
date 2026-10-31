@@ -21,6 +21,9 @@
     <div class="header-actions">
         <a class="btn btn-secondary" href="{{ path('opc_dashboard') }}">&laquo; Worklist</a>
         <a class="btn btn-secondary" href="{{ path('patient_show', {id: consultation.patientId}) }}">Patient record</a>
+        {% if consultation.isReadyForBilling %}
+            <a class="btn btn-primary" href="{{ path('billing_new', {consultation_id: consultation.consultationId}) }}">Create bill</a>
+        {% endif %}
     </div>
 </div>
 

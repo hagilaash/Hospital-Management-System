@@ -9,6 +9,14 @@ twig:
     globals:
         auth: '@App\Service\AuthSessionService'
 
+        # Shown on printed invoices. EDIT THESE VALUES to your hospital's details.
+        hospital:
+            name: 'Hospital Management System'
+            address: ''
+            phone: ''
+            email: ''
+            currency: '₹'
+
 when@test:
     twig:
         strict_variables: true

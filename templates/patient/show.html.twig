@@ -20,6 +20,8 @@
 
         {% if patient.isActive %}
             <a class="btn btn-primary" href="{{ path('patient_edit', {id: patient.patientId}) }}">Edit</a>
+            <a class="btn btn-secondary" href="{{ path('opc_dashboard', {patient_id: patient.patientId}) }}">OP consultation</a>
+            <a class="btn btn-secondary" href="{{ path('billing_new', {patient_id: patient.patientId}) }}">Create bill</a>
         {% endif %}
 
         <form method="post" action="{{ path('patient_status', {id: patient.patientId}) }}" class="inline-form"
