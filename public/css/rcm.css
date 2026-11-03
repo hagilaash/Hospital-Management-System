@@ -1,0 +1,161 @@
+/* =====================================================================
+   RCM module styles. Loaded only by the RCM pages (templates/rcm/_layout.html.twig).
+   Builds on the shared hms.css (cards, tables, buttons, stat cards); nothing there is changed.
+   ===================================================================== */
+
+/* Status labels */
+.rcm-badge-pending {
+    background: #fff4e0;
+    color: #6b4200;
+}
+
+.rcm-badge-finalized {
+    background: #e8f5e9;
+    color: #1b5e20;
+}
+
+.rcm-badge-waiting {
+    background: #eceff1;
+    color: #37474f;
+}
+
+.rcm-badge-partial {
+    background: #e3f0fb;
+    color: #0d47a1;
+}
+
+/* Workflow strip: Billing complete -> Pending queue -> Review -> Finalize -> Completed */
+.rcm-steps {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0 0 20px;
+    padding: 0;
+    list-style: none;
+}
+
+.rcm-step {
+    position: relative;
+    flex: 1 1 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #d6dce3;
+    border-radius: 6px;
+}
+
+.rcm-step + .rcm-step::before {
+    content: "\203A";
+    position: absolute;
+    left: -9px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #8a96a3;
+    font-size: 18px;
+}
+
+.rcm-step-active {
+    border-color: #1565c0;
+    background: #f1f7fd;
+}
+
+.rcm-step-title {
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.rcm-step-note {
+    font-size: 12px;
+    color: #5f6b78;
+}
+
+.rcm-step-count {
+    font-size: 20px;
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Banner at the top of a case */
+.rcm-banner {
+    margin: 0 0 16px;
+    padding: 12px 16px;
+    border-left: 5px solid #8a96a3;
+    border-radius: 4px;
+    background: #f5f7f9;
+}
+
+.rcm-banner-pending {
+    border-left-color: #ef6c00;
+    background: #fff8ec;
+}
+
+.rcm-banner-done {
+    border-left-color: #2e7d32;
+    background: #eef8ef;
+}
+
+.rcm-banner-waiting {
+    border-left-color: #607d8b;
+}
+
+/* Finalize panel */
+.rcm-finalize {
+    border: 2px solid #2e7d32;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-weight: normal;
+}
+
+.checkbox-label input[type="checkbox"] {
+    margin-top: 3px;
+}
+
+/* Dashboard aging table */
+.rcm-aging th {
+    text-align: left;
+    font-weight: normal;
+}
+
+.rcm-aging-late th,
+.rcm-aging-late td {
+    color: #b71c1c;
+    font-weight: bold;
+}
+
+/* History timeline */
+.rcm-timeline {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.rcm-timeline li {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid #edf0f4;
+}
+
+.rcm-timeline-when {
+    color: #5f6b78;
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 600px) {
+    .rcm-timeline li {
+        grid-template-columns: 1fr;
+        gap: 2px;
+    }
+
+    .rcm-step + .rcm-step::before {
+        display: none;
+    }
+}

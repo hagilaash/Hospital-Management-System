@@ -1,0 +1,234 @@
+{% extends 'rcm/_layout.html.twig' %}
+
+{#
+  Variables from RCMController::renderCase():
+    case (RCMCaseDTO with items, payments and history), remarks (as typed), errors (field => message), form_error
+#}
+
+{% block title %}RCM review {{ case.billNumber }} | HMS{% endblock %}
+
+{% block rcm_content %}
+{% import 'rcm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ case.patientName }}</h1>
+        <p class="subtitle">
+            {{ ui.rcm_badge(case.rcmStatus) }}
+            <span class="muted">{{ case.patientCode }} &middot; Bill {{ case.billNumber }}</span>
+        </p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path(case.isFinalized ? 'rcm_completed' : 'rcm_pending') }}">&laquo; {{ case.isFinalized ? 'Completed' : 'Pending queue' }}</a>
+        <a class="btn btn-secondary" href="{{ path('patient_show', {id: case.patientId}) }}">Patient record</a>
+    </div>
+</div>
+
+{% if form_error %}
+    <div class="alert alert-error" role="alert">{{ form_error }}</div>
+{% endif %}
+
+{% if case.isPending %}
+    <div class="rcm-banner rcm-banner-pending" role="status">
+        Billing is complete. Review the information below, then finalize the patient.
+        {% if case.readySince %}<span class="muted">Waiting {{ ui.waiting(case.readySince) }}.</span>{% endif %}
+    </div>
+{% elseif case.isFinalized %}
+    <div class="rcm-banner rcm-banner-done" role="status">
+        Finalized on {{ case.finalizedAt|date('d M Y, H:i') }} by {{ case.finalizedBy }}.
+    </div>
+{% else %}
+    <div class="rcm-banner rcm-banner-waiting" role="status">
+        This case is not in the RCM queue yet: {{ case.blockReason }}.
+    </div>
+{% endif %}
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Patient ID</dt><dd>{{ case.patientId }}</dd></div>
+            <div><dt>Patient code</dt><dd>{{ case.patientCode }}</dd></div>
+            <div><dt>Name</dt><dd>{{ case.patientName }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ case.patientGender|default('Not recorded') }}</dd></div>
+            <div>
+                <dt>Date of birth</dt>
+                <dd>
+                    {% if case.patientDob %}{{ case.patientDob|date('d M Y') }} <span class="muted">({{ date().diff(date(case.patientDob)).y }} years)</span>{% else %}Not recorded{% endif %}
+                </dd>
+            </div>
+            <div><dt>Phone</dt><dd>{{ case.patientPhone|default('Not recorded') }}</dd></div>
+            <div><dt>Email</dt><dd>{{ case.patientEmail|default('Not recorded') }}</dd></div>
+            <div><dt>Address</dt><dd>{{ case.patientAddress|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Visit</h2>
+        <dl class="detail-list">
+            <div><dt>Doctor</dt><dd>{% if case.doctorName %}{{ case.doctorName }}<br><span class="muted">{{ case.specialization }}</span>{% else %}Not linked{% endif %}</dd></div>
+            <div>
+                <dt>Appointment</dt>
+                <dd>
+                    {% if case.appointmentId %}
+                        <a href="{{ path('fdm_appointment_show', {id: case.appointmentId}) }}">{{ case.appointmentCode }}</a>
+                        <span class="muted">{{ case.appointmentDate|date('d M Y') }}, {{ case.appointmentTime }}</span><br>
+                        <span class="muted">Status: {{ case.appointmentStatus }}</span>
+                    {% else %}Not linked{% endif %}
+                </dd>
+            </div>
+            <div><dt>Consultation</dt><dd>{{ case.consultationCode|default('Not linked') }}</dd></div>
+        </dl>
+    </section>
+
+    <section class="card">
+        <h2>Billing</h2>
+        <dl class="detail-list">
+            <div><dt>Bill number</dt><dd>{{ case.billNumber }}</dd></div>
+            <div><dt>Billing date</dt><dd>{{ case.billDate|date('d M Y, H:i') }}</dd></div>
+            <div><dt>Payment status</dt><dd>{{ ui.payment_badge(case.billStatus) }}</dd></div>
+            <div><dt>Payments</dt><dd>{{ case.paymentCount }}{% if case.lastPaymentAt %} <span class="muted">(last {{ case.lastPaymentAt|date('d M Y, H:i') }})</span>{% endif %}</dd></div>
+        </dl>
+        <dl class="totals-list">
+            <div><dt>Bill amount</dt><dd>{{ ui.money(case.totalAmount) }}</dd></div>
+            <div><dt>Paid amount</dt><dd>{{ ui.money(case.paidAmount) }}</dd></div>
+            <div class="totals-final"><dt>Outstanding</dt><dd>{{ ui.money(case.balanceAmount) }}</dd></div>
+        </dl>
+    </section>
+
+</div>
+
+<section class="card" aria-labelledby="items-heading">
+    <h2 id="items-heading">Charges</h2>
+    {% if case.items is empty %}
+        <p class="muted">No bill items.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Description</th>
+                        <th scope="col" class="money">Qty</th>
+                        <th scope="col" class="money">Unit price</th>
+                        <th scope="col" class="money">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in case.items %}
+                    <tr>
+                        <td data-label="#">{{ item.line_no }}</td>
+                        <td data-label="Description">{{ item.description }}</td>
+                        <td data-label="Qty" class="money">{{ item.quantity }}</td>
+                        <td data-label="Unit price" class="money">{{ ui.money(item.unit_price) }}</td>
+                        <td data-label="Amount" class="money">{{ ui.money(item.line_total) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+<section class="card" aria-labelledby="payments-heading">
+    <h2 id="payments-heading">Payments</h2>
+    {% if case.payments is empty %}
+        <p class="muted">No payments recorded.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Reference</th>
+                        <th scope="col">Date</th>
+                        <th scope="col">Method</th>
+                        <th scope="col">Transaction ref.</th>
+                        <th scope="col">Received by</th>
+                        <th scope="col" class="money">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for pay in case.payments %}
+                    <tr>
+                        <td data-label="Reference"><strong>{{ pay.payment_reference }}</strong></td>
+                        <td data-label="Date">{{ pay.paid_at|date('d M Y, H:i') }}</td>
+                        <td data-label="Method">{{ pay.method }}</td>
+                        <td data-label="Transaction ref.">{{ pay.transaction_ref|default('—') }}</td>
+                        <td data-label="Received by">{{ pay.received_by|default('—') }}</td>
+                        <td data-label="Amount" class="money">{{ ui.money(pay.amount) }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{# ------------------------------------------------------------------ #}
+{#  Finalize / finalized record                                          #}
+{# ------------------------------------------------------------------ #}
+{% if case.canFinalize %}
+    <section class="card rcm-finalize" aria-labelledby="finalize-heading">
+        <h2 id="finalize-heading">Finalize patient</h2>
+        <p class="hint">Finalizing records the date, time and your user name, removes the patient from the pending queue and completes the visit.
+            It cannot be undone.</p>
+
+        <form method="post" action="{{ path('rcm_finalize', {id: case.billId}) }}" class="patient-form" novalidate
+              data-finalize-form data-confirm="Finalize {{ case.patientName }} (bill {{ case.billNumber }})? This cannot be undone.">
+            <input type="hidden" name="_token" value="{{ csrf_token('rcm_finalize_' ~ case.billId) }}">
+
+            <div class="field {{ errors.remarks is defined ? 'field-invalid' }}">
+                <label for="remarks">Remarks (optional)</label>
+                <textarea id="remarks" name="remarks" rows="3" maxlength="500"
+                          {% if errors.remarks is defined %}aria-invalid="true" aria-describedby="remarks-error"{% endif %}>{{ remarks }}</textarea>
+                {% if errors.remarks is defined %}<p class="field-error" id="remarks-error">{{ errors.remarks }}</p>{% endif %}
+            </div>
+
+            <div class="field">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="reviewed" value="1" data-require-check required>
+                    I have reviewed the patient, visit and billing information above.
+                </label>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success" data-submit-once>Finalize patient</button>
+                <a class="btn btn-secondary" href="{{ path('rcm_pending') }}">Cancel</a>
+            </div>
+        </form>
+    </section>
+{% elseif case.isFinalized %}
+    <section class="card" aria-labelledby="record-heading">
+        <h2 id="record-heading">RCM record</h2>
+        <dl class="detail-list">
+            <div><dt>RCM status</dt><dd>{{ ui.rcm_badge(case.rcmStatus) }}</dd></div>
+            <div><dt>Finalized on</dt><dd>{{ case.finalizedAt|date('d M Y, H:i') }}</dd></div>
+            <div><dt>Finalized by</dt><dd>{{ case.finalizedBy }}</dd></div>
+            <div><dt>Remarks</dt><dd>{{ case.remarks|default('None')|nl2br }}</dd></div>
+        </dl>
+    </section>
+{% endif %}
+
+<section class="card" aria-labelledby="history-heading">
+    <h2 id="history-heading">History</h2>
+    {% if case.history is empty %}
+        <p class="muted">No history recorded.</p>
+    {% else %}
+        <ol class="rcm-timeline">
+            {% for h in case.history %}
+                <li>
+                    <span class="rcm-timeline-when">{{ h.performed_at|date('d M Y, H:i') }}</span>
+                    <span class="rcm-timeline-what">
+                        <strong>{{ h.action|replace({'_': ' '})|capitalize }}</strong>
+                        {% if h.from_status or h.to_status %}<span class="muted">({{ h.from_status|default('—') }} &rarr; {{ h.to_status|default('—') }})</span>{% endif %}
+                        {% if h.details %}<br>{{ h.details }}{% endif %}
+                        <br><span class="muted">by {{ h.performed_by|default('unknown') }}</span>
+                    </span>
+                </li>
+            {% endfor %}
+        </ol>
+    {% endif %}
+</section>
+
+{% endblock %}

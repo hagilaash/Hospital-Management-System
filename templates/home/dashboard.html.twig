@@ -126,6 +126,9 @@
 
     <div class="modules">
 
+    {# RCM tile: shown from the database list when it contains RCM, otherwise added after the loop. #}
+    {% set rcmListed = modules|filter(m => (m['module_name']|trim|lower) in ['rcm', 'revenue cycle management'])|length > 0 %}
+
     {% for module in modules %}
 
         {% set moduleName = module['module_name']|trim %}
@@ -148,18 +151,18 @@
             <a href="{{ path('fdm_dashboard') }}" class="module">
                 Front Desk
             </a>
-            
+
         {% elseif moduleKey == 'op consultation' %}
 
             <a href="{{ path('opc_dashboard') }}" class="module">
                 {{ moduleName }}
-            </a>    
+            </a>
 
-        {% elseif moduleKey == 'billing' %}
+        {% elseif moduleKey == 'rcm' or moduleKey == 'revenue cycle management' %}
 
-            <a href="{{ path('billing_dashboard') }}" class="module">
-                Billing
-            </a>    
+            <a href="{{ path('rcm_index') }}" class="module">
+                {{ moduleName }}
+            </a>
 
         {% else %}
 
@@ -170,6 +173,12 @@
         {% endif %}
 
     {% endfor %}
+
+    {% if not rcmListed %}
+        <a href="{{ path('rcm_index') }}" class="module">
+            RCM
+        </a>
+    {% endif %}
 
 </div>
 

@@ -1,0 +1,108 @@
+{% extends 'rcm/_layout.html.twig' %}
+
+{#
+  Variables from RCMController::completed():
+    list (PagedListDTO of RCMCaseDTO; list.filters = search, date_from, date_to)
+#}
+
+{% block title %}Completed RCM records | HMS{% endblock %}
+
+{% block rcm_content %}
+{% import 'rcm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Completed</h1>
+        <p class="subtitle">Patients finalized by RCM, newest first</p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('rcm_pending') }}">Pending queue</a>
+</div>
+
+<form method="get" action="{{ path('rcm_completed') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100"
+                   placeholder="Patient ID, name, phone, bill or appointment number">
+        </div>
+        <div class="field">
+            <label for="date_from">Finalized from</label>
+            <input type="date" id="date_from" name="date_from" value="{{ list.filters.date_from ?? '' }}">
+        </div>
+        <div class="field">
+            <label for="date_to">Finalized to</label>
+            <input type="date" id="date_to" name="date_to" value="{{ list.filters.date_to ?? '' }}">
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('rcm_completed') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}
+            Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }}
+            {{ list.total == 1 ? 'record' : 'records' }}
+        {% else %}
+            No completed records found.
+        {% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>{% if list.filters.search or list.filters.date_from or list.filters.date_to %}No completed records match these filters.{% else %}No patient has been finalized yet.{% endif %}</p>
+            <a class="btn btn-primary" href="{{ path('rcm_pending') }}">Open pending queue</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Contact</th>
+                        <th scope="col">Visit</th>
+                        <th scope="col">Bill</th>
+                        <th scope="col" class="money">Bill amount</th>
+                        <th scope="col" class="money">Paid</th>
+                        <th scope="col">RCM status</th>
+                        <th scope="col">Finalized</th>
+                        <th scope="col">Remarks</th>
+                        <th scope="col"><span class="sr-only">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in list.items %}
+                    <tr>
+                        <td data-label="Patient">
+                            <strong>{{ c.patientName }}</strong><br>
+                            <span class="muted">{{ c.patientCode }} &middot; ID {{ c.patientId }}</span>
+                        </td>
+                        <td data-label="Contact">{{ c.patientPhone|default('—') }}</td>
+                        <td data-label="Visit">
+                            {% if c.appointmentCode %}{{ c.appointmentCode }}{% else %}<span class="muted">No appointment</span>{% endif %}
+                            {% if c.consultationCode %}<br><span class="muted">{{ c.consultationCode }}</span>{% endif %}
+                        </td>
+                        <td data-label="Bill">{{ c.billNumber }}<br><span class="muted">{{ c.billDate|date('d M Y') }}</span></td>
+                        <td data-label="Bill amount" class="money">{{ ui.money(c.totalAmount) }}</td>
+                        <td data-label="Paid" class="money">{{ ui.money(c.paidAmount) }}</td>
+                        <td data-label="RCM status">{{ ui.rcm_badge(c.rcmStatus) }}</td>
+                        <td data-label="Finalized">{{ c.finalizedAt|date('d M Y, H:i') }}<br><span class="muted">by {{ c.finalizedBy }}</span></td>
+                        <td data-label="Remarks">{{ c.remarks ? c.remarks|slice(0, 60) : '—' }}{% if c.remarks and c.remarks|length > 60 %}&hellip;{% endif %}</td>
+                        <td data-label="Action" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('rcm_show', {id: c.billId}) }}">View</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {{ ui.pager('rcm_completed', {
+            search: list.filters.search, date_from: list.filters.date_from, date_to: list.filters.date_to
+        }, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}

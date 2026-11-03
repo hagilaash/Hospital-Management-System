@@ -1,0 +1,60 @@
+{# Helpers for the RCM pages. Import inside a block:  {% import 'rcm/_macros.html.twig' as ui %} #}
+
+{# RCM status label. #}
+{% macro rcm_badge(status) %}
+    {% set classes = {'Pending': 'rcm-badge-pending', 'Finalized': 'rcm-badge-finalized', 'Awaiting Billing': 'rcm-badge-waiting'} %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status }}</span>
+{% endmacro %}
+
+{# Payment (bill) status label. #}
+{% macro payment_badge(status) %}
+    {% set classes = {'Paid': 'rcm-badge-finalized', 'Partially Paid': 'rcm-badge-partial', 'Pending': 'rcm-badge-waiting', 'Cancelled': 'badge-cancelled'} %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status }}</span>
+{% endmacro %}
+
+{# An amount with the currency symbol (from the "hospital" Twig global when it exists). #}
+{% macro money(value) %}{{ hospital.currency|default('₹') }}&nbsp;{{ value|number_format(2) }}{% endmacro %}
+
+{# How long a case has been waiting, e.g. "2 d 5 h" or "3 h". #}
+{% macro waiting(since) %}
+    {% if since %}
+        {% set gap = date('now').diff(date(since)) %}
+        {% if gap.days > 0 %}{{ gap.days }}&nbsp;d {{ gap.h }}&nbsp;h{% elseif gap.h > 0 %}{{ gap.h }}&nbsp;h {{ gap.i }}&nbsp;min{% else %}{{ gap.i }}&nbsp;min{% endif %}
+    {% else %}&mdash;{% endif %}
+{% endmacro %}
+
+{# Previous / numbered / next links. params are the filters to keep; page_param is the query key for the page number. #}
+{% macro pager(route, params, page, total_pages, page_param) %}
+    {% if total_pages > 1 %}
+        {% set first_shown = max(1, page - 2) %}
+        {% set last_shown = min(total_pages, page + 2) %}
+
+        <nav class="pager no-print" aria-label="Pages">
+            {% if page > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page - 1})) }}">&laquo; Previous</a>
+            {% endif %}
+
+            {% if first_shown > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): 1})) }}">1</a>
+                {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+            {% endif %}
+
+            {% for n in range(first_shown, last_shown) %}
+                {% if n == page %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                {% else %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): n})) }}">{{ n }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if last_shown < total_pages %}
+                {% if last_shown < total_pages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): total_pages})) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page + 1})) }}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endmacro %}

@@ -33,11 +33,15 @@ class AccessControlService
     public const OPC_VIEW = 'opc.view';
     public const OPC_MANAGE = 'opc.manage';
 
-    // billing permissions
+    // Billing permissions
     public const BILLING_VIEW = 'billing.view';
     public const BILLING_CREATE = 'billing.create';
     public const BILLING_PAYMENT = 'billing.payment';
     public const BILLING_CANCEL = 'billing.cancel';
+
+    // RCM permissions
+    public const RCM_VIEW = 'rcm.view';
+    public const RCM_FINALIZE = 'rcm.finalize';
 
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
@@ -57,6 +61,8 @@ class AccessControlService
         self::BILLING_CREATE,
         self::BILLING_PAYMENT,
         self::BILLING_CANCEL,
+        self::RCM_VIEW,
+        self::RCM_FINALIZE,
     ];
 
     public function __construct(

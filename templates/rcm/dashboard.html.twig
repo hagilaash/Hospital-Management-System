@@ -1,0 +1,75 @@
+{% extends 'rcm/_layout.html.twig' %}
+
+{#
+  Variables from RCMController::dashboard():
+    summary (RCMSummaryDTO)
+#}
+
+{% block title %}RCM dashboard | HMS{% endblock %}
+
+{% block rcm_content %}
+{% import 'rcm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <h1>RCM dashboard</h1>
+    <a class="btn btn-secondary" href="{{ path('rcm_pending') }}">Pending queue</a>
+</div>
+
+<section aria-label="Cases">
+    <div class="stat-grid">
+        <a class="stat-card stat-card-warn" href="{{ path('rcm_pending') }}">
+            <span class="stat-value">{{ summary.pendingCases }}</span>
+            <span class="stat-label">Pending RCM review</span>
+        </a>
+        <a class="stat-card stat-card-ok" href="{{ path('rcm_completed') }}">
+            <span class="stat-value">{{ summary.finalizedToday }}</span>
+            <span class="stat-label">Finalized today</span>
+        </a>
+        <a class="stat-card" href="{{ path('rcm_completed') }}">
+            <span class="stat-value">{{ summary.finalizedCases }}</span>
+            <span class="stat-label">Finalized in total</span>
+        </a>
+        <div class="stat-card">
+            <span class="stat-value">{{ summary.awaitingBillingCases }}</span>
+            <span class="stat-label">Bills not fully paid yet</span>
+        </div>
+    </div>
+</section>
+
+<div class="detail-grid">
+
+    <section class="card">
+        <h2>Amounts</h2>
+        <dl class="totals-list">
+            <div><dt>Collected, waiting for RCM</dt><dd>{{ ui.money(summary.pendingAmount) }}</dd></div>
+            <div><dt>Collected, finalized by RCM</dt><dd>{{ ui.money(summary.finalizedAmount) }}</dd></div>
+        </dl>
+        <p class="hint">Only fully paid bills are counted here.</p>
+    </section>
+
+    <section class="card">
+        <h2>How long pending cases have waited</h2>
+        {% set fresh = summary.pendingCases - summary.pendingOver1Day %}
+        {% set mid = summary.pendingOver1Day - summary.pendingOver3Days %}
+        <table class="table table-compact rcm-aging">
+            <tbody>
+                <tr><th scope="row">Less than 1 day</th><td class="money">{{ fresh }}</td></tr>
+                <tr><th scope="row">1 to 3 days</th><td class="money">{{ mid }}</td></tr>
+                <tr class="{{ summary.pendingOver3Days > 0 ? 'rcm-aging-late' }}"><th scope="row">More than 3 days</th><td class="money">{{ summary.pendingOver3Days }}</td></tr>
+            </tbody>
+        </table>
+        <p class="hint">
+            {% if summary.oldestPendingAt %}Oldest waiting case: billing completed {{ summary.oldestPendingAt|date('d M Y, H:i') }}.{% else %}No cases are waiting.{% endif %}
+        </p>
+    </section>
+
+</div>
+
+<section class="card">
+    <h2>What enters the RCM queue?</h2>
+    <p>A patient enters the queue <strong>automatically</strong> when their bill is <strong>fully paid</strong> (status Paid, nothing outstanding).
+        Creating a bill, a partial payment or a cancelled bill never makes a patient available to RCM.
+        After finalization the patient leaves the queue and appears under Completed.</p>
+</section>
+
+{% endblock %}

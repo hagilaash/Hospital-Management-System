@@ -1,0 +1,90 @@
+{% extends 'rcm/_layout.html.twig' %}
+
+{#
+  Variables from RCMController::index():
+    summary (RCMSummaryDTO), pending (the longest-waiting RCMCaseDTOs, at most 5)
+#}
+
+{% block title %}RCM | HMS{% endblock %}
+
+{% block rcm_content %}
+{% import 'rcm/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Revenue Cycle Management</h1>
+        <p class="subtitle">Review fully paid patients and finalize them to complete the visit</p>
+    </div>
+    <a class="btn btn-primary" href="{{ path('rcm_pending') }}">Open pending queue</a>
+</div>
+
+<ol class="rcm-steps" aria-label="RCM workflow">
+    <li class="rcm-step"><span class="rcm-step-title">Billing complete</span><span class="rcm-step-note">Bill fully paid</span></li>
+    <li class="rcm-step rcm-step-active"><span class="rcm-step-title">Pending queue</span><span class="rcm-step-count">{{ summary.pendingCases }}</span></li>
+    <li class="rcm-step"><span class="rcm-step-title">Review</span><span class="rcm-step-note">Open the case</span></li>
+    <li class="rcm-step"><span class="rcm-step-title">Finalize</span><span class="rcm-step-note">Confirm and record</span></li>
+    <li class="rcm-step"><span class="rcm-step-title">Completed</span><span class="rcm-step-count">{{ summary.finalizedCases }}</span></li>
+</ol>
+
+<section aria-label="RCM summary">
+    <div class="stat-grid">
+        <a class="stat-card stat-card-warn" href="{{ path('rcm_pending') }}">
+            <span class="stat-value">{{ summary.pendingCases }}</span>
+            <span class="stat-label">Pending RCM review</span>
+        </a>
+        <a class="stat-card stat-card-ok" href="{{ path('rcm_completed') }}">
+            <span class="stat-value">{{ summary.finalizedToday }}</span>
+            <span class="stat-label">Finalized today</span>
+        </a>
+        <a class="stat-card" href="{{ path('rcm_completed') }}">
+            <span class="stat-value">{{ summary.finalizedCases }}</span>
+            <span class="stat-label">Finalized in total</span>
+        </a>
+        <div class="stat-card">
+            <span class="stat-value">{{ summary.awaitingBillingCases }}</span>
+            <span class="stat-label">Bills not fully paid yet</span>
+        </div>
+    </div>
+    <p class="hint">A patient enters the pending queue automatically when their bill is fully paid.
+        Bills that are pending, partially paid or cancelled do not appear here.</p>
+</section>
+
+<section class="card" aria-labelledby="waiting-heading">
+    <h2 id="waiting-heading">Waiting the longest</h2>
+
+    {% if pending is empty %}
+        <div class="empty-state">
+            <p>No patients are waiting for RCM review.</p>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Bill</th>
+                        <th scope="col" class="money">Paid</th>
+                        <th scope="col">Waiting</th>
+                        <th scope="col"><span class="sr-only">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for c in pending %}
+                    <tr>
+                        <td data-label="Patient">{{ c.patientName }}<br><span class="muted">{{ c.patientCode }}</span></td>
+                        <td data-label="Bill">{{ c.billNumber }}</td>
+                        <td data-label="Paid" class="money">{{ ui.money(c.paidAmount) }}</td>
+                        <td data-label="Waiting">{{ ui.waiting(c.readySince) }}</td>
+                        <td data-label="Action" class="actions">
+                            <a class="btn btn-primary btn-sm" href="{{ path('rcm_show', {id: c.billId}) }}">Review</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="card-links"><a href="{{ path('rcm_pending') }}">Whole pending queue &raquo;</a></p>
+    {% endif %}
+</section>
+
+{% endblock %}
