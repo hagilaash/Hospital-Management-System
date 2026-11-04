@@ -1,11 +1,3 @@
-/*
- * HMS front desk helpers. No dependencies.
- *  1. Ask before submitting a form marked data-confirm="question".
- *  2. Reload a page marked data-auto-refresh="seconds" (the live queue), but
- *     never while the tab is hidden or while the user is typing or has a
- *     cancel form open, so nothing they entered is lost.
- * State changes are always normal POST forms; this file never sends requests.
- */
 (function () {
     'use strict';
 
