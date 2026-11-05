@@ -1,0 +1,118 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::dashboard():
+    summary (PharmacySummaryDTO), queue (PagedListDTO of PrescriptionDTO, open), low (PagedListDTO of MedicineDTO, low stock)
+#}
+
+{% block title %}Pharmacy | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Pharmacy</h1>
+        <p class="subtitle">Medicines, stock and dispensing</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('pharmacy_medicine_new') }}">+ Add medicine</a>
+        <a class="btn btn-primary" href="{{ path('pharmacy_dispensing') }}">Dispensing queue</a>
+    </div>
+</div>
+
+<ol class="rx-flow" aria-label="How the pharmacy works">
+    <li><strong>1. Receive stock</strong><span>Add medicines and batches with expiry dates</span></li>
+    <li><strong>2. Doctor prescribes</strong><span>From the OP consultation, only medicines in stock</span></li>
+    <li><strong>3. Dispense</strong><span>After the consultation: earliest expiry first</span></li>
+</ol>
+
+<section aria-label="Pharmacy summary">
+    <div class="stat-grid">
+        <a class="stat-card stat-card-warn" href="{{ path('pharmacy_dispensing') }}">
+            <span class="stat-value">{{ summary.openPrescriptions }}</span>
+            <span class="stat-label">Prescriptions to dispense</span>
+        </a>
+        <a class="stat-card stat-card-ok" href="{{ path('pharmacy_dispensing', {view: 'done'}) }}">
+            <span class="stat-value">{{ summary.dispensedToday }}</span>
+            <span class="stat-label">Dispensed today</span>
+        </a>
+        <a class="stat-card" href="{{ path('pharmacy_medicines', {stock: 'in_stock'}) }}">
+            <span class="stat-value">{{ summary.inStockMedicines }}</span>
+            <span class="stat-label">Medicines in stock</span>
+        </a>
+        <a class="stat-card stat-card-warn" href="{{ path('pharmacy_medicines', {stock: 'low'}) }}">
+            <span class="stat-value">{{ summary.lowStockMedicines }}</span>
+            <span class="stat-label">Low stock</span>
+        </a>
+        <a class="stat-card stat-card-accent" href="{{ path('pharmacy_medicines', {stock: 'out'}) }}">
+            <span class="stat-value">{{ summary.outOfStockMedicines }}</span>
+            <span class="stat-label">Out of stock</span>
+        </a>
+        <a class="stat-card stat-card-warn" href="{{ path('pharmacy_medicines', {stock: 'expiring'}) }}">
+            <span class="stat-value">{{ summary.expiringBatches }}</span>
+            <span class="stat-label">Batches expiring in 30 days</span>
+        </a>
+        <a class="stat-card" href="{{ path('pharmacy_medicines', {stock: 'expiring'}) }}">
+            <span class="stat-value">{{ summary.expiredBatches }}</span>
+            <span class="stat-label">Expired batches with stock</span>
+        </a>
+        <a class="stat-card" href="{{ path('pharmacy_medicines') }}">
+            <span class="stat-value">{{ summary.activeMedicines }}</span>
+            <span class="stat-label">Active medicines</span>
+        </a>
+    </div>
+</section>
+
+<div class="detail-grid">
+
+    <section class="card" aria-labelledby="queue-heading">
+        <h2 id="queue-heading">Waiting to be dispensed</h2>
+        {% if queue.items is empty %}
+            <p class="muted">No prescriptions are waiting. They appear here when the doctor has finished the consultation.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table class="table table-compact">
+                    <thead><tr><th scope="col">Prescription</th><th scope="col">Patient</th><th scope="col">Medicines</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
+                    <tbody>
+                    {% for rx in queue.items|slice(0, 5) %}
+                        <tr>
+                            <td data-label="Prescription"><strong>{{ rx.prescriptionCode }}</strong></td>
+                            <td data-label="Patient">{{ rx.patientName }}<br><span class="muted">{{ rx.patientCode }}</span></td>
+                            <td data-label="Medicines">{{ rx.itemCount }}</td>
+                            <td data-label="Open" class="actions"><a class="btn btn-primary btn-sm" href="{{ path('pharmacy_prescription_show', {id: rx.prescriptionId}) }}">Dispense</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="card-links"><a href="{{ path('pharmacy_dispensing') }}">Whole queue ({{ queue.total }}) &raquo;</a></p>
+        {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="low-heading">
+        <h2 id="low-heading">Running low</h2>
+        {% if low.items is empty %}
+            <p class="muted">No medicine is at or below its reorder level.</p>
+        {% else %}
+            <div class="table-wrap">
+                <table class="table table-compact">
+                    <thead><tr><th scope="col">Medicine</th><th scope="col" class="money">Available</th><th scope="col" class="money">Reorder at</th></tr></thead>
+                    <tbody>
+                    {% for m in low.items|slice(0, 5) %}
+                        <tr>
+                            <td data-label="Medicine"><a href="{{ path('pharmacy_medicine_show', {id: m.medicineId}) }}">{{ m.displayName }}</a></td>
+                            <td data-label="Available" class="money">{{ m.availableQuantity }}</td>
+                            <td data-label="Reorder at" class="money">{{ m.reorderLevel }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p class="card-links"><a href="{{ path('pharmacy_medicines', {stock: 'low'}) }}">All low stock ({{ low.total }}) &raquo;</a></p>
+        {% endif %}
+    </section>
+
+</div>
+
+{% endblock %}

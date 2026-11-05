@@ -1,0 +1,114 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::renderPrescription():
+    prescription (PrescriptionDTO with items), typed (qty typed per item id), errors (qty_<id> => message), form_error
+#}
+
+{% block title %}{{ prescription.prescriptionCode }} | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ prescription.prescriptionCode }}</h1>
+        <p class="subtitle">{{ ui.rx_badge(prescription.status) }} <span class="muted">{{ prescription.consultationCode }} &middot; written {{ prescription.createdAt|date('d M Y, H:i') }}</span></p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('pharmacy_dispensing') }}">&laquo; Dispensing</a>
+</div>
+
+{% if form_error %}<div class="alert alert-error" role="alert">{{ form_error }}</div>{% endif %}
+
+{% if prescription.canEdit %}
+    <div class="alert alert-warning" role="status">The consultation is still in progress, so the doctor can still change this prescription. It can be dispensed once the consultation has been sent to billing.</div>
+{% elseif prescription.isDispensed %}
+    <div class="alert alert-success" role="status">This prescription has been fully dispensed.</div>
+{% endif %}
+
+<div class="detail-grid">
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ prescription.patientName }}</dd></div>
+            <div><dt>Patient ID</dt><dd>{{ prescription.patientCode }}</dd></div>
+            <div><dt>Phone</dt><dd>{{ prescription.patientPhone|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+    <section class="card">
+        <h2>Doctor</h2>
+        <dl class="detail-list">
+            <div><dt>Prescribed by</dt><dd>{{ prescription.doctorName }}</dd></div>
+            <div><dt>Consultation</dt><dd>{{ prescription.consultationCode }} <span class="muted">({{ prescription.consultationStatus }})</span></dd></div>
+        </dl>
+    </section>
+</div>
+
+<section class="card" aria-labelledby="items-heading">
+    <h2 id="items-heading">Medicines</h2>
+
+    {% set can_dispense = prescription.canDispense %}
+
+    <form method="post" action="{{ path('pharmacy_dispense', {id: prescription.prescriptionId}) }}" novalidate
+          {% if can_dispense %}data-dispense-form data-confirm="Dispense the quantities entered? Stock will be deducted."{% endif %}>
+        <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_dispense_' ~ prescription.prescriptionId) }}">
+
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Medicine</th>
+                        <th scope="col">Dose</th>
+                        <th scope="col" class="money">Prescribed</th>
+                        <th scope="col" class="money">Dispensed</th>
+                        <th scope="col" class="money">Left</th>
+                        <th scope="col" class="money">In stock</th>
+                        {% if can_dispense %}<th scope="col">Dispense now</th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in prescription.items %}
+                    {% set short = item.quantity_remaining > item.available_stock %}
+                    <tr class="{{ errors['qty_' ~ item.item_id] is defined ? 'field-invalid' }}">
+                        <td data-label="Medicine">
+                            <strong>{{ item.medicine_name }}{% if item.strength %} {{ item.strength }}{% endif %}</strong><br>
+                            <span class="muted">{{ item.form }}{% if item.generic_name %} &middot; {{ item.generic_name }}{% endif %}</span>
+                        </td>
+                        <td data-label="Dose">{{ item.dosage }}, {{ item.frequency|lower }} for {{ item.duration_days }} {{ item.duration_days == 1 ? 'day' : 'days' }}{% if item.instructions %}<br><span class="muted">{{ item.instructions }}</span>{% endif %}</td>
+                        <td data-label="Prescribed" class="money">{{ item.quantity }}</td>
+                        <td data-label="Dispensed" class="money">{{ item.quantity_dispensed }}</td>
+                        <td data-label="Left" class="money">{{ item.quantity_remaining }}</td>
+                        <td data-label="In stock" class="money {{ short and item.quantity_remaining > 0 ? 'rx-out' }}">{{ item.available_stock }} <span class="muted">{{ item.unit }}</span></td>
+                        {% if can_dispense %}
+                            <td data-label="Dispense now">
+                                {% if item.quantity_remaining > 0 %}
+                                    <input type="text" inputmode="numeric" name="qty[{{ item.item_id }}]" maxlength="5" size="5"
+                                           value="{{ typed[item.item_id] ?? (short ? item.available_stock : item.quantity_remaining) }}"
+                                           data-remaining="{{ item.quantity_remaining }}" aria-label="Quantity of {{ item.medicine_name }} to dispense">
+                                    {% if errors['qty_' ~ item.item_id] is defined %}<p class="field-error">{{ errors['qty_' ~ item.item_id] }}</p>{% endif %}
+                                    {% if short %}<small class="rx-warn">Not enough stock for all of it</small>{% endif %}
+                                {% else %}
+                                    <span class="badge rx-badge-done">Done</span>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7" class="muted">No medicines on this prescription.</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if can_dispense %}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success" data-submit-once>Dispense</button>
+                <button type="button" class="btn btn-secondary no-print" data-fill-remaining>Fill all remaining</button>
+                <a class="btn btn-secondary" href="{{ path('pharmacy_dispensing') }}">Cancel</a>
+            </div>
+            <p class="hint">Stock is taken from the batch that expires first; expired stock is never used. If any medicine cannot be dispensed in full, nothing is dispensed. Reduce a quantity to dispense only part of a prescription now.</p>
+        {% endif %}
+    </form>
+</section>
+
+{% endblock %}

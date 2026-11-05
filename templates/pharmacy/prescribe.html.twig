@@ -1,0 +1,173 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  The DOCTOR's screen, reached from OP Consultation ("Prescribe medicines").
+  Variables from PharmacyController::renderPrescribe():
+    prescription (PrescriptionDTO with items), search, results (MedicineDTO in stock), selected (MedicineDTO or null),
+    frequencies, typed (the add form as typed), errors (field => message), form_error
+#}
+
+{% block title %}Prescribe medicines | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Prescribe medicines</h1>
+        <p class="subtitle">{{ prescription.patientName }} <span class="muted">{{ prescription.patientCode }} &middot; {{ prescription.consultationCode }} &middot; Dr. {{ prescription.doctorName|replace({'Dr. ': '', 'Dr ': ''}) }}</span></p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('opc_show', {id: prescription.consultationId}) }}">&laquo; Back to consultation</a>
+</div>
+
+{% if form_error %}<div class="alert alert-error" role="alert">{{ form_error }}</div>{% endif %}
+
+{% if not prescription.canEdit %}
+    <div class="alert alert-warning" role="status">
+        This consultation is {{ prescription.consultationStatus|lower }}, so the prescription is locked. Medicines can be added or removed only while the consultation is in progress.
+    </div>
+{% endif %}
+
+<section class="card" aria-labelledby="items-heading">
+    <h2 id="items-heading">
+        Prescription {% if prescription.hasPrescription %}<span class="muted">{{ prescription.prescriptionCode }}</span> {{ ui.rx_badge(prescription.status) }}{% endif %}
+    </h2>
+
+    {% if prescription.items is empty %}
+        <p class="muted">No medicines added yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Medicine</th><th scope="col">Dosage</th><th scope="col">Frequency</th>
+                        <th scope="col" class="money">Days</th><th scope="col" class="money">Quantity</th><th scope="col">Instructions</th>
+                        {% if prescription.canEdit %}<th scope="col"><span class="sr-only">Remove</span></th>{% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                {% for item in prescription.items %}
+                    <tr>
+                        <td data-label="Medicine"><strong>{{ item.medicine_name }}{% if item.strength %} {{ item.strength }}{% endif %}</strong><br><span class="muted">{{ item.form }}</span></td>
+                        <td data-label="Dosage">{{ item.dosage }}</td>
+                        <td data-label="Frequency">{{ item.frequency }}</td>
+                        <td data-label="Days" class="money">{{ item.duration_days }}</td>
+                        <td data-label="Quantity" class="money">{{ item.quantity }} <span class="muted">{{ item.unit }}</span></td>
+                        <td data-label="Instructions">{{ item.instructions|default('—') }}</td>
+                        {% if prescription.canEdit %}
+                            <td data-label="Remove" class="actions">
+                                <form method="post" action="{{ path('pharmacy_prescribe_remove', {id: prescription.consultationId, itemId: item.item_id}) }}" class="inline-form" data-confirm="Remove {{ item.medicine_name }} from the prescription?">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_remove_' ~ item.item_id) }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                </form>
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{% if prescription.canEdit %}
+
+    <section class="card" aria-labelledby="find-heading">
+        <h2 id="find-heading">1. Find a medicine in stock</h2>
+        <p class="hint">Only active medicines that are in stock (not expired) are listed, with the quantity available now.</p>
+
+        <form method="get" action="{{ path('pharmacy_prescribe', {id: prescription.consultationId}) }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Medicine or generic name</label>
+                <input type="search" id="q" name="q" value="{{ search }}" maxlength="100" autofocus>
+            </div>
+            <div class="toolbar-actions"><button type="submit" class="btn btn-primary">Search</button></div>
+        </form>
+
+        {% if results is empty %}
+            <div class="empty-state"><p>{{ search ? 'No medicine in stock matches this search.' : 'No medicines are in stock yet. Ask the pharmacy to receive stock.' }}</p></div>
+        {% else %}
+            <div class="table-wrap">
+                <table class="table table-compact">
+                    <thead><tr><th scope="col">Medicine</th><th scope="col">Form</th><th scope="col" class="money">In stock</th><th scope="col"><span class="sr-only">Select</span></th></tr></thead>
+                    <tbody>
+                    {% for m in results %}
+                        <tr class="{{ selected and selected.medicineId == m.medicineId ? 'rx-selected' }}">
+                            <td data-label="Medicine"><strong>{{ m.displayName }}</strong>{% if m.genericName %}<br><span class="muted">{{ m.genericName }}</span>{% endif %}</td>
+                            <td data-label="Form">{{ m.form }}</td>
+                            <td data-label="In stock" class="money">{{ m.availableQuantity }} <span class="muted">{{ m.unit }}</span></td>
+                            <td data-label="Select" class="actions">
+                                <a class="btn btn-primary btn-sm" href="{{ path('pharmacy_prescribe', {id: prescription.consultationId, q: search, medicine_id: m.medicineId}) }}#add-heading">Select</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="add-heading">
+        <h2 id="add-heading">2. Dosage and quantity</h2>
+
+        {% if selected is null %}
+            <p class="muted">Select a medicine above first.</p>
+            {% if errors.medicineId is defined %}<p class="field-error" role="alert">{{ errors.medicineId }}</p>{% endif %}
+        {% else %}
+            <div class="selected-patient">
+                <div>
+                    <span class="muted">Medicine</span>
+                    <strong>{{ selected.displayName }}</strong>
+                    <span class="muted">{{ selected.form }} &middot; {{ selected.availableQuantity }} {{ selected.unit }} in stock</span>
+                </div>
+                <a class="btn btn-secondary btn-sm" href="{{ path('pharmacy_prescribe', {id: prescription.consultationId, q: search}) }}">Change</a>
+            </div>
+
+            <form method="post" action="{{ path('pharmacy_prescribe_add', {id: prescription.consultationId}) }}" class="patient-form" novalidate>
+                <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_prescribe_' ~ prescription.consultationId) }}">
+                <input type="hidden" name="medicine_id" value="{{ selected.medicineId }}">
+
+                <div class="form-grid">
+                    <div class="field {{ errors.dosage is defined ? 'field-invalid' }}">
+                        <label for="dosage">Dosage <span class="req" aria-hidden="true">*</span></label>
+                        <input type="text" id="dosage" name="dosage" value="{{ typed.dosage }}" maxlength="50" required placeholder="e.g. 1 {{ selected.unit }}">
+                        {% if errors.dosage is defined %}<p class="field-error">{{ errors.dosage }}</p>{% endif %}
+                    </div>
+
+                    <div class="field {{ errors.frequency is defined ? 'field-invalid' }}">
+                        <label for="frequency">How often <span class="req" aria-hidden="true">*</span></label>
+                        <select id="frequency" name="frequency" required>
+                            <option value="">Select&hellip;</option>
+                            {% for f in frequencies %}<option value="{{ f }}" {{ typed.frequency == f ? 'selected' }}>{{ f }}</option>{% endfor %}
+                        </select>
+                        {% if errors.frequency is defined %}<p class="field-error">{{ errors.frequency }}</p>{% endif %}
+                    </div>
+
+                    <div class="field {{ errors.durationDays is defined ? 'field-invalid' }}">
+                        <label for="duration_days">For how many days <span class="req" aria-hidden="true">*</span></label>
+                        <input type="text" inputmode="numeric" id="duration_days" name="duration_days" value="{{ typed.duration_days }}" maxlength="3" required>
+                        {% if errors.durationDays is defined %}<p class="field-error">{{ errors.durationDays }}</p>{% endif %}
+                    </div>
+
+                    <div class="field {{ errors.quantity is defined ? 'field-invalid' }}">
+                        <label for="quantity">Total quantity ({{ selected.unit }}) <span class="req" aria-hidden="true">*</span></label>
+                        <input type="text" inputmode="numeric" id="quantity" name="quantity" value="{{ typed.quantity }}" maxlength="4" required>
+                        <small class="hint">At most {{ selected.availableQuantity }} (the stock available now).</small>
+                        {% if errors.quantity is defined %}<p class="field-error">{{ errors.quantity }}</p>{% endif %}
+                    </div>
+
+                    <div class="field field-wide {{ errors.instructions is defined ? 'field-invalid' }}">
+                        <label for="instructions">Instructions (optional)</label>
+                        <input type="text" id="instructions" name="instructions" value="{{ typed.instructions }}" maxlength="255" placeholder="e.g. after food">
+                        {% if errors.instructions is defined %}<p class="field-error">{{ errors.instructions }}</p>{% endif %}
+                    </div>
+                </div>
+
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Add to prescription</button></div>
+            </form>
+        {% endif %}
+    </section>
+
+{% endif %}
+
+{% endblock %}

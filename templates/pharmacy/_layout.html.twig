@@ -1,0 +1,32 @@
+{# Frame for every Pharmacy page: the shared shell plus the Pharmacy sub-navigation, pharmacy.css and pharmacy.js. #}
+{% extends 'layout/_layout.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="/css/pharmacy.css">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="/js/pharmacy.js" defer></script>
+{% endblock %}
+
+{% block content %}
+    {% set current = app.request.attributes.get('_route') ?? '' %}
+
+    <nav class="fdm-subnav no-print" aria-label="Pharmacy">
+        {% for item in [
+            {routes: ['pharmacy_dashboard'], route: 'pharmacy_dashboard', label: 'Overview'},
+            {routes: ['pharmacy_medicines', 'pharmacy_medicine_new', 'pharmacy_medicine_edit', 'pharmacy_medicine_show'], route: 'pharmacy_medicines', label: 'Medicines & stock'},
+            {routes: ['pharmacy_dispensing', 'pharmacy_prescription_show'], route: 'pharmacy_dispensing', label: 'Dispensing'}
+        ] %}
+            {% if current in item.routes %}
+                <a href="{{ path(item.route) }}" class="is-active" aria-current="page">{{ item.label }}</a>
+            {% else %}
+                <a href="{{ path(item.route) }}">{{ item.label }}</a>
+            {% endif %}
+        {% endfor %}
+    </nav>
+
+    {% block pharmacy_content %}{% endblock %}
+{% endblock %}

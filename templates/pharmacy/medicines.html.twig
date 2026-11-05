@@ -1,0 +1,96 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::medicines():
+    list (PagedListDTO of MedicineDTO; list.filters = search, form, stock), forms, stock_filters
+#}
+
+{% block title %}Medicines & stock | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <h1>Medicines &amp; stock</h1>
+    <a class="btn btn-primary" href="{{ path('pharmacy_medicine_new') }}">+ Add medicine</a>
+</div>
+
+<form method="get" action="{{ path('pharmacy_medicines') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100" placeholder="Name, generic name or code">
+        </div>
+        <div class="field">
+            <label for="form">Form</label>
+            <select id="form" name="form">
+                <option value="">All forms</option>
+                {% for f in forms %}<option value="{{ f }}" {{ list.filters.form == f ? 'selected' }}>{{ f }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="stock">Stock</label>
+            <select id="stock" name="stock">
+                {% set labels = {'all': 'All', 'in_stock': 'In stock', 'low': 'Low stock', 'out': 'Out of stock', 'expiring': 'Expiring / expired'} %}
+                {% for s in stock_filters %}<option value="{{ s }}" {{ list.filters.stock == s ? 'selected' }}>{{ labels[s] }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('pharmacy_medicines') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }} {{ list.total == 1 ? 'medicine' : 'medicines' }}{% else %}No medicines found.{% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>No medicines match. Add the medicine first, then receive stock for it.</p>
+            <a class="btn btn-primary" href="{{ path('pharmacy_medicine_new') }}">Add a medicine</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Medicine</th>
+                        <th scope="col">Form</th>
+                        <th scope="col" class="money">Available</th>
+                        <th scope="col" class="money">Reorder at</th>
+                        <th scope="col">Nearest expiry</th>
+                        <th scope="col">Status</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for m in list.items %}
+                    <tr class="{{ m.isActive ? '' : 'row-inactive' }}">
+                        <td data-label="Medicine">
+                            <a href="{{ path('pharmacy_medicine_show', {id: m.medicineId}) }}"><strong>{{ m.displayName }}</strong></a><br>
+                            <span class="muted">{{ m.medicineCode }}{% if m.genericName %} &middot; {{ m.genericName }}{% endif %}</span>
+                        </td>
+                        <td data-label="Form">{{ m.form }}</td>
+                        <td data-label="Available" class="money">{{ m.availableQuantity }} <span class="muted">{{ m.unit }}</span>
+                            {% if m.expiredQuantity > 0 %}<br><span class="rx-warn">{{ m.expiredQuantity }} expired</span>{% endif %}</td>
+                        <td data-label="Reorder at" class="money">{{ m.reorderLevel > 0 ? m.reorderLevel : '—' }}</td>
+                        <td data-label="Nearest expiry">{{ m.nearestExpiry ? m.nearestExpiry|date('d M Y') : '—' }}
+                            {% if m.expiringQuantity > 0 %}<br><span class="rx-warn">{{ m.expiringQuantity }} within 30 days</span>{% endif %}</td>
+                        <td data-label="Status">{{ ui.stock_badge(m) }}</td>
+                        <td data-label="Actions" class="actions">
+                            <a class="btn btn-secondary btn-sm" href="{{ path('pharmacy_medicine_show', {id: m.medicineId}) }}">Stock</a>
+                            <a class="btn btn-secondary btn-sm" href="{{ path('pharmacy_medicine_edit', {id: m.medicineId}) }}">Edit</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pager('pharmacy_medicines', {search: list.filters.search, form: list.filters.form, stock: list.filters.stock}, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}

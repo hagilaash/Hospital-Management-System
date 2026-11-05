@@ -1,0 +1,78 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::renderMedicineForm():
+    medicine (MedicineDTO as typed), medicine_id (null when adding), forms, errors (field => message), form_error
+#}
+
+{% block title %}{{ medicine_id ? 'Edit medicine' : 'Add medicine' }} | HMS{% endblock %}
+
+{% block pharmacy_content %}
+
+<div class="page-header">
+    <h1>{{ medicine_id ? 'Edit medicine' : 'Add medicine' }}</h1>
+    <a class="btn btn-secondary" href="{{ medicine_id ? path('pharmacy_medicine_show', {id: medicine_id}) : path('pharmacy_medicines') }}">Cancel</a>
+</div>
+
+{% if form_error %}<div class="alert alert-error" role="alert">{{ form_error }}</div>{% endif %}
+
+<form method="post" action="{{ medicine_id ? path('pharmacy_medicine_edit', {id: medicine_id}) : path('pharmacy_medicine_new') }}" class="card patient-form" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_medicine_' ~ (medicine_id ?? 'new')) }}">
+
+    <div class="form-grid">
+        <div class="field {{ errors.medicineName is defined ? 'field-invalid' }}">
+            <label for="medicine_name">Medicine name <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="medicine_name" name="medicine_name" value="{{ medicine.medicineName }}" maxlength="150" required
+                   {% if errors.medicineName is defined %}aria-invalid="true" aria-describedby="medicine_name-error"{% endif %}>
+            {% if errors.medicineName is defined %}<p class="field-error" id="medicine_name-error">{{ errors.medicineName }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.genericName is defined ? 'field-invalid' }}">
+            <label for="generic_name">Generic name</label>
+            <input type="text" id="generic_name" name="generic_name" value="{{ medicine.genericName }}" maxlength="150">
+            {% if errors.genericName is defined %}<p class="field-error">{{ errors.genericName }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.form is defined ? 'field-invalid' }}">
+            <label for="form">Form <span class="req" aria-hidden="true">*</span></label>
+            <select id="form" name="form" required>
+                {% for f in forms %}<option value="{{ f }}" {{ medicine.form == f ? 'selected' }}>{{ f }}</option>{% endfor %}
+            </select>
+            {% if errors.form is defined %}<p class="field-error">{{ errors.form }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.strength is defined ? 'field-invalid' }}">
+            <label for="strength">Strength</label>
+            <input type="text" id="strength" name="strength" value="{{ medicine.strength }}" maxlength="50" placeholder="e.g. 500 mg">
+            {% if errors.strength is defined %}<p class="field-error">{{ errors.strength }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.unit is defined ? 'field-invalid' }}">
+            <label for="unit">Stock unit <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="unit" name="unit" value="{{ medicine.unit }}" maxlength="20" required placeholder="tablet, capsule, ml, vial ...">
+            <small class="hint">The unit stock is counted in.</small>
+            {% if errors.unit is defined %}<p class="field-error">{{ errors.unit }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.reorderLevel is defined ? 'field-invalid' }}">
+            <label for="reorder_level">Reorder level</label>
+            <input type="text" inputmode="numeric" id="reorder_level" name="reorder_level" value="{{ medicine.reorderLevel >= 0 ? medicine.reorderLevel : '' }}" maxlength="7">
+            <small class="hint">Shown as "Low stock" at or below this quantity. 0 = no alert.</small>
+            {% if errors.reorderLevel is defined %}<p class="field-error">{{ errors.reorderLevel }}</p>{% endif %}
+        </div>
+
+        <div class="field field-wide">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" value="1" {{ medicine.isActive ? 'checked' }}>
+                Active (doctors can prescribe it while it has stock)
+            </label>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ medicine_id ? 'Save changes' : 'Add medicine' }}</button>
+        <a class="btn btn-secondary" href="{{ medicine_id ? path('pharmacy_medicine_show', {id: medicine_id}) : path('pharmacy_medicines') }}">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

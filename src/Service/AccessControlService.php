@@ -43,6 +43,12 @@ class AccessControlService
     public const RCM_VIEW = 'rcm.view';
     public const RCM_FINALIZE = 'rcm.finalize';
 
+    // Pharmacy permissions
+    public const PHARMACY_VIEW = 'pharmacy.view';
+    public const PHARMACY_MANAGE = 'pharmacy.manage';
+    public const PHARMACY_DISPENSE = 'pharmacy.dispense';
+    public const PHARMACY_PRESCRIBE = 'pharmacy.prescribe';
+
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,
@@ -63,6 +69,10 @@ class AccessControlService
         self::BILLING_CANCEL,
         self::RCM_VIEW,
         self::RCM_FINALIZE,
+        self::PHARMACY_VIEW,
+        self::PHARMACY_MANAGE,
+        self::PHARMACY_DISPENSE,
+        self::PHARMACY_PRESCRIBE,
     ];
 
     public function __construct(

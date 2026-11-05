@@ -1,0 +1,130 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::showMedicine():
+    medicine (MedicineDTO), batches (rows: stock_id, batch_number, expiry_date, quantity_received, quantity_available,
+    unit_cost, supplier, received_at, received_by, is_expired), movements (rows)
+#}
+
+{% block title %}{{ medicine.displayName }} | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ medicine.displayName }}</h1>
+        <p class="subtitle">{{ ui.stock_badge(medicine) }} <span class="muted">{{ medicine.medicineCode }} &middot; {{ medicine.form }}{% if medicine.genericName %} &middot; {{ medicine.genericName }}{% endif %}</span></p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('pharmacy_medicines') }}">&laquo; Medicines</a>
+        <a class="btn btn-secondary" href="{{ path('pharmacy_medicine_edit', {id: medicine.medicineId}) }}">Edit</a>
+    </div>
+</div>
+
+<section aria-label="Stock figures">
+    <div class="stat-grid">
+        <div class="stat-card stat-card-ok"><span class="stat-value">{{ medicine.availableQuantity }}</span><span class="stat-label">Available ({{ medicine.unit }})</span></div>
+        <div class="stat-card stat-card-warn"><span class="stat-value">{{ medicine.expiringQuantity }}</span><span class="stat-label">Expiring within 30 days</span></div>
+        <div class="stat-card"><span class="stat-value">{{ medicine.expiredQuantity }}</span><span class="stat-label">Expired (cannot be used)</span></div>
+        <div class="stat-card"><span class="stat-value">{{ medicine.reorderLevel > 0 ? medicine.reorderLevel : '—' }}</span><span class="stat-label">Reorder level</span></div>
+    </div>
+</section>
+
+<section class="card" aria-labelledby="receive-heading">
+    <h2 id="receive-heading">Receive stock</h2>
+    <form method="post" action="{{ path('pharmacy_stock_receive', {id: medicine.medicineId}) }}" class="patient-form" novalidate>
+        <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_receive_' ~ medicine.medicineId) }}">
+        <div class="form-grid">
+            <div class="field">
+                <label for="batch_number">Batch number <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" id="batch_number" name="batch_number" maxlength="50" required>
+            </div>
+            <div class="field">
+                <label for="expiry_date">Expiry date <span class="req" aria-hidden="true">*</span></label>
+                <input type="date" id="expiry_date" name="expiry_date" required>
+            </div>
+            <div class="field">
+                <label for="quantity">Quantity ({{ medicine.unit }}) <span class="req" aria-hidden="true">*</span></label>
+                <input type="text" inputmode="numeric" id="quantity" name="quantity" maxlength="7" required>
+            </div>
+            <div class="field">
+                <label for="unit_cost">Unit cost (optional)</label>
+                <input type="text" inputmode="decimal" id="unit_cost" name="unit_cost" maxlength="11" placeholder="0.00">
+            </div>
+            <div class="field field-wide">
+                <label for="supplier">Supplier (optional)</label>
+                <input type="text" id="supplier" name="supplier" maxlength="150">
+            </div>
+        </div>
+        <div class="form-actions"><button type="submit" class="btn btn-success">Receive stock</button></div>
+        <p class="hint">Receiving the same batch number again adds to that batch (the expiry date must match). Expired stock cannot be received.</p>
+    </form>
+</section>
+
+<section class="card" aria-labelledby="batches-heading">
+    <h2 id="batches-heading">Batches</h2>
+    {% if batches is empty %}
+        <p class="muted">No stock has been received for this medicine yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr>
+                        <th scope="col">Batch</th><th scope="col">Expiry</th>
+                        <th scope="col" class="money">Received</th><th scope="col" class="money">Available</th>
+                        <th scope="col">Supplier</th><th scope="col">Adjust stock</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for b in batches %}
+                    <tr class="{{ b.is_expired ? 'row-inactive' : '' }}">
+                        <td data-label="Batch"><strong>{{ b.batch_number }}</strong><br><span class="muted">{{ b.received_at|date('d M Y') }}{% if b.received_by %} by {{ b.received_by }}{% endif %}</span></td>
+                        <td data-label="Expiry">{{ b.expiry_date|date('d M Y') }}{% if b.is_expired %} <span class="badge badge-cancelled">Expired</span>{% endif %}</td>
+                        <td data-label="Received" class="money">{{ b.quantity_received }}</td>
+                        <td data-label="Available" class="money">{{ b.quantity_available }}</td>
+                        <td data-label="Supplier">{{ b.supplier|default('—') }}</td>
+                        <td data-label="Adjust stock">
+                            <form method="post" action="{{ path('pharmacy_stock_adjust', {id: b.stock_id}) }}" class="rx-adjust" data-confirm="Adjust the stock of batch {{ b.batch_number }}?">
+                                <input type="hidden" name="_token" value="{{ csrf_token('pharmacy_adjust_' ~ b.stock_id) }}">
+                                <input type="hidden" name="medicine_id" value="{{ medicine.medicineId }}">
+                                <input type="text" name="change" inputmode="numeric" maxlength="8" size="6" placeholder="-5 or 10" aria-label="Quantity change for batch {{ b.batch_number }}" required>
+                                <input type="text" name="reason" maxlength="255" placeholder="Reason" aria-label="Reason for batch {{ b.batch_number }}" required>
+                                <button type="submit" class="btn btn-secondary btn-sm">Adjust</button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="hint">A negative number removes stock (damage, expired stock written off); a positive number corrects a count. A reason is always recorded.</p>
+    {% endif %}
+</section>
+
+<section class="card" aria-labelledby="ledger-heading">
+    <h2 id="ledger-heading">Recent stock movements</h2>
+    {% if movements is empty %}
+        <p class="muted">No movements yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead><tr><th scope="col">When</th><th scope="col">Type</th><th scope="col">Batch</th><th scope="col" class="money">Quantity</th><th scope="col">Details</th><th scope="col">By</th></tr></thead>
+                <tbody>
+                {% for mv in movements %}
+                    <tr>
+                        <td data-label="When">{{ mv.performed_at|date('d M Y, H:i') }}</td>
+                        <td data-label="Type">{{ mv.movement_type }}</td>
+                        <td data-label="Batch">{{ mv.batch_number }}</td>
+                        <td data-label="Quantity" class="money {{ mv.quantity < 0 ? 'rx-out' : 'rx-in' }}">{{ mv.quantity > 0 ? '+' ~ mv.quantity : mv.quantity }}</td>
+                        <td data-label="Details">{% if mv.prescription_code %}{{ mv.prescription_code }}{% elseif mv.reason %}{{ mv.reason }}{% else %}—{% endif %}</td>
+                        <td data-label="By">{{ mv.performed_by|default('—') }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{% endblock %}

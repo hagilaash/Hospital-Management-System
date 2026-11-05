@@ -1,0 +1,84 @@
+{% extends 'pharmacy/_layout.html.twig' %}
+
+{#
+  Variables from PharmacyController::dispensing():
+    list (PagedListDTO of PrescriptionDTO; list.filters = view ('open' or 'done'), search)
+#}
+
+{% block title %}Dispensing | HMS{% endblock %}
+
+{% block pharmacy_content %}
+{% import 'pharmacy/_macros.html.twig' as ui %}
+{% set done = list.filters.view == 'done' %}
+
+<div class="page-header">
+    <div>
+        <h1>Dispensing</h1>
+        <p class="subtitle">{{ done ? 'Prescriptions that have been dispensed, newest first' : 'Prescriptions of finished consultations, longest waiting first' }}</p>
+    </div>
+    <div class="header-actions">
+        {% if done %}
+            <a class="btn btn-primary" href="{{ path('pharmacy_dispensing') }}">To dispense</a>
+        {% else %}
+            <a class="btn btn-secondary" href="{{ path('pharmacy_dispensing', {view: 'done'}) }}">Dispensed</a>
+        {% endif %}
+    </div>
+</div>
+
+<form method="get" action="{{ path('pharmacy_dispensing') }}" class="card filters" role="search">
+    <input type="hidden" name="view" value="{{ list.filters.view }}">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100"
+                   placeholder="Prescription, consultation, patient ID, name or phone">
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a class="btn btn-secondary" href="{{ path('pharmacy_dispensing', {view: list.filters.view}) }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }} {{ list.total == 1 ? 'prescription' : 'prescriptions' }}{% else %}Nothing here.{% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>{% if done %}Nothing has been dispensed yet.{% else %}No prescriptions are waiting. A prescription appears here after the doctor has sent the consultation to billing.{% endif %}</p>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Prescription</th><th scope="col">Patient</th><th scope="col">Doctor</th>
+                        <th scope="col" class="money">Medicines</th><th scope="col" class="money">Dispensed</th>
+                        <th scope="col">Status</th><th scope="col">Written</th><th scope="col"><span class="sr-only">Action</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for rx in list.items %}
+                    <tr>
+                        <td data-label="Prescription"><strong>{{ rx.prescriptionCode }}</strong><br><span class="muted">{{ rx.consultationCode }}</span></td>
+                        <td data-label="Patient">{{ rx.patientName }}<br><span class="muted">{{ rx.patientCode }} &middot; {{ rx.patientPhone|default('—') }}</span></td>
+                        <td data-label="Doctor">{{ rx.doctorName }}</td>
+                        <td data-label="Medicines" class="money">{{ rx.itemCount }}</td>
+                        <td data-label="Dispensed" class="money">{{ rx.dispensedQuantity }} / {{ rx.totalQuantity }}</td>
+                        <td data-label="Status">{{ ui.rx_badge(rx.status) }}</td>
+                        <td data-label="Written">{{ rx.createdAt|date('d M Y, H:i') }}</td>
+                        <td data-label="Action" class="actions">
+                            <a class="btn {{ done ? 'btn-secondary' : 'btn-primary' }} btn-sm" href="{{ path('pharmacy_prescription_show', {id: rx.prescriptionId}) }}">{{ done ? 'View' : 'Dispense' }}</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pager('pharmacy_dispensing', {view: list.filters.view, search: list.filters.search}, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}
