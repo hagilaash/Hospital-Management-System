@@ -3,24 +3,34 @@
 namespace App\DTO;
 
 /**
- * One page of the patient list plus everything the template needs to draw the
- * search box, the status filter and the pager. Immutable: PatientService
- * builds it once and the controller only passes it to Twig.
+ * One page of any list (consultations, bills, services, RCM records ...).
+ * Immutable: a Service builds it once and the controller hands it to Twig.
+ *
+ * $filters holds the filters that produced the page (already normalised), so a
+ * template can redisplay them and build pager links. $today is the hospital's
+ * current day, which templates need for date-dependent buttons.
  */
-class PatientListDTO
+class PagedListDTO
 {
     /**
-     * @param list<PatientDTO> $patients
+     * @param list<object>         $items
+     * @param array<string, mixed> $filters
      */
     public function __construct(
-        public readonly array $patients,
+        public readonly array $items,
         public readonly int $total,
         public readonly int $page,
         public readonly int $perPage,
         public readonly int $totalPages,
-        public readonly ?string $search,
-        public readonly string $status,
+        public readonly array $filters = [],
+        public readonly string $today = ''
     ) {
+    }
+
+    /** An empty first page, used when the database cannot be reached. */
+    public static function empty(int $perPage = 10, array $filters = []): self
+    {
+        return new self([], 0, 1, $perPage, 1, $filters);
     }
 
     public function hasPreviousPage(): bool
@@ -33,19 +43,17 @@ class PatientListDTO
         return $this->page < $this->totalPages;
     }
 
-    /** Number of the first patient on this page ("Showing 11-20 of 45"), 0 when empty. */
     public function getFirstItemNumber(): int
     {
-        return 0 === $this->total ? 0 : ($this->page - 1) * $this->perPage + 1;
+        return $this->total === 0 ? 0 : ($this->page - 1) * $this->perPage + 1;
     }
 
-    /** Number of the last patient on this page, 0 when empty. */
     public function getLastItemNumber(): int
     {
-        if (0 === $this->total) {
+        if ($this->total === 0) {
             return 0;
         }
 
-        return min($this->total, ($this->page - 1) * $this->perPage + count($this->patients));
+        return min($this->total, ($this->page - 1) * $this->perPage + count($this->items));
     }
 }
