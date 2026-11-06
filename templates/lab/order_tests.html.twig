@@ -1,0 +1,149 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  The DOCTOR's screen, reached from OP Consultation ("Order lab tests").
+  Variables from LabController::renderOrderTests():
+    order (LabOrderDTO with items and results), search, results (LabTestDTO, active tests), selected (LabTestDTO or null),
+    priorities, typed (the add form as typed), errors (field => message), form_error
+#}
+
+{% block title %}Order lab tests | HMS{% endblock %}
+
+{% block lab_content %}
+{% import 'lab/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Order lab tests</h1>
+        <p class="subtitle">{{ order.patientName }} <span class="muted">{{ order.patientCode }} &middot; {{ order.consultationCode }}</span></p>
+    </div>
+    <a class="btn btn-secondary" href="{{ path('opc_show', {id: order.consultationId}) }}">&laquo; Back to consultation</a>
+</div>
+
+{% if form_error %}<div class="alert alert-error" role="alert">{{ form_error }}</div>{% endif %}
+
+{% if not order.canEdit %}
+    <div class="alert alert-warning" role="status">This consultation is {{ order.consultationStatus|lower }}, so tests can no longer be added or removed. Results appear below as the laboratory enters them.</div>
+{% endif %}
+
+<section class="card" aria-labelledby="items-heading">
+    <h2 id="items-heading">
+        Ordered tests {% if order.hasOrder %}<span class="muted">{{ order.orderCode }}</span> {{ ui.order_badge(order.orderStatus) }} {{ ui.priority_badge(order.priority) }}{% endif %}
+    </h2>
+
+    {% if order.items is empty %}
+        <p class="muted">No tests ordered yet.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead>
+                    <tr><th scope="col">Test</th><th scope="col">Sample</th><th scope="col">Status</th><th scope="col">Result</th><th scope="col">Reference range</th>{% if order.canEdit %}<th scope="col"><span class="sr-only">Remove</span></th>{% endif %}</tr>
+                </thead>
+                <tbody>
+                {% for item in order.items %}
+                    <tr class="{{ item.status == 'Cancelled' ? 'row-inactive' }}">
+                        <td data-label="Test"><strong>{{ item.test_name }}</strong><br><span class="muted">{{ item.category }}</span></td>
+                        <td data-label="Sample">{{ item.sample_type }}</td>
+                        <td data-label="Status">{{ ui.item_badge(item.status) }}</td>
+                        <td data-label="Result">
+                            {% if item.status == 'Resulted' %}
+                                <strong>{{ item.result_display }}</strong>{% if item.unit %} <span class="muted">{{ item.unit }}</span>{% endif %} {{ ui.flag_badge(item.result_flag) }}
+                                {% if item.result_comment %}<br><span class="muted">{{ item.result_comment }}</span>{% endif %}
+                            {% elseif item.status == 'Cancelled' %}<span class="muted">{{ item.cancel_reason }}</span>
+                            {% else %}<span class="muted">Pending</span>{% endif %}
+                        </td>
+                        <td data-label="Reference range">{{ ui.ref_range(item) }}</td>
+                        {% if order.canEdit %}
+                            <td data-label="Remove" class="actions">
+                                {% if item.status == 'Ordered' %}
+                                    <form method="post" action="{{ path('lab_order_remove', {id: order.consultationId, itemId: item.item_id}) }}" class="inline-form" data-confirm="Remove {{ item.test_name }} from the order?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('lab_remove_' ~ item.item_id) }}">
+                                        <button type="submit" class="btn btn-danger btn-sm">Remove</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        {% endif %}
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</section>
+
+{% if order.canEdit %}
+
+    <section class="card" aria-labelledby="find-heading">
+        <h2 id="find-heading">1. Find a test</h2>
+        <form method="get" action="{{ path('lab_order', {id: order.consultationId}) }}" class="toolbar" role="search">
+            <div class="toolbar-field toolbar-grow">
+                <label for="q">Test name</label>
+                <input type="search" id="q" name="q" value="{{ search }}" maxlength="100" autofocus>
+            </div>
+            <div class="toolbar-actions"><button type="submit" class="btn btn-primary">Search</button></div>
+        </form>
+
+        {% if results is empty %}
+            <div class="empty-state"><p>{{ search ? 'No active test matches this search.' : 'The laboratory has not added any tests yet.' }}</p></div>
+        {% else %}
+            <div class="table-wrap">
+                <table class="table table-compact">
+                    <thead><tr><th scope="col">Test</th><th scope="col">Category</th><th scope="col">Sample</th><th scope="col"><span class="sr-only">Select</span></th></tr></thead>
+                    <tbody>
+                    {% for t in results %}
+                        <tr class="{{ selected and selected.testId == t.testId ? 'rx-selected' }}">
+                            <td data-label="Test"><strong>{{ t.testName }}</strong></td>
+                            <td data-label="Category">{{ t.category }}</td>
+                            <td data-label="Sample">{{ t.sampleType }}</td>
+                            <td data-label="Select" class="actions"><a class="btn btn-primary btn-sm" href="{{ path('lab_order', {id: order.consultationId, q: search, test_id: t.testId}) }}#add-heading">Select</a></td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% endif %}
+    </section>
+
+    <section class="card" aria-labelledby="add-heading">
+        <h2 id="add-heading">2. Order it</h2>
+
+        {% if selected is null %}
+            <p class="muted">Select a test above first.</p>
+            {% if errors.testId is defined %}<p class="field-error" role="alert">{{ errors.testId }}</p>{% endif %}
+        {% else %}
+            <div class="selected-patient">
+                <div><span class="muted">Test</span> <strong>{{ selected.testName }}</strong> <span class="muted">{{ selected.category }} &middot; {{ selected.sampleType }} sample</span></div>
+                <a class="btn btn-secondary btn-sm" href="{{ path('lab_order', {id: order.consultationId, q: search}) }}">Change</a>
+            </div>
+
+            <form method="post" action="{{ path('lab_order_add', {id: order.consultationId}) }}" class="patient-form" novalidate>
+                <input type="hidden" name="_token" value="{{ csrf_token('lab_order_' ~ order.consultationId) }}">
+                <input type="hidden" name="test_id" value="{{ selected.testId }}">
+
+                <div class="form-grid">
+                    <div class="field {{ errors.priority is defined ? 'field-invalid' }}">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            {% for p in priorities %}<option value="{{ p }}" {{ (order.hasOrder ? order.priority : typed.priority) == p ? 'selected' }}>{{ p }}</option>{% endfor %}
+                        </select>
+                        <small class="hint">{{ order.hasOrder ? 'Applies to the whole order. Choosing Urgent raises it; it cannot be lowered here.' : 'Applies to the whole order.' }}</small>
+                        {% if errors.priority is defined %}<p class="field-error">{{ errors.priority }}</p>{% endif %}
+                    </div>
+
+                    {% if not order.hasOrder %}
+                        <div class="field field-wide {{ errors.clinicalNotes is defined ? 'field-invalid' }}">
+                            <label for="clinical_notes">Clinical notes for the laboratory (optional)</label>
+                            <textarea id="clinical_notes" name="clinical_notes" rows="2" maxlength="500">{{ typed.clinical_notes }}</textarea>
+                            {% if errors.clinicalNotes is defined %}<p class="field-error">{{ errors.clinicalNotes }}</p>{% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-actions"><button type="submit" class="btn btn-primary">Order test</button></div>
+            </form>
+        {% endif %}
+    </section>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,158 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::showOrder():
+    order (LabOrderDTO with items = tests and their results, and samples)
+#}
+
+{% block title %}{{ order.orderCode }} | HMS{% endblock %}
+
+{% block lab_content %}
+{% import 'lab/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>{{ order.orderCode }}</h1>
+        <p class="subtitle">{{ ui.order_badge(order.orderStatus) }} {{ ui.priority_badge(order.priority) }} <span class="muted">ordered {{ order.createdAt|date('d M Y, H:i') }}</span></p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('lab_worklist') }}">&laquo; Worklist</a>
+        {% if order.hasResults %}<a class="btn btn-primary" href="{{ path('lab_report', {id: order.orderId}) }}">Lab report</a>{% endif %}
+    </div>
+</div>
+
+{% if order.isCompleted %}
+    <div class="alert alert-success" role="status">Every test on this order has a result (or was cancelled). The order is complete.</div>
+{% endif %}
+
+<div class="detail-grid">
+    <section class="card">
+        <h2>Patient</h2>
+        <dl class="detail-list">
+            <div><dt>Name</dt><dd>{{ order.patientName }}</dd></div>
+            <div><dt>Patient ID</dt><dd>{{ order.patientCode }}</dd></div>
+            <div><dt>Gender</dt><dd>{{ order.patientGender|default('Not recorded') }}</dd></div>
+            <div><dt>Age</dt><dd>{% if order.patientDob %}{{ date().diff(date(order.patientDob)).y }} years{% else %}Not recorded{% endif %}</dd></div>
+            <div><dt>Phone</dt><dd>{{ order.patientPhone|default('Not recorded') }}</dd></div>
+        </dl>
+    </section>
+    <section class="card">
+        <h2>Order</h2>
+        <dl class="detail-list">
+            <div><dt>Ordered by</dt><dd>{{ order.doctorName }}</dd></div>
+            <div><dt>Consultation</dt><dd>{{ order.consultationCode }} <span class="muted">({{ order.consultationStatus }})</span></dd></div>
+            <div><dt>Clinical notes</dt><dd>{{ order.clinicalNotes|default('None')|nl2br }}</dd></div>
+        </dl>
+    </section>
+</div>
+
+{% set waiting = order.sampleTypesWaiting %}
+{% if waiting is not empty %}
+    <section class="card" aria-labelledby="collect-heading">
+        <h2 id="collect-heading">Collect samples</h2>
+        <p class="hint">One sample of a type serves every waiting test that needs it.</p>
+        {% for type in waiting %}
+            {% set tests = order.items|filter(i => i.status == 'Ordered' and i.sample_type == type) %}
+            <form method="post" action="{{ path('lab_collect', {id: order.orderId}) }}" class="lab-collect" data-confirm="Mark the {{ type|lower }} sample as collected?">
+                <input type="hidden" name="_token" value="{{ csrf_token('lab_collect_' ~ order.orderId) }}">
+                <input type="hidden" name="sample_type" value="{{ type }}">
+                <div class="lab-collect-info">
+                    <strong>{{ type }} sample</strong>
+                    <span class="muted">for {{ tests|length }} {{ tests|length == 1 ? 'test' : 'tests' }}: {{ tests|map(i => i.test_name)|join(', ') }}</span>
+                </div>
+                <input type="text" name="notes" maxlength="255" placeholder="Notes (optional)" aria-label="Notes for the {{ type|lower }} sample">
+                <button type="submit" class="btn btn-success btn-sm" data-submit-once>Collect {{ type|lower }} sample</button>
+            </form>
+        {% endfor %}
+    </section>
+{% endif %}
+
+<section class="card" aria-labelledby="tests-heading">
+    <h2 id="tests-heading">Tests</h2>
+    <div class="table-wrap">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th scope="col">Test</th><th scope="col">Sample</th><th scope="col">Reference range</th>
+                    <th scope="col">Status</th><th scope="col">Result</th><th scope="col"><span class="sr-only">Cancel</span></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for item in order.items %}
+                <tr class="{{ item.status == 'Cancelled' ? 'row-inactive' }}">
+                    <td data-label="Test"><strong>{{ item.test_name }}</strong><br><span class="muted">{{ item.category }} &middot; {{ item.test_code }}</span></td>
+                    <td data-label="Sample">{{ item.sample_type }}{% if item.sample_code %}<br><span class="muted">{{ item.sample_code }}</span>{% endif %}</td>
+                    <td data-label="Reference range">{{ ui.ref_range(item) }}</td>
+                    <td data-label="Status">{{ ui.item_badge(item.status) }}</td>
+                    <td data-label="Result">
+                        {% if item.status == 'Resulted' %}
+                            <strong class="lab-result">{{ item.result_display }}</strong>{% if item.unit %} <span class="muted">{{ item.unit }}</span>{% endif %}
+                            {{ ui.flag_badge(item.result_flag) }}
+                            {% if item.result_comment %}<br><span class="muted">{{ item.result_comment }}</span>{% endif %}
+                            <br><span class="muted">{{ item.resulted_by }}, {{ item.resulted_at|date('d M, H:i') }}</span>
+                        {% elseif item.status == 'Sample Collected' %}
+                            <form method="post" action="{{ path('lab_result', {id: item.item_id}) }}" class="lab-result-form" data-confirm="Save this result? It cannot be changed afterwards.">
+                                <input type="hidden" name="_token" value="{{ csrf_token('lab_result_' ~ item.item_id) }}">
+                                <input type="hidden" name="order_id" value="{{ order.orderId }}">
+                                <input type="text" name="value" maxlength="{{ item.result_type == 'Numeric' ? 16 : 500 }}" required
+                                       {% if item.result_type == 'Numeric' %}inputmode="decimal" size="10" placeholder="Value{% if item.unit %} ({{ item.unit }}){% endif %}"{% else %}placeholder="Finding"{% endif %}
+                                       aria-label="Result of {{ item.test_name }}">
+                                {% if item.result_type == 'Text' %}
+                                    <select name="flag" required aria-label="Flag for {{ item.test_name }}">
+                                        <option value="">Normal or abnormal?</option><option value="Normal">Normal</option><option value="Abnormal">Abnormal</option>
+                                    </select>
+                                {% endif %}
+                                <input type="text" name="comment" maxlength="500" placeholder="Comment (optional)" aria-label="Comment for {{ item.test_name }}">
+                                <button type="submit" class="btn btn-primary btn-sm" data-submit-once>Save result</button>
+                            </form>
+                        {% elseif item.status == 'Cancelled' %}
+                            <span class="muted">{{ item.cancel_reason }}</span>
+                        {% else %}
+                            <span class="muted">Collect the sample first</span>
+                        {% endif %}
+                    </td>
+                    <td data-label="Cancel" class="actions">
+                        {% if item.status == 'Ordered' or item.status == 'Sample Collected' %}
+                            <details class="lab-cancel">
+                                <summary class="btn btn-secondary btn-sm">Cancel test</summary>
+                                <form method="post" action="{{ path('lab_cancel_item', {id: item.item_id}) }}" data-confirm="Cancel {{ item.test_name }}?">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('lab_cancel_' ~ item.item_id) }}">
+                                    <input type="hidden" name="order_id" value="{{ order.orderId }}">
+                                    <input type="text" name="reason" maxlength="255" placeholder="Reason (required)" required aria-label="Reason for cancelling {{ item.test_name }}">
+                                    <button type="submit" class="btn btn-danger btn-sm">Cancel</button>
+                                </form>
+                            </details>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="hint">A numeric result is flagged Low / High automatically from the reference range. A saved result cannot be changed.</p>
+</section>
+
+{% if order.samples is not empty %}
+    <section class="card" aria-labelledby="samples-heading">
+        <h2 id="samples-heading">Samples collected</h2>
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead><tr><th scope="col">Sample</th><th scope="col">Type</th><th scope="col">Collected</th><th scope="col">By</th><th scope="col" class="money">Tests</th><th scope="col">Notes</th></tr></thead>
+                <tbody>
+                {% for s in order.samples %}
+                    <tr>
+                        <td data-label="Sample"><strong>{{ s.sample_code }}</strong></td>
+                        <td data-label="Type">{{ s.sample_type }}</td>
+                        <td data-label="Collected">{{ s.collected_at|date('d M Y, H:i') }}</td>
+                        <td data-label="By">{{ s.collected_by }}</td>
+                        <td data-label="Tests" class="money">{{ s.test_count }}</td>
+                        <td data-label="Notes">{{ s.notes|default('—') }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+{% endif %}
+
+{% endblock %}

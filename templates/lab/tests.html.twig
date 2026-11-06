@@ -1,0 +1,82 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::tests():
+    list (PagedListDTO of LabTestDTO; list.filters = search, category, status), categories, statuses
+#}
+
+{% block title %}Test catalogue | HMS{% endblock %}
+
+{% block lab_content %}
+
+<div class="page-header">
+    <h1>Test catalogue</h1>
+    <a class="btn btn-primary" href="{{ path('lab_test_new') }}">+ Add test</a>
+</div>
+
+<form method="get" action="{{ path('lab_tests') }}" class="card filters" role="search">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100" placeholder="Test name or code">
+        </div>
+        <div class="field">
+            <label for="category">Category</label>
+            <select id="category" name="category">
+                <option value="">All categories</option>
+                {% for c in categories %}<option value="{{ c }}" {{ list.filters.category == c ? 'selected' }}>{{ c }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status">
+                {% for s in statuses %}<option value="{{ s }}" {{ list.filters.status == s ? 'selected' }}>{{ s|capitalize }}</option>{% endfor %}
+            </select>
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Apply filters</button>
+        <a class="btn btn-secondary" href="{{ path('lab_tests') }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }} {{ list.total == 1 ? 'test' : 'tests' }}{% else %}No tests found.{% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state">
+            <p>No tests match. Add the tests your laboratory performs so doctors can order them.</p>
+            <a class="btn btn-primary" href="{{ path('lab_test_new') }}">Add a test</a>
+        </div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Test</th><th scope="col">Category</th><th scope="col">Sample</th>
+                        <th scope="col">Result</th><th scope="col">Reference range</th><th scope="col">Status</th><th scope="col"><span class="sr-only">Edit</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for t in list.items %}
+                    <tr class="{{ t.isActive ? '' : 'row-inactive' }}">
+                        <td data-label="Test"><strong>{{ t.testName }}</strong><br><span class="muted">{{ t.testCode }}</span></td>
+                        <td data-label="Category">{{ t.category }}</td>
+                        <td data-label="Sample">{{ t.sampleType }}</td>
+                        <td data-label="Result">{{ t.resultType }}{% if t.unit %} <span class="muted">({{ t.unit }})</span>{% endif %}</td>
+                        <td data-label="Reference range">{{ t.rangeLabel|default('—') }}</td>
+                        <td data-label="Status">{% if t.isActive %}<span class="badge lab-badge-done">Active</span>{% else %}<span class="badge badge-inactive">Inactive</span>{% endif %}</td>
+                        <td data-label="Edit" class="actions"><a class="btn btn-secondary btn-sm" href="{{ path('lab_test_edit', {id: t.testId}) }}">Edit</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% import 'lab/_macros.html.twig' as ui %}
+        {{ ui.pager('lab_tests', {search: list.filters.search, category: list.filters.category, status: list.filters.status}, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}

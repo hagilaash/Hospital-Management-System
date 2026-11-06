@@ -1,0 +1,88 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::report():
+    order (LabOrderDTO with items = tests and their results, and samples)
+  Hospital details come from the "hospital" Twig global (config/packages/twig.yaml) when it exists.
+#}
+
+{% block title %}Lab report {{ order.orderCode }} | HMS{% endblock %}
+
+{% block lab_content %}
+{% import 'lab/_macros.html.twig' as ui %}
+
+<div class="page-header no-print">
+    <h1>Lab report</h1>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('lab_order_show', {id: order.orderId}) }}">&laquo; Back to order</a>
+        <button type="button" class="btn btn-primary" data-print>Print report</button>
+    </div>
+</div>
+
+{% if not order.isCompleted %}
+    <div class="alert alert-warning no-print" role="status">This order is not complete yet: tests without a result are shown as pending.</div>
+{% endif %}
+
+<article class="card lab-report" aria-label="Lab report {{ order.orderCode }}">
+    <header class="lab-report-header">
+        <div>
+            <h2 class="lab-report-hospital">{{ hospital.name|default('Hospital Management System') }}</h2>
+            {% if hospital.address|default('') %}<p>{{ hospital.address|nl2br }}</p>{% endif %}
+            {% if hospital.phone|default('') %}<p class="muted">Tel: {{ hospital.phone }}</p>{% endif %}
+        </div>
+        <div class="lab-report-title">
+            <h2>LABORATORY REPORT</h2>
+            <p><strong>{{ order.orderCode }}</strong></p>
+            <p>{{ order.createdAt|date('d M Y, H:i') }}</p>
+        </div>
+    </header>
+
+    <div class="lab-report-parties">
+        <div>
+            <h3>Patient</h3>
+            <p><strong>{{ order.patientName }}</strong></p>
+            <p>Patient ID: {{ order.patientCode }}</p>
+            <p>{{ order.patientGender|default('') }}{% if order.patientDob %}{% if order.patientGender %}, {% endif %}{{ date().diff(date(order.patientDob)).y }} years{% endif %}</p>
+        </div>
+        <div>
+            <h3>Ordered by</h3>
+            <p>{{ order.doctorName }}</p>
+            <p>Consultation: {{ order.consultationCode }}</p>
+            {% if order.isUrgent %}<p><strong>URGENT</strong></p>{% endif %}
+        </div>
+    </div>
+
+    {% if order.clinicalNotes %}<p><strong>Clinical notes:</strong> {{ order.clinicalNotes|nl2br }}</p>{% endif %}
+
+    <table class="table table-compact lab-report-table">
+        <thead>
+            <tr><th scope="col">Test</th><th scope="col">Result</th><th scope="col">Flag</th><th scope="col">Reference range</th><th scope="col">Sample</th></tr>
+        </thead>
+        <tbody>
+        {% for item in order.items %}
+            <tr class="{{ item.status == 'Resulted' and item.result_flag != 'Normal' ? 'lab-report-abnormal' }}">
+                <td>{{ item.test_name }}<br><span class="muted">{{ item.category }}</span></td>
+                <td>
+                    {% if item.status == 'Resulted' %}
+                        <strong>{{ item.result_display }}</strong>{% if item.unit %} {{ item.unit }}{% endif %}
+                        {% if item.result_comment %}<br><span class="muted">{{ item.result_comment }}</span>{% endif %}
+                    {% elseif item.status == 'Cancelled' %}<span class="muted">Cancelled: {{ item.cancel_reason }}</span>
+                    {% else %}<span class="muted">Pending</span>{% endif %}
+                </td>
+                <td>{{ ui.flag_badge(item.result_flag) }}</td>
+                <td>{{ ui.ref_range(item) }}</td>
+                <td>{{ item.sample_type }}{% if item.collected_at %}<br><span class="muted">{{ item.collected_at|date('d M, H:i') }}</span>{% endif %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <footer class="lab-report-footer">
+        <p class="muted">Results entered by:
+            {% set people = order.items|filter(i => i.resulted_by)|map(i => i.resulted_by)|reduce((carry, name) => name in carry ? carry : carry|merge([name]), []) %}
+            {{ people is empty ? '—' : people|join(', ') }}.
+            This is a computer-generated report.</p>
+    </footer>
+</article>
+
+{% endblock %}

@@ -1,0 +1,69 @@
+{# Helpers for the Laboratory pages. Import inside a block:  {% import 'lab/_macros.html.twig' as ui %} #}
+
+{# Order status label. #}
+{% macro order_badge(status) %}
+    {% set classes = {'Ordered': 'lab-badge-ordered', 'In Progress': 'lab-badge-progress', 'Completed': 'lab-badge-done', 'Cancelled': 'badge-cancelled'} %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ status ?? 'No tests yet' }}</span>
+{% endmacro %}
+
+{# Test (order item) status label. #}
+{% macro item_badge(status) %}
+    {% set labels = {'Ordered': 'Waiting for sample', 'Sample Collected': 'Sample collected', 'Resulted': 'Resulted', 'Cancelled': 'Cancelled'} %}
+    {% set classes = {'Ordered': 'lab-badge-ordered', 'Sample Collected': 'lab-badge-progress', 'Resulted': 'lab-badge-done', 'Cancelled': 'badge-cancelled'} %}
+    <span class="badge {{ classes[status] ?? 'badge-inactive' }}">{{ labels[status] ?? status }}</span>
+{% endmacro %}
+
+{# Result flag: Normal / Low / High / Abnormal. #}
+{% macro flag_badge(flag) %}
+    {% set classes = {'Normal': 'lab-flag-normal', 'Low': 'lab-flag-low', 'High': 'lab-flag-high', 'Abnormal': 'lab-flag-high'} %}
+    {% if flag %}<span class="badge {{ classes[flag] ?? 'badge-inactive' }}">{{ flag }}</span>{% endif %}
+{% endmacro %}
+
+{% macro priority_badge(priority) %}
+    {% if priority == 'Urgent' %}<span class="badge lab-flag-high">Urgent</span>{% else %}<span class="muted">Routine</span>{% endif %}
+{% endmacro %}
+
+{# Reference range of an order-item row (or "-"): the typed text, or "low - high unit". `+ 0` drops trailing zeros (5.2000 -> 5.2). #}
+{% macro range(item) %}
+    {% if item.reference_text %}{{ item.reference_text }}
+    {% elseif item.ref_low is not null and item.ref_high is not null %}{{ item.ref_low + 0 }} &ndash; {{ item.ref_high + 0 }}{% if item.unit %} {{ item.unit }}{% endif %}
+    {% elseif item.ref_low is not null %}&ge; {{ item.ref_low + 0 }}{% if item.unit %} {{ item.unit }}{% endif %}
+    {% elseif item.ref_high is not null %}&le; {{ item.ref_high + 0 }}{% if item.unit %} {{ item.unit }}{% endif %}
+    {% else %}&mdash;{% endif %}
+{% endmacro %}
+
+{# Previous / numbered / next links. params are the filters to keep; page_param is the query key for the page number. #}
+{% macro pager(route, params, page, total_pages, page_param) %}
+    {% if total_pages > 1 %}
+        {% set first_shown = max(1, page - 2) %}
+        {% set last_shown = min(total_pages, page + 2) %}
+
+        <nav class="pager no-print" aria-label="Pages">
+            {% if page > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page - 1})) }}">&laquo; Previous</a>
+            {% endif %}
+
+            {% if first_shown > 1 %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): 1})) }}">1</a>
+                {% if first_shown > 2 %}<span class="pager-gap">&hellip;</span>{% endif %}
+            {% endif %}
+
+            {% for n in range(first_shown, last_shown) %}
+                {% if n == page %}
+                    <span class="btn btn-primary btn-sm" aria-current="page">{{ n }}</span>
+                {% else %}
+                    <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): n})) }}">{{ n }}</a>
+                {% endif %}
+            {% endfor %}
+
+            {% if last_shown < total_pages %}
+                {% if last_shown < total_pages - 1 %}<span class="pager-gap">&hellip;</span>{% endif %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): total_pages})) }}">{{ total_pages }}</a>
+            {% endif %}
+
+            {% if page < total_pages %}
+                <a class="btn btn-secondary btn-sm" href="{{ path(route, params|merge({(page_param): page + 1})) }}">Next &raquo;</a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endmacro %}

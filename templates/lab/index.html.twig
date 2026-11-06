@@ -1,0 +1,94 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::dashboard():
+    summary (LabSummaryDTO), pending (PagedListDTO of LabOrderDTO: the pending worklist)
+#}
+
+{% block title %}Laboratory | HMS{% endblock %}
+
+{% block lab_content %}
+{% import 'lab/_macros.html.twig' as ui %}
+
+<div class="page-header">
+    <div>
+        <h1>Laboratory</h1>
+        <p class="subtitle">Lab orders, sample collection and test results</p>
+    </div>
+    <div class="header-actions">
+        <a class="btn btn-secondary" href="{{ path('lab_test_new') }}">+ Add test</a>
+        <a class="btn btn-primary" href="{{ path('lab_worklist') }}">Worklist</a>
+    </div>
+</div>
+
+<ol class="lab-flow" aria-label="How the laboratory works">
+    <li><strong>1. Doctor orders</strong><span>From the OP consultation</span></li>
+    <li><strong>2. Collect sample</strong><span>One sample per type serves all its tests</span></li>
+    <li><strong>3. Enter results</strong><span>Low / High flagged automatically</span></li>
+    <li><strong>4. Report</strong><span>Printable lab report</span></li>
+</ol>
+
+<section aria-label="Laboratory summary">
+    <div class="stat-grid">
+        <a class="stat-card stat-card-warn" href="{{ path('lab_worklist') }}">
+            <span class="stat-value">{{ summary.pendingOrders }}</span>
+            <span class="stat-label">Orders in the worklist</span>
+        </a>
+        <a class="stat-card stat-card-accent" href="{{ path('lab_worklist') }}">
+            <span class="stat-value">{{ summary.urgentOrders }}</span>
+            <span class="stat-label">Urgent orders</span>
+        </a>
+        <div class="stat-card stat-card-warn">
+            <span class="stat-value">{{ summary.awaitingSample }}</span>
+            <span class="stat-label">Tests awaiting a sample</span>
+        </div>
+        <div class="stat-card stat-card-warn">
+            <span class="stat-value">{{ summary.awaitingResult }}</span>
+            <span class="stat-label">Tests awaiting a result</span>
+        </div>
+        <div class="stat-card stat-card-ok">
+            <span class="stat-value">{{ summary.resultedToday }}</span>
+            <span class="stat-label">Results entered today</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-value">{{ summary.abnormalToday }}</span>
+            <span class="stat-label">Abnormal results today</span>
+        </div>
+        <a class="stat-card" href="{{ path('lab_worklist', {view: 'done'}) }}">
+            <span class="stat-value">{{ summary.completedToday }}</span>
+            <span class="stat-label">Orders completed today</span>
+        </a>
+        <a class="stat-card" href="{{ path('lab_tests', {status: 'active'}) }}">
+            <span class="stat-value">{{ summary.activeTests }}</span>
+            <span class="stat-label">Tests in the catalogue</span>
+        </a>
+    </div>
+</section>
+
+<section class="card" aria-labelledby="pending-heading">
+    <h2 id="pending-heading">Next in the worklist</h2>
+    {% if pending.items is empty %}
+        <p class="muted">No lab orders are waiting. Orders appear here when a doctor orders tests from an OP consultation.</p>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table table-compact">
+                <thead><tr><th scope="col">Order</th><th scope="col">Patient</th><th scope="col">Priority</th><th scope="col" class="money">To sample</th><th scope="col" class="money">To result</th><th scope="col"><span class="sr-only">Open</span></th></tr></thead>
+                <tbody>
+                {% for o in pending.items|slice(0, 6) %}
+                    <tr>
+                        <td data-label="Order"><strong>{{ o.orderCode }}</strong></td>
+                        <td data-label="Patient">{{ o.patientName }}<br><span class="muted">{{ o.patientCode }}</span></td>
+                        <td data-label="Priority">{{ ui.priority_badge(o.priority) }}</td>
+                        <td data-label="To sample" class="money">{{ o.awaitingSample }}</td>
+                        <td data-label="To result" class="money">{{ o.awaitingResult }}</td>
+                        <td data-label="Open" class="actions"><a class="btn btn-primary btn-sm" href="{{ path('lab_order_show', {id: o.orderId}) }}">Process</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <p class="card-links"><a href="{{ path('lab_worklist') }}">Whole worklist ({{ pending.total }}) &raquo;</a></p>
+    {% endif %}
+</section>
+
+{% endblock %}

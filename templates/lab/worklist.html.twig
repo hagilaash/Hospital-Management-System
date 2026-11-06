@@ -1,0 +1,78 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::worklist():
+    list (PagedListDTO of LabOrderDTO; list.filters = view ('pending' or 'done'), search)
+#}
+
+{% block title %}Lab worklist | HMS{% endblock %}
+
+{% block lab_content %}
+{% import 'lab/_macros.html.twig' as ui %}
+{% set done = list.filters.view == 'done' %}
+
+<div class="page-header">
+    <div>
+        <h1>Worklist</h1>
+        <p class="subtitle">{{ done ? 'Completed and cancelled orders, newest first' : 'Open orders, urgent first, then longest waiting' }}</p>
+    </div>
+    <div class="header-actions">
+        {% if done %}<a class="btn btn-primary" href="{{ path('lab_worklist') }}">Open orders</a>{% else %}<a class="btn btn-secondary" href="{{ path('lab_worklist', {view: 'done'}) }}">Completed</a>{% endif %}
+    </div>
+</div>
+
+<form method="get" action="{{ path('lab_worklist') }}" class="card filters" role="search">
+    <input type="hidden" name="view" value="{{ list.filters.view }}">
+    <div class="filter-grid">
+        <div class="field">
+            <label for="search">Search</label>
+            <input type="search" id="search" name="search" value="{{ list.filters.search ?? '' }}" maxlength="100" placeholder="Order, consultation, patient ID, name or phone">
+        </div>
+    </div>
+    <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a class="btn btn-secondary" href="{{ path('lab_worklist', {view: list.filters.view}) }}">Clear</a>
+    </div>
+</form>
+
+<section class="card">
+    <p class="result-summary" aria-live="polite">
+        {% if list.total > 0 %}Showing {{ list.firstItemNumber }}&ndash;{{ list.lastItemNumber }} of {{ list.total }} {{ list.total == 1 ? 'order' : 'orders' }}{% else %}Nothing here.{% endif %}
+    </p>
+
+    {% if list.total == 0 %}
+        <div class="empty-state"><p>{{ done ? 'No order has been completed yet.' : 'No lab orders are waiting.' }}</p></div>
+    {% else %}
+        <div class="table-wrap">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th scope="col">Order</th><th scope="col">Patient</th><th scope="col">Doctor</th><th scope="col">Priority</th>
+                        <th scope="col" class="money">Tests</th><th scope="col" class="money">To sample</th><th scope="col" class="money">To result</th><th scope="col" class="money">Resulted</th>
+                        <th scope="col">Status</th><th scope="col">Ordered</th><th scope="col"><span class="sr-only">Open</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for o in list.items %}
+                    <tr class="{{ o.isUrgent and not done ? 'lab-row-urgent' }}">
+                        <td data-label="Order"><strong>{{ o.orderCode }}</strong><br><span class="muted">{{ o.consultationCode }}</span></td>
+                        <td data-label="Patient">{{ o.patientName }}<br><span class="muted">{{ o.patientCode }} &middot; {{ o.patientPhone|default('—') }}</span></td>
+                        <td data-label="Doctor">{{ o.doctorName }}</td>
+                        <td data-label="Priority">{{ ui.priority_badge(o.priority) }}</td>
+                        <td data-label="Tests" class="money">{{ o.itemCount }}</td>
+                        <td data-label="To sample" class="money">{{ o.awaitingSample }}</td>
+                        <td data-label="To result" class="money">{{ o.awaitingResult }}</td>
+                        <td data-label="Resulted" class="money">{{ o.resultedCount }}{% if o.abnormalCount > 0 %} <span class="badge lab-flag-high" title="Abnormal results">{{ o.abnormalCount }}</span>{% endif %}</td>
+                        <td data-label="Status">{{ ui.order_badge(o.orderStatus) }}</td>
+                        <td data-label="Ordered">{{ o.createdAt|date('d M, H:i') }}</td>
+                        <td data-label="Open" class="actions"><a class="btn {{ done ? 'btn-secondary' : 'btn-primary' }} btn-sm" href="{{ path('lab_order_show', {id: o.orderId}) }}">{{ done ? 'View' : 'Process' }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {{ ui.pager('lab_worklist', {view: list.filters.view, search: list.filters.search}, list.page, list.totalPages, 'page') }}
+    {% endif %}
+</section>
+
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends 'lab/_layout.html.twig' %}
+
+{#
+  Variables from LabController::renderTestForm():
+    test (LabTestDTO as typed), test_id (null when adding), categories, sample_types, result_types, errors (field => message), form_error
+#}
+
+{% block title %}{{ test_id ? 'Edit test' : 'Add test' }} | HMS{% endblock %}
+
+{% block lab_content %}
+
+<div class="page-header">
+    <h1>{{ test_id ? 'Edit test' : 'Add test' }}</h1>
+    <a class="btn btn-secondary" href="{{ path('lab_tests') }}">Cancel</a>
+</div>
+
+{% if form_error %}<div class="alert alert-error" role="alert">{{ form_error }}</div>{% endif %}
+
+<form method="post" action="{{ test_id ? path('lab_test_edit', {id: test_id}) : path('lab_test_new') }}" class="card patient-form" novalidate>
+    <input type="hidden" name="_token" value="{{ csrf_token('lab_test_' ~ (test_id ?? 'new')) }}">
+
+    <div class="form-grid">
+        <div class="field field-wide {{ errors.testName is defined ? 'field-invalid' }}">
+            <label for="test_name">Test name <span class="req" aria-hidden="true">*</span></label>
+            <input type="text" id="test_name" name="test_name" value="{{ test.testName }}" maxlength="150" required placeholder="e.g. Hemoglobin">
+            {% if errors.testName is defined %}<p class="field-error">{{ errors.testName }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.category is defined ? 'field-invalid' }}">
+            <label for="category">Category <span class="req" aria-hidden="true">*</span></label>
+            <select id="category" name="category" required>
+                {% for c in categories %}<option value="{{ c }}" {{ test.category == c ? 'selected' }}>{{ c }}</option>{% endfor %}
+            </select>
+            {% if errors.category is defined %}<p class="field-error">{{ errors.category }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.sampleType is defined ? 'field-invalid' }}">
+            <label for="sample_type">Sample needed <span class="req" aria-hidden="true">*</span></label>
+            <select id="sample_type" name="sample_type" required>
+                {% for s in sample_types %}<option value="{{ s }}" {{ test.sampleType == s ? 'selected' }}>{{ s }}</option>{% endfor %}
+            </select>
+            {% if errors.sampleType is defined %}<p class="field-error">{{ errors.sampleType }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.resultType is defined ? 'field-invalid' }}">
+            <label for="result_type">Result type <span class="req" aria-hidden="true">*</span></label>
+            <select id="result_type" name="result_type" required>
+                {% for r in result_types %}<option value="{{ r }}" {{ test.resultType == r ? 'selected' }}>{{ r == 'Numeric' ? 'Numeric (a number, flagged against the range)' : 'Text (a finding, flagged Normal / Abnormal)' }}</option>{% endfor %}
+            </select>
+            {% if errors.resultType is defined %}<p class="field-error">{{ errors.resultType }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.unit is defined ? 'field-invalid' }}">
+            <label for="unit">Unit</label>
+            <input type="text" id="unit" name="unit" value="{{ test.unit }}" maxlength="30" placeholder="e.g. g/dL">
+            {% if errors.unit is defined %}<p class="field-error">{{ errors.unit }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.refLow is defined ? 'field-invalid' }}">
+            <label for="ref_low">Normal range: low</label>
+            <input type="text" inputmode="decimal" id="ref_low" name="ref_low" value="{{ test.refLow }}" maxlength="16">
+            <small class="hint">Numeric tests only. A result below this is flagged Low.</small>
+            {% if errors.refLow is defined %}<p class="field-error">{{ errors.refLow }}</p>{% endif %}
+        </div>
+
+        <div class="field {{ errors.refHigh is defined ? 'field-invalid' }}">
+            <label for="ref_high">Normal range: high</label>
+            <input type="text" inputmode="decimal" id="ref_high" name="ref_high" value="{{ test.refHigh }}" maxlength="16">
+            <small class="hint">A result above this is flagged High. Leave a side empty for "no limit".</small>
+            {% if errors.refHigh is defined %}<p class="field-error">{{ errors.refHigh }}</p>{% endif %}
+        </div>
+
+        <div class="field field-wide {{ errors.referenceText is defined ? 'field-invalid' }}">
+            <label for="reference_text">Reference text (optional)</label>
+            <input type="text" id="reference_text" name="reference_text" value="{{ test.referenceText }}" maxlength="100" placeholder="Shown instead of the numbers, e.g. Negative">
+            {% if errors.referenceText is defined %}<p class="field-error">{{ errors.referenceText }}</p>{% endif %}
+        </div>
+
+        <div class="field field-wide">
+            <label class="checkbox-label">
+                <input type="checkbox" name="is_active" value="1" {{ test.isActive ? 'checked' }}>
+                Active (doctors can order it)
+            </label>
+        </div>
+    </div>
+
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary">{{ test_id ? 'Save changes' : 'Add test' }}</button>
+        <a class="btn btn-secondary" href="{{ path('lab_tests') }}">Cancel</a>
+    </div>
+</form>
+
+{% endblock %}

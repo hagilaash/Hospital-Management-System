@@ -49,6 +49,14 @@ class AccessControlService
     public const PHARMACY_DISPENSE = 'pharmacy.dispense';
     public const PHARMACY_PRESCRIBE = 'pharmacy.prescribe';
 
+    // lab permissions
+    public const LAB_VIEW = 'lab.view';
+    public const LAB_MANAGE = 'lab.manage';
+    public const LAB_COLLECT = 'lab.collect';
+    public const LAB_ORDER = 'lab.order';
+    public const LAB_RESULT = 'lab.result';
+
+
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,
@@ -73,6 +81,11 @@ class AccessControlService
         self::PHARMACY_MANAGE,
         self::PHARMACY_DISPENSE,
         self::PHARMACY_PRESCRIBE,
+        self::LAB_VIEW,
+        self::LAB_MANAGE,
+        self::LAB_COLLECT,
+        self::LAB_ORDER,
+        self::LAB_RESULT,
     ];
 
     public function __construct(

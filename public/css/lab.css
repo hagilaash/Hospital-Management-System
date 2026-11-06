@@ -1,0 +1,65 @@
+/* =====================================================================
+   Laboratory module styles. Loaded only by the Laboratory pages (templates/lab/_layout.html.twig).
+   Builds on the shared hms.css; nothing there is changed.
+   ===================================================================== */
+
+/* Order / test status labels */
+.lab-badge-ordered  { background: #eceff1; color: #37474f; }
+.lab-badge-progress { background: #e3f0fb; color: #0d47a1; }
+.lab-badge-done     { background: #e8f5e9; color: #1b5e20; }
+
+/* Result flags */
+.lab-flag-normal { background: #e8f5e9; color: #1b5e20; }
+.lab-flag-low    { background: #e3f0fb; color: #0d47a1; }
+.lab-flag-high   { background: #fdecea; color: #b71c1c; }
+
+.lab-row-urgent td:first-child { box-shadow: inset 4px 0 0 #b71c1c; }
+
+/* "How it works" strip on the overview */
+.lab-flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 20px; padding: 0; list-style: none; }
+.lab-flow li { display: flex; flex-direction: column; gap: 2px; padding: 10px 14px; background: #ffffff; border: 1px solid #d6dce3; border-radius: 6px; }
+.lab-flow span { font-size: 13px; color: #5f6b78; }
+
+/* Sample collection and result entry */
+.lab-collect { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid #edf0f4; }
+.lab-collect-info { flex: 1 1 260px; display: flex; flex-direction: column; }
+.lab-collect input[type="text"], .lab-result-form input, .lab-result-form select, .lab-cancel input {
+    padding: 6px 8px; font-size: 13px; border: 1px solid #b9c2cd; border-radius: 4px;
+}
+.lab-result-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.lab-result { font-size: 16px; }
+.lab-cancel summary { cursor: pointer; list-style: none; }
+.lab-cancel summary::-webkit-details-marker { display: none; }
+.lab-cancel form { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+
+tr.rx-selected td { background: #f1f7fd; }
+.checkbox-label { display: flex; align-items: flex-start; gap: 8px; font-weight: normal; }
+.checkbox-label input[type="checkbox"] { margin-top: 3px; }
+textarea { width: 100%; min-height: 56px; padding: 10px; font-family: inherit; font-size: 15px; border: 1px solid #b9c2cd; border-radius: 4px; resize: vertical; }
+
+/* Printable report */
+.lab-report-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 2px solid #1565c0; }
+.lab-report-hospital { margin: 0 0 4px; color: #1565c0; }
+.lab-report p { margin: 2px 0; }
+.lab-report-title { text-align: right; }
+.lab-report-title h2 { margin: 0 0 4px; letter-spacing: 0.1em; }
+.lab-report-parties { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-bottom: 14px; }
+.lab-report-parties h3 { margin: 0 0 6px; font-size: 14px; color: #5f6b78; text-transform: uppercase; letter-spacing: 0.04em; }
+.lab-report-abnormal td { font-weight: bold; }
+.lab-report-footer { margin-top: 22px; padding-top: 10px; border-top: 1px solid #d6dce3; }
+
+@media (max-width: 700px) {
+    .lab-flow { grid-template-columns: 1fr; }
+    .lab-report-parties { grid-template-columns: 1fr; }
+    .lab-report-title { text-align: left; }
+}
+
+@media print {
+    body { background: #ffffff; font-size: 12px; }
+    .no-print, .hms-topbar, .fdm-subnav, .alert { display: none !important; }
+    .hms-main { max-width: none; padding: 0; }
+    .card { padding: 0; box-shadow: none; border: 0; }
+    .badge { border: 1px solid #888; background: #ffffff; color: #000000; }
+    a { color: inherit; text-decoration: none; }
+    @page { margin: 14mm; }
+}
