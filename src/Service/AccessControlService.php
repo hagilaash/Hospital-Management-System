@@ -49,7 +49,7 @@ class AccessControlService
     public const PHARMACY_DISPENSE = 'pharmacy.dispense';
     public const PHARMACY_PRESCRIBE = 'pharmacy.prescribe';
 
-    // lab permissions
+    // Laboratory permissions
     public const LAB_VIEW = 'lab.view';
     public const LAB_MANAGE = 'lab.manage';
     public const LAB_COLLECT = 'lab.collect';

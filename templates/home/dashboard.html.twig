@@ -129,6 +129,7 @@
     {# RCM tile: shown from the database list when it contains RCM, otherwise added after the loop. #}
     {% set rcmListed = modules|filter(m => (m['module_name']|trim|lower) in ['rcm', 'revenue cycle management'])|length > 0 %}
     {% set pharmacyListed = modules|filter(m => (m['module_name']|trim|lower) == 'pharmacy')|length > 0 %}
+    {% set labListed = modules|filter(m => (m['module_name']|trim|lower) in ['laboratory', 'lab', 'laboratory management'])|length > 0 %}
 
     {% for module in modules %}
 
@@ -171,6 +172,12 @@
                 {{ moduleName }}
             </a>
 
+        {% elseif moduleKey == 'laboratory' or moduleKey == 'lab' or moduleKey == 'laboratory management' %}
+
+            <a href="{{ path('lab_dashboard') }}" class="module">
+                {{ moduleName }}
+            </a>
+
         {% else %}
 
             <div class="module">
@@ -190,6 +197,12 @@
     {% if not pharmacyListed %}
         <a href="{{ path('pharmacy_dashboard') }}" class="module">
             Pharmacy
+        </a>
+    {% endif %}
+
+    {% if not labListed %}
+        <a href="{{ path('lab_dashboard') }}" class="module">
+            Laboratory
         </a>
     {% endif %}
 

@@ -22,6 +22,7 @@
         <a class="btn btn-secondary" href="{{ path('opc_dashboard') }}">&laquo; Worklist</a>
         <a class="btn btn-secondary" href="{{ path('patient_show', {id: consultation.patientId}) }}">Patient record</a>
         <a class="btn {{ consultation.isEditable ? 'btn-primary' : 'btn-secondary' }}" href="{{ path('pharmacy_prescribe', {id: consultation.consultationId}) }}">{{ consultation.isEditable ? 'Prescribe medicines' : 'View prescription' }}</a>
+        <a class="btn {{ consultation.isEditable ? 'btn-primary' : 'btn-secondary' }}" href="{{ path('lab_order', {id: consultation.consultationId}) }}">{{ consultation.isEditable ? 'Order lab tests' : 'Lab tests and results' }}</a>
         {% if consultation.isReadyForBilling %}
             <a class="btn btn-primary" href="{{ path('billing_new', {consultation_id: consultation.consultationId}) }}">Create bill</a>
         {% endif %}
