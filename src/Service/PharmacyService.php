@@ -50,7 +50,7 @@ class PharmacyService
     private const MESSAGE_NOT_SIGNED_IN = 'You must be signed in to perform this action';
 
     public function __construct(
-        private PharmacyRepository $pharmacyRepository
+        private PharmacyRepository $pharmacyRepository,
     ) {
     }
 
@@ -71,7 +71,7 @@ class PharmacyService
     {
         $search = Input::search($search);
         $form = Input::whitelist($form, self::FORMS, '');
-        $form = $form === '' ? null : $form;
+        $form = '' === $form ? null : $form;
         $stock = Input::whitelist($stock, self::STOCK_FILTERS, 'all');
 
         $total = $this->pharmacyRepository->countMedicines($search, $form, $stock);
@@ -152,7 +152,7 @@ class PharmacyService
     public function saveMedicine(?int $medicineId, MedicineDTO $input, string $performedBy): array
     {
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -166,21 +166,21 @@ class PharmacyService
         $medicine->isActive = $input->isActive;
 
         $errors = [];
-        if ($medicine->medicineName === '') {
+        if ('' === $medicine->medicineName) {
             $errors['medicineName'] = 'Medicine name is required';
         } elseif (mb_strlen($medicine->medicineName) > 150) {
             $errors['medicineName'] = 'Medicine name must be 150 characters or fewer';
         }
-        if ($medicine->genericName !== null && mb_strlen($medicine->genericName) > 150) {
+        if (null !== $medicine->genericName && mb_strlen($medicine->genericName) > 150) {
             $errors['genericName'] = 'Generic name must be 150 characters or fewer';
         }
-        if ($medicine->form === '') {
+        if ('' === $medicine->form) {
             $errors['form'] = 'Select a form';
         }
-        if ($medicine->strength !== null && mb_strlen($medicine->strength) > 50) {
+        if (null !== $medicine->strength && mb_strlen($medicine->strength) > 50) {
             $errors['strength'] = 'Strength must be 50 characters or fewer';
         }
-        if ($medicine->unit === '') {
+        if ('' === $medicine->unit) {
             $errors['unit'] = 'Unit is required, for example tablet, ml or vial';
         } elseif (mb_strlen($medicine->unit) > 20) {
             $errors['unit'] = 'Unit must be 20 characters or fewer';
@@ -188,7 +188,7 @@ class PharmacyService
         if ($medicine->reorderLevel < 0 || $medicine->reorderLevel > 1000000) {
             $errors['reorderLevel'] = 'Reorder level must be a whole number from 0 to 1000000';
         }
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -219,20 +219,20 @@ class PharmacyService
         ?string $quantity,
         ?string $unitCost,
         ?string $supplier,
-        string $performedBy
+        string $performedBy,
     ): array {
         if ($medicineId < 1) {
             return $this->failure('Medicine not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
 
         $batch = Input::clean($batchNumber);
-        if ($batch === '') {
+        if ('' === $batch) {
             $errors['batchNumber'] = 'A batch number is required';
         } elseif (mb_strlen($batch) > 50) {
             $errors['batchNumber'] = 'The batch number must be 50 characters or fewer';
@@ -244,24 +244,24 @@ class PharmacyService
         }
 
         $quantityText = trim((string) $quantity);
-        if (preg_match('/^\d{1,7}$/', $quantityText) !== 1 || (int) $quantityText < 1 || (int) $quantityText > 1000000) {
+        if (1 !== preg_match('/^\d{1,7}$/', $quantityText) || (int) $quantityText < 1 || (int) $quantityText > 1000000) {
             $errors['quantity'] = 'The quantity must be a whole number from 1 to 1000000';
         }
 
         $cost = null;
-        if (trim((string) $unitCost) !== '') {
+        if ('' !== trim((string) $unitCost)) {
             $cost = Input::money($unitCost, 8);
-            if ($cost === null) {
+            if (null === $cost) {
                 $errors['unitCost'] = 'The unit cost must be an amount with at most 2 decimals';
             }
         }
 
         $supplierText = Input::nullIfEmpty(Input::clean($supplier));
-        if ($supplierText !== null && mb_strlen($supplierText) > 150) {
+        if (null !== $supplierText && mb_strlen($supplierText) > 150) {
             $errors['supplier'] = 'The supplier must be 150 characters or fewer';
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -291,22 +291,22 @@ class PharmacyService
             return $this->failure('Stock batch not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
         $changeText = str_replace('+', '', trim((string) $change));
-        if (preg_match('/^-?\d{1,7}$/', $changeText) !== 1 || (int) $changeText === 0 || abs((int) $changeText) > 1000000) {
+        if (1 !== preg_match('/^-?\d{1,7}$/', $changeText) || 0 === (int) $changeText || abs((int) $changeText) > 1000000) {
             $errors['change'] = 'Enter a whole number other than zero (negative removes stock)';
         }
         $reasonText = Input::clean($reason);
-        if ($reasonText === '') {
+        if ('' === $reasonText) {
             $errors['reason'] = 'A reason is required';
         } elseif (mb_strlen($reasonText) > 255) {
             $errors['reason'] = 'The reason must be 255 characters or fewer';
         }
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -330,25 +330,25 @@ class PharmacyService
         ?string $durationDays,
         ?string $quantity,
         ?string $instructions,
-        string $performedBy
+        string $performedBy,
     ): array {
         if ($consultationId < 1) {
             return $this->failure('Consultation not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
 
         $medicine = Input::positiveInt($medicineId);
-        if ($medicine === null) {
+        if (null === $medicine) {
             $errors['medicineId'] = 'Select a medicine';
         }
 
         $dosageText = Input::clean($dosage);
-        if ($dosageText === '') {
+        if ('' === $dosageText) {
             $errors['dosage'] = 'The dosage is required, for example 1 tablet';
         } elseif (mb_strlen($dosageText) > 50) {
             $errors['dosage'] = 'The dosage must be 50 characters or fewer';
@@ -360,21 +360,21 @@ class PharmacyService
         }
 
         $daysText = trim((string) $durationDays);
-        if (preg_match('/^\d{1,3}$/', $daysText) !== 1 || (int) $daysText < 1 || (int) $daysText > 365) {
+        if (1 !== preg_match('/^\d{1,3}$/', $daysText) || (int) $daysText < 1 || (int) $daysText > 365) {
             $errors['durationDays'] = 'The duration must be from 1 to 365 days';
         }
 
         $quantityText = trim((string) $quantity);
-        if (preg_match('/^\d{1,4}$/', $quantityText) !== 1 || (int) $quantityText < 1) {
+        if (1 !== preg_match('/^\d{1,4}$/', $quantityText) || (int) $quantityText < 1) {
             $errors['quantity'] = 'The quantity must be a whole number from 1 to 9999';
         }
 
         $instructionText = Input::nullIfEmpty(Input::clean($instructions));
-        if ($instructionText !== null && mb_strlen($instructionText) > 255) {
+        if (null !== $instructionText && mb_strlen($instructionText) > 255) {
             $errors['instructions'] = 'The instructions must be 255 characters or fewer';
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -410,7 +410,7 @@ class PharmacyService
             return $this->failure('Prescription item not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -431,7 +431,7 @@ class PharmacyService
             return $this->failure('Prescription not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -440,20 +440,20 @@ class PharmacyService
         foreach ($quantities as $itemId => $text) {
             $id = Input::positiveInt((string) $itemId);
             $text = is_scalar($text) ? trim((string) $text) : '';
-            if ($id === null || $text === '' || $text === '0') {
+            if (null === $id || '' === $text || '0' === $text) {
                 continue;
             }
-            if (preg_match('/^\d{1,5}$/', $text) !== 1 || (int) $text < 1) {
-                $errors['qty_' . $itemId] = 'Enter a whole number';
+            if (1 !== preg_match('/^\d{1,5}$/', $text) || (int) $text < 1) {
+                $errors['qty_'.$itemId] = 'Enter a whole number';
                 continue;
             }
             $lines[$id] = (int) $text;
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
-        if ($lines === []) {
+        if ([] === $lines) {
             return $this->failure('Enter the quantity to dispense for at least one medicine');
         }
 

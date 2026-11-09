@@ -12,7 +12,7 @@ use App\DTO\LabTestDTO;
 class LabDAO
 {
     public function __construct(
-        private LabDatabaseFunction $labDatabaseFunction
+        private LabDatabaseFunction $labDatabaseFunction,
     ) {
     }
 

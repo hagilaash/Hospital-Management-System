@@ -13,7 +13,7 @@ use App\DTO\MedicineDTO;
 class PharmacyDAO
 {
     public function __construct(
-        private PharmacyDatabaseFunction $pharmacyDatabaseFunction
+        private PharmacyDatabaseFunction $pharmacyDatabaseFunction,
     ) {
     }
 

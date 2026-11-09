@@ -36,7 +36,7 @@ class RCMController extends AbstractController
     public function __construct(
         private RCMService $rcmService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -172,7 +172,7 @@ class RCMController extends AbstractController
 
         $remarks = $request->request->getString('remarks');
 
-        if (!$this->isCsrfTokenValid('rcm_finalize_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('rcm_finalize_'.$id, $request->request->getString('_token'))) {
             return $this->renderCase($case, $remarks, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -186,8 +186,8 @@ class RCMController extends AbstractController
 
         if ($result['success']) {
             $this->addFlash('success', sprintf('%s. %s', $result['message'], $case->patientName));
-            if ($result['visit_note'] !== null) {
-                $this->addFlash('error', $result['visit_note'] . '. Please check the visit in Front Desk.');
+            if (null !== $result['visit_note']) {
+                $this->addFlash('error', $result['visit_note'].'. Please check the visit in Front Desk.');
             }
 
             return $this->redirectToRoute('rcm_show', ['id' => $id]);
@@ -200,7 +200,7 @@ class RCMController extends AbstractController
             return $this->redirectToRoute('rcm_show', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderCase($case, $remarks, $result['errors'], $status, $result['message']);
     }
@@ -239,7 +239,7 @@ class RCMController extends AbstractController
             return $this->redirectToRoute('rcm_pending');
         }
 
-        if ($case === null) {
+        if (null === $case) {
             $this->addFlash('error', self::MESSAGE_NOT_FOUND);
 
             return $this->redirectToRoute('rcm_pending');
@@ -256,7 +256,7 @@ class RCMController extends AbstractController
         string $remarks = '',
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         return $this->render('rcm/show.html.twig', [
             'case' => $case,

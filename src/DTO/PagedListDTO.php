@@ -23,7 +23,7 @@ class PagedListDTO
         public readonly int $perPage,
         public readonly int $totalPages,
         public readonly array $filters = [],
-        public readonly string $today = ''
+        public readonly string $today = '',
     ) {
     }
 
@@ -45,12 +45,12 @@ class PagedListDTO
 
     public function getFirstItemNumber(): int
     {
-        return $this->total === 0 ? 0 : ($this->page - 1) * $this->perPage + 1;
+        return 0 === $this->total ? 0 : ($this->page - 1) * $this->perPage + 1;
     }
 
     public function getLastItemNumber(): int
     {
-        if ($this->total === 0) {
+        if (0 === $this->total) {
             return 0;
         }
 

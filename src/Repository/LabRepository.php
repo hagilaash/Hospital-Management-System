@@ -18,7 +18,7 @@ class LabRepository
     public const VIEW_DONE = 'done';
 
     public function __construct(
-        private LabDAO $labDAO
+        private LabDAO $labDAO,
     ) {
     }
 
@@ -36,7 +36,7 @@ class LabRepository
     {
         $row = $this->labDAO->getTestById($testId);
 
-        return $row === null ? null : LabTestDTO::fromRow($row);
+        return null === $row ? null : LabTestDTO::fromRow($row);
     }
 
     /**
@@ -72,12 +72,12 @@ class LabRepository
     public function getOrder(?int $consultationId, ?int $orderId): ?LabOrderDTO
     {
         $row = $this->labDAO->getOrderContext($consultationId, $orderId);
-        if ($row === null) {
+        if (null === $row) {
             return null;
         }
 
         $order = LabOrderDTO::fromRow($row);
-        if ($order->orderId !== null) {
+        if (null !== $order->orderId) {
             $order->items = $this->labDAO->getOrderItems($order->orderId);
             $order->samples = $this->labDAO->getOrderSamples($order->orderId);
             $order->itemCount = count($order->items);

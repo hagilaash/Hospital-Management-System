@@ -41,7 +41,7 @@ class RCMService
     private const MESSAGE_NOT_SIGNED_IN = 'You must be signed in to finalize';
 
     public function __construct(
-        private RCMRepository $rcmRepository
+        private RCMRepository $rcmRepository,
     ) {
     }
 
@@ -94,13 +94,13 @@ class RCMService
             return $this->failure(self::MESSAGE_NOT_FOUND);
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $remarks = Input::nullIfEmpty(Input::cleanMultiline($remarks));
-        if ($remarks !== null && mb_strlen($remarks) > self::MAX_REMARKS) {
-            $message = 'The remarks must be ' . self::MAX_REMARKS . ' characters or fewer';
+        if (null !== $remarks && mb_strlen($remarks) > self::MAX_REMARKS) {
+            $message = 'The remarks must be '.self::MAX_REMARKS.' characters or fewer';
 
             return $this->failure($message, ['remarks' => $message]);
         }
@@ -111,7 +111,7 @@ class RCMService
         $result['success'] = Input::isTrue($db['success'] ?? false);
         $result['rcm_id'] = isset($db['rcm_id']) ? (int) $db['rcm_id'] : null;
         $result['already_finalized'] = Input::isTrue($db['already_finalized'] ?? false);
-        $result['visit_note'] = isset($db['visit_note']) && $db['visit_note'] !== '' ? (string) $db['visit_note'] : null;
+        $result['visit_note'] = isset($db['visit_note']) && '' !== $db['visit_note'] ? (string) $db['visit_note'] : null;
         if (!$result['success'] && str_starts_with($result['message'], 'The remarks must')) {
             $result['errors']['remarks'] = $result['message'];
         }
@@ -126,7 +126,7 @@ class RCMService
         $search = Input::search($search);
         $from = Input::dateOrNull($dateFrom);
         $to = Input::dateOrNull($dateTo);
-        if ($from !== null && $to !== null && $from > $to) {
+        if (null !== $from && null !== $to && $from > $to) {
             [$from, $to] = [$to, $from];
         }
 

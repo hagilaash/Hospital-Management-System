@@ -42,7 +42,7 @@ class PharmacyController extends AbstractController
     public function __construct(
         private PharmacyService $pharmacyService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -133,7 +133,7 @@ class PharmacyController extends AbstractController
         $medicine->medicineId = $id;
         $medicine->medicineCode = $existing->medicineCode;
 
-        if (!$this->isCsrfTokenValid('pharmacy_medicine_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_medicine_'.$id, $request->request->getString('_token'))) {
             return $this->renderMedicineForm($medicine, $id, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -174,7 +174,7 @@ class PharmacyController extends AbstractController
     {
         $back = $this->redirectToRoute('pharmacy_medicine_show', ['id' => $id]);
 
-        if (!$this->isCsrfTokenValid('pharmacy_receive_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_receive_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -206,11 +206,11 @@ class PharmacyController extends AbstractController
     public function adjustStock(int $id, Request $request): Response
     {
         $medicineId = Input::positiveInt($request->request->getString('medicine_id'));
-        $back = $medicineId !== null
+        $back = null !== $medicineId
             ? $this->redirectToRoute('pharmacy_medicine_show', ['id' => $medicineId])
             : $this->redirectToRoute('pharmacy_medicines');
 
-        if (!$this->isCsrfTokenValid('pharmacy_adjust_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_adjust_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -277,7 +277,7 @@ class PharmacyController extends AbstractController
 
         $typed = $request->request->all('qty');
 
-        if (!$this->isCsrfTokenValid('pharmacy_dispense_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_dispense_'.$id, $request->request->getString('_token'))) {
             return $this->renderPrescription($prescription, $typed, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -295,7 +295,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('pharmacy_prescription_show', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderPrescription($prescription, $typed, $result['errors'], $status, $result['message']);
     }
@@ -337,7 +337,7 @@ class PharmacyController extends AbstractController
         ];
         $selectedId = Input::positiveInt($typed['medicine_id']);
 
-        if (!$this->isCsrfTokenValid('pharmacy_prescribe_' . $id, $post->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_prescribe_'.$id, $post->getString('_token'))) {
             return $this->renderPrescribe($prescription, '', $selectedId, $typed, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -364,7 +364,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('pharmacy_prescribe', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderPrescribe($prescription, '', $selectedId, $typed, $result['errors'], $status, $result['message']);
     }
@@ -374,7 +374,7 @@ class PharmacyController extends AbstractController
     {
         $back = $this->redirectToRoute('pharmacy_prescribe', ['id' => $id]);
 
-        if (!$this->isCsrfTokenValid('pharmacy_remove_' . $itemId, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('pharmacy_remove_'.$itemId, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -418,7 +418,7 @@ class PharmacyController extends AbstractController
         }
 
         $detail = array_unique(array_values($result['errors']));
-        $this->addFlash('error', $detail === [] || $result['message'] === $detail[0] ? $result['message'] : $result['message'] . ': ' . implode('. ', $detail));
+        $this->addFlash('error', [] === $detail || $result['message'] === $detail[0] ? $result['message'] : $result['message'].': '.implode('. ', $detail));
     }
 
     private function saveMedicine(?int $id, MedicineDTO $medicine): Response
@@ -437,7 +437,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('pharmacy_medicine_show', ['id' => $result['medicine_id']]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderMedicineForm($medicine, $id, $result['errors'], $status, $result['message']);
     }
@@ -453,7 +453,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('pharmacy_medicines');
         }
 
-        if ($medicine === null) {
+        if (null === $medicine) {
             $this->addFlash('error', 'Medicine not found');
 
             return $this->redirectToRoute('pharmacy_medicines');
@@ -473,7 +473,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('pharmacy_dispensing');
         }
 
-        if ($prescription === null) {
+        if (null === $prescription) {
             $this->addFlash('error', 'Prescription not found');
 
             return $this->redirectToRoute('pharmacy_dispensing');
@@ -494,7 +494,7 @@ class PharmacyController extends AbstractController
             return $this->redirectToRoute('opc_dashboard');
         }
 
-        if ($prescription === null) {
+        if (null === $prescription) {
             $this->addFlash('error', 'Consultation not found');
 
             return $this->redirectToRoute('opc_dashboard');
@@ -542,7 +542,7 @@ class PharmacyController extends AbstractController
         array $typed = [],
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         $results = [];
         $selected = null;
@@ -550,12 +550,12 @@ class PharmacyController extends AbstractController
         if ($prescription->canEdit()) {
             try {
                 $results = $this->pharmacyService->searchPrescribable($search);
-                $selected = $selectedId !== null ? $this->pharmacyService->getMedicine($selectedId) : null;
+                $selected = null !== $selectedId ? $this->pharmacyService->getMedicine($selectedId) : null;
             } catch (DbalException $exception) {
                 $this->logger->error('Medicines could not be searched.', ['exception' => $exception]);
                 $this->addFlash('error', self::MESSAGE_GENERIC_ERROR);
             }
-            if ($selected !== null && (!$selected->isActive || $selected->availableQuantity < 1)) {
+            if (null !== $selected && (!$selected->isActive || $selected->availableQuantity < 1)) {
                 $selected = null;
             }
         }

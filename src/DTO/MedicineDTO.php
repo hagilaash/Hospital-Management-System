@@ -44,7 +44,7 @@ class MedicineDTO
         $dto->unit = (string) ($row['unit'] ?? '');
         $dto->reorderLevel = (int) ($row['reorder_level'] ?? 0);
         $flag = $row['is_active'] ?? true;
-        $dto->isActive = $flag === true || $flag === 't' || $flag === 'true' || $flag === 1 || $flag === '1';
+        $dto->isActive = true === $flag || 't' === $flag || 'true' === $flag || 1 === $flag || '1' === $flag;
 
         $dto->availableQuantity = (int) ($row['available_quantity'] ?? 0);
         $dto->expiringQuantity = (int) ($row['expiring_quantity'] ?? 0);
@@ -71,7 +71,7 @@ class MedicineDTO
         $dto->unit = trim((string) self::nullableString($input['unit'] ?? null));
         $reorder = trim((string) self::nullableString($input['reorder_level'] ?? null));
         $dto->reorderLevel = ctype_digit($reorder) && strlen($reorder) <= 7 ? (int) $reorder : -1; // -1 = invalid, rejected by the service
-        $dto->isActive = isset($input['is_active']) && is_scalar($input['is_active']) && (string) $input['is_active'] !== '' && (string) $input['is_active'] !== '0';
+        $dto->isActive = isset($input['is_active']) && is_scalar($input['is_active']) && '' !== (string) $input['is_active'] && '0' !== (string) $input['is_active'];
 
         return $dto;
     }
@@ -79,12 +79,12 @@ class MedicineDTO
     /** "Paracetamol 500 mg" */
     public function displayName(): string
     {
-        return $this->strength !== null && $this->strength !== '' ? $this->medicineName . ' ' . $this->strength : $this->medicineName;
+        return null !== $this->strength && '' !== $this->strength ? $this->medicineName.' '.$this->strength : $this->medicineName;
     }
 
     public function isOutOfStock(): bool
     {
-        return $this->availableQuantity === 0;
+        return 0 === $this->availableQuantity;
     }
 
     /** At or below its reorder level (only when a reorder level has been set). */

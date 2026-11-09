@@ -18,7 +18,7 @@ class PharmacyRepository
     public const QUEUE_DONE = 'done';
 
     public function __construct(
-        private PharmacyDAO $pharmacyDAO
+        private PharmacyDAO $pharmacyDAO,
     ) {
     }
 
@@ -36,7 +36,7 @@ class PharmacyRepository
     {
         $row = $this->pharmacyDAO->getMedicineById($medicineId);
 
-        return $row === null ? null : MedicineDTO::fromRow($row);
+        return null === $row ? null : MedicineDTO::fromRow($row);
     }
 
     /**
@@ -102,12 +102,12 @@ class PharmacyRepository
     public function getPrescription(?int $consultationId, ?int $prescriptionId): ?PrescriptionDTO
     {
         $row = $this->pharmacyDAO->getPrescriptionContext($consultationId, $prescriptionId);
-        if ($row === null) {
+        if (null === $row) {
             return null;
         }
 
         $prescription = PrescriptionDTO::fromRow($row);
-        if ($prescription->prescriptionId !== null) {
+        if (null !== $prescription->prescriptionId) {
             $prescription->items = $this->pharmacyDAO->getPrescriptionItems($prescription->prescriptionId);
             $prescription->itemCount = count($prescription->items);
         }

@@ -41,7 +41,7 @@ class LabController extends AbstractController
     public function __construct(
         private LabService $labService,
         private AuthSessionService $authSession,
-        private LoggerInterface $logger
+        private LoggerInterface $logger,
     ) {
     }
 
@@ -123,7 +123,7 @@ class LabController extends AbstractController
         $test->testId = $id;
         $test->testCode = $existing->testCode;
 
-        if (!$this->isCsrfTokenValid('lab_test_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_test_'.$id, $request->request->getString('_token'))) {
             return $this->renderTestForm($test, $id, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -181,7 +181,7 @@ class LabController extends AbstractController
     {
         $back = $this->redirectToRoute('lab_order_show', ['id' => $id]);
 
-        if (!$this->isCsrfTokenValid('lab_collect_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_collect_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -206,7 +206,7 @@ class LabController extends AbstractController
     {
         $back = $this->backToOrder($request);
 
-        if (!$this->isCsrfTokenValid('lab_result_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_result_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -237,7 +237,7 @@ class LabController extends AbstractController
     {
         $back = $this->backToOrder($request);
 
-        if (!$this->isCsrfTokenValid('lab_cancel_' . $id, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_cancel_'.$id, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -289,7 +289,7 @@ class LabController extends AbstractController
         ];
         $selectedId = Input::positiveInt($typed['test_id']);
 
-        if (!$this->isCsrfTokenValid('lab_order_' . $id, $post->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_order_'.$id, $post->getString('_token'))) {
             return $this->renderOrderTests($order, '', $selectedId, $typed, [], Response::HTTP_BAD_REQUEST, self::MESSAGE_CSRF_ERROR);
         }
 
@@ -307,7 +307,7 @@ class LabController extends AbstractController
             return $this->redirectToRoute('lab_order', ['id' => $id]);
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderOrderTests($order, '', $selectedId, $typed, $result['errors'], $status, $result['message']);
     }
@@ -317,7 +317,7 @@ class LabController extends AbstractController
     {
         $back = $this->redirectToRoute('lab_order', ['id' => $id]);
 
-        if (!$this->isCsrfTokenValid('lab_remove_' . $itemId, $request->request->getString('_token'))) {
+        if (!$this->isCsrfTokenValid('lab_remove_'.$itemId, $request->request->getString('_token'))) {
             $this->addFlash('error', self::MESSAGE_CSRF_ERROR);
 
             return $back;
@@ -358,7 +358,7 @@ class LabController extends AbstractController
         }
 
         $detail = array_unique(array_values($result['errors']));
-        $this->addFlash('error', $detail === [] || $result['message'] === $detail[0] ? $result['message'] : $result['message'] . ': ' . implode('. ', $detail));
+        $this->addFlash('error', [] === $detail || $result['message'] === $detail[0] ? $result['message'] : $result['message'].': '.implode('. ', $detail));
     }
 
     /** Back to the processing screen of the order the posted form belongs to (hidden field order_id). */
@@ -366,7 +366,7 @@ class LabController extends AbstractController
     {
         $orderId = Input::positiveInt($request->request->getString('order_id'));
 
-        return $orderId !== null ? $this->redirectToRoute('lab_order_show', ['id' => $orderId]) : $this->redirectToRoute('lab_worklist');
+        return null !== $orderId ? $this->redirectToRoute('lab_order_show', ['id' => $orderId]) : $this->redirectToRoute('lab_worklist');
     }
 
     private function saveTest(?int $id, LabTestDTO $test): Response
@@ -385,7 +385,7 @@ class LabController extends AbstractController
             return $this->redirectToRoute('lab_tests');
         }
 
-        $status = $result['errors'] !== [] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
+        $status = [] !== $result['errors'] ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_CONFLICT;
 
         return $this->renderTestForm($test, $id, $result['errors'], $status, $result['message']);
     }
@@ -401,7 +401,7 @@ class LabController extends AbstractController
             return $this->redirectToRoute('lab_tests');
         }
 
-        if ($test === null) {
+        if (null === $test) {
             $this->addFlash('error', 'Test not found');
 
             return $this->redirectToRoute('lab_tests');
@@ -421,7 +421,7 @@ class LabController extends AbstractController
             return $this->redirectToRoute('lab_worklist');
         }
 
-        if ($order === null) {
+        if (null === $order) {
             $this->addFlash('error', 'Lab order not found');
 
             return $this->redirectToRoute('lab_worklist');
@@ -442,7 +442,7 @@ class LabController extends AbstractController
             return $this->redirectToRoute('opc_dashboard');
         }
 
-        if ($order === null) {
+        if (null === $order) {
             $this->addFlash('error', 'Consultation not found');
 
             return $this->redirectToRoute('opc_dashboard');
@@ -478,7 +478,7 @@ class LabController extends AbstractController
         array $typed = [],
         array $errors = [],
         int $status = Response::HTTP_OK,
-        ?string $formError = null
+        ?string $formError = null,
     ): Response {
         $results = [];
         $selected = null;
@@ -486,12 +486,12 @@ class LabController extends AbstractController
         if ($order->canEdit()) {
             try {
                 $results = $this->labService->searchOrderable($search);
-                $selected = $selectedId !== null ? $this->labService->getTest($selectedId) : null;
+                $selected = null !== $selectedId ? $this->labService->getTest($selectedId) : null;
             } catch (DbalException $exception) {
                 $this->logger->error('Tests could not be searched.', ['exception' => $exception]);
                 $this->addFlash('error', self::MESSAGE_GENERIC_ERROR);
             }
-            if ($selected !== null && !$selected->isActive) {
+            if (null !== $selected && !$selected->isActive) {
                 $selected = null;
             }
         }

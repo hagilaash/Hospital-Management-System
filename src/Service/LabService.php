@@ -49,7 +49,7 @@ class LabService
     private const NUMBER_PATTERN = '/^-?\d{1,10}(\.\d{1,4})?$/';
 
     public function __construct(
-        private LabRepository $labRepository
+        private LabRepository $labRepository,
     ) {
     }
 
@@ -69,7 +69,7 @@ class LabService
     {
         $search = Input::search($search);
         $category = Input::whitelist($category, self::CATEGORIES, '');
-        $category = $category === '' ? null : $category;
+        $category = '' === $category ? null : $category;
         $status = Input::whitelist($status, self::STATUS_FILTERS, 'all');
 
         $total = $this->labRepository->countTests($search, $category, $status);
@@ -136,7 +136,7 @@ class LabService
     public function saveTest(?int $testId, LabTestDTO $input, string $performedBy): array
     {
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -150,39 +150,39 @@ class LabService
         $test->isActive = $input->isActive;
 
         $errors = [];
-        if ($test->testName === '') {
+        if ('' === $test->testName) {
             $errors['testName'] = 'Test name is required';
         } elseif (mb_strlen($test->testName) > 150) {
             $errors['testName'] = 'Test name must be 150 characters or fewer';
         }
-        if ($test->category === '') {
+        if ('' === $test->category) {
             $errors['category'] = 'Select a category';
         }
-        if ($test->sampleType === '') {
+        if ('' === $test->sampleType) {
             $errors['sampleType'] = 'Select a sample type';
         }
-        if ($test->resultType === '') {
+        if ('' === $test->resultType) {
             $errors['resultType'] = 'Select a result type';
         }
-        if ($test->unit !== null && mb_strlen($test->unit) > 30) {
+        if (null !== $test->unit && mb_strlen($test->unit) > 30) {
             $errors['unit'] = 'Unit must be 30 characters or fewer';
         }
-        if ($test->referenceText !== null && mb_strlen($test->referenceText) > 100) {
+        if (null !== $test->referenceText && mb_strlen($test->referenceText) > 100) {
             $errors['referenceText'] = 'Reference text must be 100 characters or fewer';
         }
 
         $low = $this->number($input->refLow, 'refLow', 'The low end of the range', $errors);
         $high = $this->number($input->refHigh, 'refHigh', 'The high end of the range', $errors);
-        if ($test->resultType === 'Text' && ($low !== null || $high !== null)) {
+        if ('Text' === $test->resultType && (null !== $low || null !== $high)) {
             $errors['refLow'] = 'A text result cannot have a numeric reference range';
         }
-        if ($low !== null && $high !== null && (float) $low > (float) $high) {
+        if (null !== $low && null !== $high && (float) $low > (float) $high) {
             $errors['refLow'] = 'The low end of the range cannot be above the high end';
         }
         $test->refLow = $low;
         $test->refHigh = $high;
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -213,28 +213,28 @@ class LabService
             return $this->failure('Consultation not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
 
         $test = Input::positiveInt($testId);
-        if ($test === null) {
+        if (null === $test) {
             $errors['testId'] = 'Select a test';
         }
 
         $priorityText = Input::whitelist($priority, self::PRIORITIES, '');
-        if ($priorityText === '') {
+        if ('' === $priorityText) {
             $errors['priority'] = 'Select Routine or Urgent';
         }
 
         $notesText = Input::nullIfEmpty(Input::cleanMultiline($notes));
-        if ($notesText !== null && mb_strlen($notesText) > 500) {
+        if (null !== $notesText && mb_strlen($notesText) > 500) {
             $errors['clinicalNotes'] = 'The clinical notes must be 500 characters or fewer';
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -257,7 +257,7 @@ class LabService
             return $this->failure('Test not found on the order');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
@@ -275,16 +275,16 @@ class LabService
             return $this->failure('Lab order not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $type = Input::whitelist($sampleType, self::SAMPLE_TYPES, '');
-        if ($type === '') {
+        if ('' === $type) {
             return $this->failure(self::MESSAGE_VALIDATION, ['sampleType' => 'Select a sample type']);
         }
         $notesText = Input::nullIfEmpty(Input::clean($notes));
-        if ($notesText !== null && mb_strlen($notesText) > 255) {
+        if (null !== $notesText && mb_strlen($notesText) > 255) {
             return $this->failure(self::MESSAGE_VALIDATION, ['notes' => 'The notes must be 255 characters or fewer']);
         }
 
@@ -307,14 +307,14 @@ class LabService
             return $this->failure('Test not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $errors = [];
 
         $valueText = Input::clean($value);
-        if ($valueText === '') {
+        if ('' === $valueText) {
             $errors['value'] = 'Enter the result';
         } elseif (mb_strlen($valueText) > 500) {
             $errors['value'] = 'The result must be 500 characters or fewer';
@@ -323,11 +323,11 @@ class LabService
         $flagText = Input::whitelist($flag, ['Normal', 'Abnormal'], '');
 
         $commentText = Input::nullIfEmpty(Input::cleanMultiline($comment));
-        if ($commentText !== null && mb_strlen($commentText) > 500) {
+        if (null !== $commentText && mb_strlen($commentText) > 500) {
             $errors['comment'] = 'The comment must be 500 characters or fewer';
         }
 
-        if ($errors !== []) {
+        if ([] !== $errors) {
             return $this->failure(self::MESSAGE_VALIDATION, $errors);
         }
 
@@ -352,12 +352,12 @@ class LabService
             return $this->failure('Test not found');
         }
         $performedBy = trim($performedBy);
-        if ($performedBy === '') {
+        if ('' === $performedBy) {
             return $this->failure(self::MESSAGE_NOT_SIGNED_IN);
         }
 
         $reasonText = Input::clean($reason);
-        if ($reasonText === '') {
+        if ('' === $reasonText) {
             return $this->failure('A reason is required', ['reason' => 'A reason is required']);
         }
         if (mb_strlen($reasonText) > 255) {
@@ -384,11 +384,11 @@ class LabService
     private function number(?string $value, string $field, string $label, array &$errors): ?string
     {
         $text = trim((string) $value);
-        if ($text === '') {
+        if ('' === $text) {
             return null;
         }
-        if (preg_match(self::NUMBER_PATTERN, $text) !== 1) {
-            $errors[$field] = $label . ' must be a number with at most 4 decimals';
+        if (1 !== preg_match(self::NUMBER_PATTERN, $text)) {
+            $errors[$field] = $label.' must be a number with at most 4 decimals';
 
             return null;
         }

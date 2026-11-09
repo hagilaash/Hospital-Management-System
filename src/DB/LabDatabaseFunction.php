@@ -13,7 +13,7 @@ use Doctrine\DBAL\Connection;
 class LabDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
@@ -35,7 +35,7 @@ class LabDatabaseFunction
         ?string $refHigh,
         ?string $referenceText,
         bool $isActive,
-        string $by
+        string $by,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_save_lab_test(
@@ -77,7 +77,7 @@ class LabDatabaseFunction
             ['test_id' => $testId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_lab_tests_list(5 params). $status: all | active | inactive */
@@ -135,7 +135,7 @@ class LabDatabaseFunction
             ['consultation_id' => $consultationId, 'order_id' => $orderId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_lab_order_items(1 param) */
@@ -159,7 +159,7 @@ class LabDatabaseFunction
     // ------------------------------------------------------------------ the doctor
 
     /**
-     * ecs_add_lab_order_item(5 params)
+     * ecs_add_lab_order_item(5 params).
      *
      * @return array{success: bool, message: string, item_id: ?int, order_id: ?int, order_code: ?string}
      */
@@ -180,7 +180,7 @@ class LabDatabaseFunction
     }
 
     /**
-     * ecs_remove_lab_order_item(2 params)
+     * ecs_remove_lab_order_item(2 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -228,7 +228,7 @@ class LabDatabaseFunction
     }
 
     /**
-     * ecs_collect_lab_sample(4 params)
+     * ecs_collect_lab_sample(4 params).
      *
      * @return array{success: bool, message: string, sample_id: ?int, sample_code: ?string, test_count: int}
      */
@@ -248,7 +248,7 @@ class LabDatabaseFunction
     }
 
     /**
-     * ecs_enter_lab_result(5 params)
+     * ecs_enter_lab_result(5 params).
      *
      * @return array{success: bool, message: string, result_flag: ?string}
      */
@@ -269,7 +269,7 @@ class LabDatabaseFunction
     }
 
     /**
-     * ecs_cancel_lab_item(3 params)
+     * ecs_cancel_lab_item(3 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -303,7 +303,7 @@ class LabDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 

@@ -56,7 +56,6 @@ class AccessControlService
     public const LAB_ORDER = 'lab.order';
     public const LAB_RESULT = 'lab.result';
 
-
     private const DEFINED_PERMISSIONS = [
         self::PATIENT_VIEW,
         self::PATIENT_CREATE,

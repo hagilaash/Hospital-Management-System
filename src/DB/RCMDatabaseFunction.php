@@ -15,7 +15,7 @@ use Doctrine\DBAL\Connection;
 class RCMDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
@@ -66,7 +66,7 @@ class RCMDatabaseFunction
             ['bill_id' => $billId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_rcm_summary(0 params): one row of dashboard figures */
@@ -105,7 +105,7 @@ class RCMDatabaseFunction
     }
 
     /**
-     * ecs_finalize_rcm(3 params)
+     * ecs_finalize_rcm(3 params).
      *
      * @return array{success: bool, message: string, rcm_id: ?int, already_finalized: bool, visit_note: ?string}
      */
@@ -130,7 +130,7 @@ class RCMDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 

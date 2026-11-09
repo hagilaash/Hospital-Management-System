@@ -11,7 +11,7 @@ use App\DB\RCMDatabaseFunction;
 class RCMDAO
 {
     public function __construct(
-        private RCMDatabaseFunction $rcmDatabaseFunction
+        private RCMDatabaseFunction $rcmDatabaseFunction,
     ) {
     }
 

@@ -12,7 +12,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Unit tests for LabService. The repository is mocked, so nothing here touches PostgreSQL.
  * (The rules that need locking - samples, derived order status, locked results - are proven by
- * sql/lab/03_verify.sql.)
+ * sql/lab/03_verify.sql.).
  */
 class LabServiceTest extends TestCase
 {
@@ -120,14 +120,14 @@ class LabServiceTest extends TestCase
     public static function badTestProvider(): array
     {
         return [
-            'no name'         => [['test_name' => ''], 'testName'],
-            'long name'       => [['test_name' => str_repeat('x', 151)], 'testName'],
-            'bad category'    => [['category' => 'Magic'], 'category'],
-            'bad sample'      => [['sample_type' => 'Hair'], 'sampleType'],
+            'no name' => [['test_name' => ''], 'testName'],
+            'long name' => [['test_name' => str_repeat('x', 151)], 'testName'],
+            'bad category' => [['category' => 'Magic'], 'category'],
+            'bad sample' => [['sample_type' => 'Hair'], 'sampleType'],
             'bad result type' => [['result_type' => 'Picture'], 'resultType'],
-            'text low'        => [['ref_low' => 'abc'], 'refLow'],
-            'five decimals'   => [['ref_high' => '1.23456'], 'refHigh'],
-            'low above high'  => [['ref_low' => '20', 'ref_high' => '10'], 'refLow'],
+            'text low' => [['ref_low' => 'abc'], 'refLow'],
+            'five decimals' => [['ref_high' => '1.23456'], 'refHigh'],
+            'low above high' => [['ref_low' => '20', 'ref_high' => '10'], 'refLow'],
             'text with range' => [['result_type' => 'Text', 'ref_low' => '1', 'ref_high' => '2'], 'refLow'],
         ];
     }
@@ -171,10 +171,10 @@ class LabServiceTest extends TestCase
     public static function badOrderProvider(): array
     {
         return [
-            'no test'      => [['', 'Routine', null, 'dr'], 'testId'],
-            'text test'    => [['abc', 'Routine', null, 'dr'], 'testId'],
+            'no test' => [['', 'Routine', null, 'dr'], 'testId'],
+            'text test' => [['abc', 'Routine', null, 'dr'], 'testId'],
             'bad priority' => [['4', 'ASAP', null, 'dr'], 'priority'],
-            'long notes'   => [['4', 'Routine', str_repeat('x', 501), 'dr'], 'clinicalNotes'],
+            'long notes' => [['4', 'Routine', str_repeat('x', 501), 'dr'], 'clinicalNotes'],
         ];
     }
 

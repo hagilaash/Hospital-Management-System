@@ -71,23 +71,23 @@ class PrescriptionDTO
 
     public function hasPrescription(): bool
     {
-        return $this->prescriptionId !== null;
+        return null !== $this->prescriptionId;
     }
 
     /** The doctor can add or remove medicines only while the consultation is in progress. */
     public function canEdit(): bool
     {
-        return $this->consultationStatus === 'In Progress';
+        return 'In Progress' === $this->consultationStatus;
     }
 
     public function isDispensed(): bool
     {
-        return $this->status === self::STATUS_DISPENSED;
+        return self::STATUS_DISPENSED === $this->status;
     }
 
     /** Pharmacy can dispense once the doctor has finished and something is still left. */
     public function canDispense(): bool
     {
-        return $this->hasPrescription() && !$this->canEdit() && !$this->isDispensed() && $this->items !== [];
+        return $this->hasPrescription() && !$this->canEdit() && !$this->isDispensed() && [] !== $this->items;
     }
 }

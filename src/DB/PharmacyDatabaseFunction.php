@@ -14,7 +14,7 @@ use Doctrine\DBAL\Connection;
 class PharmacyDatabaseFunction
 {
     public function __construct(
-        private Connection $connection
+        private Connection $connection,
     ) {
     }
 
@@ -34,7 +34,7 @@ class PharmacyDatabaseFunction
         string $unit,
         int $reorderLevel,
         bool $isActive,
-        string $by
+        string $by,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_save_medicine(
@@ -72,7 +72,7 @@ class PharmacyDatabaseFunction
             ['medicine_id' => $medicineId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_medicines_list(5 params). $stock: all | in_stock | low | out | expiring */
@@ -119,7 +119,7 @@ class PharmacyDatabaseFunction
         int $quantity,
         ?string $unitCost,
         ?string $supplier,
-        string $by
+        string $by,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_receive_stock(
@@ -146,7 +146,7 @@ class PharmacyDatabaseFunction
     }
 
     /**
-     * ecs_adjust_stock(4 params)
+     * ecs_adjust_stock(4 params).
      *
      * @return array{success: bool, message: string, quantity_available: ?int}
      */
@@ -211,7 +211,7 @@ class PharmacyDatabaseFunction
             ['consultation_id' => $consultationId, 'prescription_id' => $prescriptionId]
         );
 
-        return $row === false ? null : $row;
+        return false === $row ? null : $row;
     }
 
     /** ecs_get_prescription_items(1 param) */
@@ -224,7 +224,7 @@ class PharmacyDatabaseFunction
     }
 
     /**
-     * ecs_add_prescription_item(8 params)
+     * ecs_add_prescription_item(8 params).
      *
      * @return array{success: bool, message: string, item_id: ?int, prescription_id: ?int, prescription_code: ?string}
      */
@@ -236,7 +236,7 @@ class PharmacyDatabaseFunction
         int $durationDays,
         int $quantity,
         ?string $instructions,
-        string $by
+        string $by,
     ): array {
         $row = $this->connection->fetchAssociative(
             'SELECT * FROM ecs_add_prescription_item(
@@ -265,7 +265,7 @@ class PharmacyDatabaseFunction
     }
 
     /**
-     * ecs_remove_prescription_item(2 params)
+     * ecs_remove_prescription_item(2 params).
      *
      * @return array{success: bool, message: string}
      */
@@ -313,7 +313,7 @@ class PharmacyDatabaseFunction
     }
 
     /**
-     * ecs_dispense_prescription(3 params). $itemsJson: [{"item_id": "12", "quantity": "5"}, ...]
+     * ecs_dispense_prescription(3 params). $itemsJson: [{"item_id": "12", "quantity": "5"}, ...].
      *
      * @return array{success: bool, message: string, status: ?string}
      */
@@ -348,7 +348,7 @@ class PharmacyDatabaseFunction
      */
     private function requireRow(array|false $row, string $function): array
     {
-        if ($row === false) {
+        if (false === $row) {
             throw new \RuntimeException(sprintf('Database function %s returned no row.', $function));
         }
 

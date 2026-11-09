@@ -41,7 +41,7 @@ class LabTestDTO
         $dto->refHigh = self::trimNumber($row['ref_high'] ?? null);
         $dto->referenceText = self::nullableString($row['reference_text'] ?? null);
         $flag = $row['is_active'] ?? true;
-        $dto->isActive = $flag === true || $flag === 't' || $flag === 'true' || $flag === 1 || $flag === '1';
+        $dto->isActive = true === $flag || 't' === $flag || 'true' === $flag || 1 === $flag || '1' === $flag;
 
         return $dto;
     }
@@ -64,30 +64,30 @@ class LabTestDTO
         $dto->refLow = self::nullableString($input['ref_low'] ?? null);
         $dto->refHigh = self::nullableString($input['ref_high'] ?? null);
         $dto->referenceText = self::nullableString($input['reference_text'] ?? null);
-        $dto->isActive = isset($input['is_active']) && is_scalar($input['is_active']) && (string) $input['is_active'] !== '' && (string) $input['is_active'] !== '0';
+        $dto->isActive = isset($input['is_active']) && is_scalar($input['is_active']) && '' !== (string) $input['is_active'] && '0' !== (string) $input['is_active'];
 
         return $dto;
     }
 
     public function isNumeric(): bool
     {
-        return $this->resultType === 'Numeric';
+        return 'Numeric' === $this->resultType;
     }
 
     /** "12 – 16 g/dL", "No abnormality", or an empty string. */
     public function rangeLabel(): string
     {
-        if ($this->referenceText !== null && $this->referenceText !== '') {
+        if (null !== $this->referenceText && '' !== $this->referenceText) {
             return $this->referenceText;
         }
-        if ($this->refLow !== null && $this->refHigh !== null) {
-            return $this->refLow . ' – ' . $this->refHigh . ($this->unit ? ' ' . $this->unit : '');
+        if (null !== $this->refLow && null !== $this->refHigh) {
+            return $this->refLow.' – '.$this->refHigh.($this->unit ? ' '.$this->unit : '');
         }
-        if ($this->refLow !== null) {
-            return '≥ ' . $this->refLow . ($this->unit ? ' ' . $this->unit : '');
+        if (null !== $this->refLow) {
+            return '≥ '.$this->refLow.($this->unit ? ' '.$this->unit : '');
         }
-        if ($this->refHigh !== null) {
-            return '≤ ' . $this->refHigh . ($this->unit ? ' ' . $this->unit : '');
+        if (null !== $this->refHigh) {
+            return '≤ '.$this->refHigh.($this->unit ? ' '.$this->unit : '');
         }
 
         return '';

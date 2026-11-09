@@ -85,29 +85,29 @@ class LabOrderDTO
 
     public function hasOrder(): bool
     {
-        return $this->orderId !== null;
+        return null !== $this->orderId;
     }
 
     /** The doctor can add or remove tests only while the consultation is in progress. */
     public function canEdit(): bool
     {
-        return $this->consultationStatus === 'In Progress';
+        return 'In Progress' === $this->consultationStatus;
     }
 
     public function isUrgent(): bool
     {
-        return $this->priority === 'Urgent';
+        return 'Urgent' === $this->priority;
     }
 
     /** Work is still to be done in the lab. */
     public function isOpen(): bool
     {
-        return $this->orderStatus === self::STATUS_ORDERED || $this->orderStatus === self::STATUS_IN_PROGRESS;
+        return self::STATUS_ORDERED === $this->orderStatus || self::STATUS_IN_PROGRESS === $this->orderStatus;
     }
 
     public function isCompleted(): bool
     {
-        return $this->orderStatus === self::STATUS_COMPLETED;
+        return self::STATUS_COMPLETED === $this->orderStatus;
     }
 
     /**

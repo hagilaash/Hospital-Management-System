@@ -98,14 +98,14 @@ class RCMCaseDTO
         $dto->appointmentCode = self::nullableString($row['appointment_code'] ?? null);
         $dto->appointmentDate = self::nullableString($row['appointment_date'] ?? null);
         $time = $row['appointment_time'] ?? null;
-        $dto->appointmentTime = is_scalar($time) && (string) $time !== '' ? substr((string) $time, 0, 5) : null;
+        $dto->appointmentTime = is_scalar($time) && '' !== (string) $time ? substr((string) $time, 0, 5) : null;
         $dto->appointmentStatus = self::nullableString($row['appointment_status'] ?? null);
         $dto->consultationId = self::nullableInt($row['consultation_id'] ?? null);
         $dto->consultationCode = self::nullableString($row['consultation_code'] ?? null);
 
         $dto->rcmStatus = (string) ($row['rcm_status'] ?? self::STATUS_PENDING);
         $flag = $row['can_finalize'] ?? false;
-        $dto->canFinalize = $flag === true || $flag === 't' || $flag === 'true' || $flag === 1 || $flag === '1';
+        $dto->canFinalize = true === $flag || 't' === $flag || 'true' === $flag || 1 === $flag || '1' === $flag;
         $dto->blockReason = self::nullableString($row['block_reason'] ?? null);
         $dto->rcmId = self::nullableInt($row['rcm_id'] ?? null);
         $dto->readySince = self::nullableString($row['ready_since'] ?? null);
@@ -118,17 +118,17 @@ class RCMCaseDTO
 
     public function isPending(): bool
     {
-        return $this->rcmStatus === self::STATUS_PENDING;
+        return self::STATUS_PENDING === $this->rcmStatus;
     }
 
     public function isFinalized(): bool
     {
-        return $this->rcmStatus === self::STATUS_FINALIZED;
+        return self::STATUS_FINALIZED === $this->rcmStatus;
     }
 
     public function isAwaitingBilling(): bool
     {
-        return $this->rcmStatus === self::STATUS_AWAITING_BILLING;
+        return self::STATUS_AWAITING_BILLING === $this->rcmStatus;
     }
 
     private static function nullableString(mixed $value): ?string

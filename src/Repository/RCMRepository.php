@@ -18,7 +18,7 @@ class RCMRepository
     public const VIEW_FINALIZED = 'finalized';
 
     public function __construct(
-        private RCMDAO $rcmDAO
+        private RCMDAO $rcmDAO,
     ) {
     }
 
@@ -46,7 +46,7 @@ class RCMRepository
     public function getCase(int $billId): ?RCMCaseDTO
     {
         $row = $this->rcmDAO->getCaseByBill($billId);
-        if ($row === null) {
+        if (null === $row) {
             return null;
         }
 
