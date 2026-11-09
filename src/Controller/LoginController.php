@@ -23,7 +23,7 @@ class LoginController extends AbstractController
     #[Route('/login', name: 'login', methods: ['GET', 'POST'])]
     public function login(Request $request): Response
     {
-        $this->logger->info('Login page requested');  // Log the request for the login page
+        $this->logger->info('LOGIN PAGE REQUESTED');  // Log the request for the login page
         if ($this->authSession->isAuthenticated()) {  // Redirect to home if already logged in
             return $this->redirectToRoute('home');
         }
@@ -51,7 +51,7 @@ class LoginController extends AbstractController
         try {
             $result = $this->loginService->login($username, $password);
         } catch (DbalException $exception) {
-            $this->logger->error('Login failed because of a database error.', ['exception' => $exception]);
+            $this->logger->error('LOGIN FAILED BECAUSE OF A DATABASE ERROR.', ['exception' => $exception]);
 
             return $this->render('login/login.html.twig', [
                 'error' => 'The service is temporarily unavailable. Please try again later.',
@@ -60,7 +60,7 @@ class LoginController extends AbstractController
         }
 
         if (($result['success'] ?? false) === true) {
-            $this->logger->info('User login successful.', ['username' => $username]);
+            $this->logger->info('USER LOGIN SUCCESSFUL.', ['username' => $username]);
             $this->authSession->login($username);
 
             return $this->redirectToRoute('home');
@@ -82,6 +82,7 @@ class LoginController extends AbstractController
         }
 
         $this->authSession->logout();
+        $this->logger->info('USER LOGOUT SUCCESSFUL.');
         $this->addFlash('success', 'You have been logged out.');
 
         return $this->redirectToRoute('login');

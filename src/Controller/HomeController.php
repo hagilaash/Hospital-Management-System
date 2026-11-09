@@ -20,7 +20,7 @@ class HomeController extends AbstractController
     public function home(): Response
     {
         $modules = $this->homeService->getHomeModules();
-        $this->logger->info('Home page requested'); // Log the request for the home page
+        $this->logger->info('HOME PAGE REQUESTED');
 
         return $this->render('home/dashboard.html.twig', [
             'modules' => $modules,
